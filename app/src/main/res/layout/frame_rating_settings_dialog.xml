@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+     xmlns:android="http://schemas.android.com/apk/res/android"
+     android:layout_height="wrap_content"
+     android:layout_width="match_parent"
+     android:padding="16dp">
+
+    <LinearLayout
+         android:layout_height="wrap_content"
+         android:layout_width="match_parent"
+         android:orientation="vertical">
+
+        <TextView
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:layout_marginBottom="8dp"
+             android:textSize="16sp"
+             android:text="Display Elements"
+             android:textStyle="bold" />
+
+        <CheckBox
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:id="@+id/CBShowFPS"
+             android:text="Show FPS" />
+
+        <CheckBox
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:id="@+id/CBShowRenderer"
+             android:text="Show Renderer" />
+
+        <CheckBox
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:id="@+id/CBShowGPU"
+             android:text="Show GPU" />
+
+        <CheckBox
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:id="@+id/CBShowRAM"
+             android:text="Show RAM" />
+
+        <CheckBox
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:id="@+id/CBShowTemperature"
+             android:text="Temperature (Bat🔋/CPU🔋🔲)" />
+
+        <CheckBox
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:id="@+id/CBShowBatteryLevel"
+             android:text="Battery Level" />
+
+        <CheckBox
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:id="@+id/CBShowBatteryPower"
+             android:text="Battery Power" />
+
+        <TextView
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:layout_marginBottom="8dp"
+             android:textSize="16sp"
+             android:layout_marginTop="16dp"
+             android:text="Layout Orientation"
+             android:textStyle="bold" />
+
+        <RadioGroup
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:orientation="horizontal"
+             android:id="@+id/RGLayout">
+
+            <RadioButton
+                 android:layout_height="wrap_content"
+                 android:layout_width="0dp"
+                 android:layout_weight="1"
+                 android:id="@+id/RBVertical"
+                 android:text="Vertical" />
+
+            <RadioButton
+                 android:layout_height="wrap_content"
+                 android:layout_width="0dp"
+                 android:layout_weight="1"
+                 android:id="@+id/RBHorizontal"
+                 android:text="Horizontal" />
+
+        </RadioGroup>
+
+        <TextView
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:layout_marginBottom="8dp"
+             android:textSize="16sp"
+             android:layout_marginTop="16dp"
+             android:text="Transparency"
+             android:textStyle="bold" />
+
+        <TextView
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:text="Background Alpha" />
+
+        <LinearLayout
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:orientation="horizontal">
+
+            <SeekBar
+                 android:layout_height="wrap_content"
+                 android:layout_width="0dp"
+                 android:max="255"
+                 android:layout_weight="1"
+                 android:id="@+id/SBBackgroundAlpha" />
+
+            <TextView
+                 android:layout_height="wrap_content"
+                 android:layout_width="wrap_content"
+                 android:textSize="12sp"
+                 android:layout_marginStart="8dp"
+                 android:id="@+id/TVBackgroundAlphaValue"
+                 android:text="20%" />
+
+        </LinearLayout>
+
+        <TextView
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:layout_marginTop="8dp"
+             android:text="Text Alpha" />
+
+        <LinearLayout
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:orientation="horizontal">
+
+            <SeekBar
+                 android:layout_height="wrap_content"
+                 android:layout_width="0dp"
+                 android:max="255"
+                 android:layout_weight="1"
+                 android:id="@+id/SBTextAlpha" />
+
+            <TextView
+                 android:layout_height="wrap_content"
+                 android:layout_width="wrap_content"
+                 android:textSize="12sp"
+                 android:layout_marginStart="8dp"
+                 android:id="@+id/TVTextAlphaValue"
+                 android:text="100%" />
+
+        </LinearLayout>
+
+        <TextView
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:layout_marginTop="8dp"
+             android:text="Button Alpha" />
+
+        <LinearLayout
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:orientation="horizontal">
+
+            <SeekBar
+                 android:layout_height="wrap_content"
+                 android:layout_width="0dp"
+                 android:max="255"
+                 android:layout_weight="1"
+                 android:id="@+id/SBButtonAlpha" />
+
+            <TextView
+                 android:layout_height="wrap_content"
+                 android:layout_width="wrap_content"
+                 android:textSize="12sp"
+                 android:layout_marginStart="8dp"
+                 android:id="@+id/TVButtonAlphaValue"
+                 android:text="50%" />
+
+        </LinearLayout>
+
+        <TextView
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:layout_marginBottom="8dp"
+             android:textSize="16sp"
+             android:layout_marginTop="16dp"
+             android:text="FPS Limit"
+             android:textStyle="bold" />
+
+        <LinearLayout
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:orientation="horizontal">
+
+            <SeekBar
+                 android:layout_height="wrap_content"
+                 android:layout_width="0dp"
+                 android:layout_weight="1"
+                 android:id="@+id/SBFpsLimit" />
+
+            <TextView
+                 android:layout_height="wrap_content"
+                 android:layout_width="wrap_content"
+                 android:textSize="12sp"
+                 android:layout_marginStart="8dp"
+                 android:id="@+id/TVFpsLimitValue"
+                 android:text="No Limit" />
+
+        </LinearLayout>
+
+        <TextView
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:layout_marginBottom="8dp"
+             android:textSize="16sp"
+             android:layout_marginTop="16dp"
+             android:text="MangoHud"
+             android:textStyle="bold" />
+
+        <CheckBox
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             android:id="@+id/CBShowMangoHud"
+             android:text="Show MangoHud Overlay" />
+
+    </LinearLayout>
+
+</ScrollView>
