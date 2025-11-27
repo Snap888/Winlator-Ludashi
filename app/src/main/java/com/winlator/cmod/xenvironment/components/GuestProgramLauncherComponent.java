@@ -304,14 +304,15 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
         envVars.put("PATH", winePath + ":" +
                 rootDir.getPath() + "/usr/bin");
 
- 
         envVars.put("ANDROID_SYSVSHM_SERVER", rootDir.getPath() + UnixSocketConfig.SYSVSHM_SERVER_PATH);
 
-        String primaryDNS = "8.8.4.4";
+        String primaryDNS = "8.8.8.8";
         ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Service.CONNECTIVITY_SERVICE);
         if (connectivityManager.getActiveNetwork() != null) {
             ArrayList<InetAddress> dnsServers = new ArrayList<>(connectivityManager.getLinkProperties(connectivityManager.getActiveNetwork()).getDnsServers());
-            primaryDNS = dnsServers.get(0).toString().substring(1);
+            if (!dnsServers.isEmpty()) {
+                primaryDNS = dnsServers.get(0).toString().substring(1);
+            }
         }
         envVars.put("ANDROID_RESOLV_DNS", primaryDNS);
         envVars.put("WINE_NEW_NDIS", "1");
@@ -325,13 +326,8 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
 
         envVars.put("LD_PRELOAD", ld_preload);
 
-        if (this.envVars.has("MANGOHUD")) {
-            this.envVars.remove("MANGOHUD");
-        }
-
-        if (this.envVars.has("MANGOHUD_CONFIG")) {
-            this.envVars.remove("MANGOHUD_CONFIG");
-        }
+        // Настройка MangoHud с конфигурационным файлом
+        setupMangoHudConfig(envVars);
         
         // Merge any additional environment variables from external sources
         if (this.envVars != null) {
@@ -363,7 +359,7 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
                 command = imageFs.getBinDir() + "/box64 " + guestExecutable;
         }
 
-        // **Maybe remove this: Set execute permissions for box64 if necessary (Glibc/Proot artifact)
+        // Set execute permissions for box64 if necessary (Glibc/Proot artifact)
         File box64File = new File(rootDir, "/usr/bin/box64");
         if (box64File.exists()) {
             FileUtils.chmod(box64File, 0755);
@@ -377,6 +373,53 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
             if (terminationCallback != null)
                 terminationCallback.call(status);
         });
+    }
+
+    /**
+     * Настраивает MangoHud с использованием конфигурационного файла
+     */
+    private void setupMangoHudConfig(EnvVars envVars) {
+        try {
+            Context context = environment.getContext();
+            
+            // Создаем базовый конфигурационный файл MangoHud
+            String configPath = context.getFilesDir().getPath() + "/mangohud.conf";
+            File configFile = new File(configPath);
+            
+            // Если файл не существует, создаем его с настройками по умолчанию
+            if (!configFile.exists()) {
+                String defaultConfig = 
+                    "no_display=false\n" +
+                    "background_alpha=0.0\n" + // По умолчанию полностью прозрачный
+                    "text_alpha=0.0\n" +
+                    "position=top-left\n" +
+                    "text_scale=1.0\n" +
+                    "fps_limit=0\n" +
+                    "fps=0\n" +
+                    "frametime=0\n" +
+                    "cpu_stats=0\n" +
+                    "gpu_stats=0\n" +
+                    "ram_stats=0\n" +
+                    "vram=0\n";
+                
+                java.io.FileWriter writer = new java.io.FileWriter(configFile);
+                writer.write(defaultConfig);
+                writer.close();
+                
+                Log.d("MangoHud", "Created default MangoHud config at: " + configPath);
+            }
+            
+            // Устанавливаем переменные окружения для MangoHud
+            // ВАЖНО: MANGOHUD=1 должен быть установлен для работы ограничения FPS
+            envVars.put("MANGOHUD", "1");
+            envVars.put("MANGOHUD_CONFIGFILE", configPath);
+            envVars.put("MANGOHUD_DLSYM", "1");
+            
+            Log.d("MangoHud", "MangoHud configured with MANGOHUD=1 and config file: " + configPath);
+            
+        } catch (Exception e) {
+            Log.e("GuestProgramLauncher", "Error setting up MangoHud config", e);
+        }
     }
 
     private void addBox64EnvVars(EnvVars envVars, boolean enableLogs) {
@@ -402,6 +445,46 @@ public class GuestProgramLauncherComponent extends EnvironmentComponent {
     public void resumeProcess() {
         synchronized (lock) {
             if (pid != -1) ProcessHelper.resumeProcess(pid);
+        }
+    }
+
+    /**
+     * Возвращает PID запущенного процесса игры
+     */
+    public static int getPid() {
+        synchronized (lock) {
+            return pid;
+        }
+    }
+
+    /**
+     * Отправляет сигнал для обновления конфигурации MangoHud
+     */
+    public static void sendMangoHudReloadSignal() {
+        synchronized (lock) {
+            if (pid != -1) {
+                try {
+                    // Используем полное имя класса java.lang.Process чтобы избежать конфликта с android.os.Process
+                    java.lang.Process killProcess = Runtime.getRuntime().exec(new String[]{"kill", "-USR1", String.valueOf(pid)});
+                    int exitCode = killProcess.waitFor();
+                    if (exitCode == 0) {
+                        Log.d("MangoHud", "Sent reload signal to game process: " + pid);
+                    } else {
+                        Log.d("MangoHud", "Failed to send signal to process: " + pid + ", exit code: " + exitCode);
+                        // Пробуем альтернативный метод
+                        try {
+                            Runtime.getRuntime().exec(new String[]{"pkill", "-USR1", "mangohud"}).waitFor();
+                            Log.d("MangoHud", "Tried alternative signal method via pkill");
+                        } catch (Exception e2) {
+                            Log.d("MangoHud", "Alternative signal method also failed");
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.e("MangoHud", "Error sending reload signal to process: " + pid, e);
+                }
+            } else {
+                Log.d("MangoHud", "No active process to send reload signal");
+            }
         }
     }
 }
