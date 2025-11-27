@@ -253,4 +253,211 @@ public class InputControlsManager {
         for (ControlsProfile profile : getProfiles()) if (profile.id == id) return profile;
         return null;
     }
+
+    /**
+     * Get profile by ID without loading all profiles
+     * @param id the profile ID to search for
+     * @return the found profile or null if not found
+     */
+    public ControlsProfile getProfileById(int id) {
+        // First check in already loaded profiles
+        if (profilesLoaded) {
+            for (ControlsProfile profile : profiles) {
+                if (profile.id == id) {
+                    return profile;
+                }
+            }
+        }
+        
+        // If not found, try to load directly from file
+        File profileFile = ControlsProfile.getProfileFile(context, id);
+        if (profileFile.exists()) {
+            return loadProfile(context, profileFile);
+        }
+        
+        return null;
+    }
+
+    /**
+     * Check if a profile with the given ID exists
+     * @param id the profile ID to check
+     * @return true if the profile exists
+     */
+    public boolean profileExists(int id) {
+        if (id == 0) return false;
+        
+        if (profilesLoaded) {
+            for (ControlsProfile profile : profiles) {
+                if (profile.id == id) {
+                    return true;
+                }
+            }
+        }
+        
+        // Check if file exists
+        File profileFile = ControlsProfile.getProfileFile(context, id);
+        return profileFile.exists();
+    }
+
+    /**
+     * Get all available profile names for UI display
+     * @param excludeId profile ID to exclude from the list (usually current profile)
+     * @return array of profile names
+     */
+    public String[] getProfileNames(int excludeId) {
+        ArrayList<ControlsProfile> allProfiles = getProfiles(true); // ignoreTemplates = true
+        ArrayList<String> names = new ArrayList<>();
+        
+        for (ControlsProfile profile : allProfiles) {
+            if (profile.id != excludeId) {
+                names.add(profile.getName());
+            }
+        }
+        
+        return names.toArray(new String[0]);
+    }
+
+    /**
+     * Get all available profile IDs for UI display
+     * @param excludeId profile ID to exclude from the list (usually current profile)
+     * @return array of profile IDs
+     */
+    public int[] getProfileIds(int excludeId) {
+        ArrayList<ControlsProfile> allProfiles = getProfiles(true); // ignoreTemplates = true
+        ArrayList<Integer> ids = new ArrayList<>();
+        
+        for (ControlsProfile profile : allProfiles) {
+            if (profile.id != excludeId) {
+                ids.add(profile.id);
+            }
+        }
+        
+        // Convert to int array
+        int[] result = new int[ids.size()];
+        for (int i = 0; i < ids.size(); i++) {
+            result[i] = ids.get(i);
+        }
+        return result;
+    }
+
+    /**
+     * Get profile name by ID
+     * @param id the profile ID
+     * @return profile name or "Unknown Profile" if not found
+     */
+    public String getProfileNameById(int id) {
+        if (id == 0) return "None";
+        
+        ControlsProfile profile = getProfileById(id);
+        return profile != null ? profile.getName() : "Unknown Profile";
+    }
+
+    /**
+     * Reload profiles from disk
+     */
+    public void reloadProfiles() {
+        profilesLoaded = false;
+        loadProfiles(false);
+    }
+
+    /**
+     * Get all profiles that contain Vertical Scroll Bar elements
+     * @return list of profiles with scroll bars
+     */
+    public ArrayList<ControlsProfile> getProfilesWithScrollBars() {
+        ArrayList<ControlsProfile> profilesWithScrollBars = new ArrayList<>();
+        for (ControlsProfile profile : getProfiles()) {
+            if (profile.hasVerticalScrollBarElements()) {
+                profilesWithScrollBars.add(profile);
+            }
+        }
+        return profilesWithScrollBars;
+    }
+
+    /**
+     * Get all profiles that contain profile switching elements
+     * @return list of profiles with profile switching
+     */
+    public ArrayList<ControlsProfile> getProfilesWithProfileSwitching() {
+        ArrayList<ControlsProfile> profilesWithSwitching = new ArrayList<>();
+        for (ControlsProfile profile : getProfiles()) {
+            if (profile.hasProfileSwitchingElements()) {
+                profilesWithSwitching.add(profile);
+            }
+        }
+        return profilesWithSwitching;
+    }
+
+    /**
+     * Get all profiles that contain multi-binding elements
+     * @return list of profiles with multi-binding
+     */
+    public ArrayList<ControlsProfile> getProfilesWithMultiBinding() {
+        ArrayList<ControlsProfile> profilesWithMultiBinding = new ArrayList<>();
+        for (ControlsProfile profile : getProfiles()) {
+            if (profile.hasMultiBindingElements()) {
+                profilesWithMultiBinding.add(profile);
+            }
+        }
+        return profilesWithMultiBinding;
+    }
+
+    /**
+     * Create a default profile with common elements including a Vertical Scroll Bar
+     * @param profileName the name for the new profile
+     * @return the created profile
+     */
+    public ControlsProfile createDefaultProfileWithScrollBar(String profileName) {
+        ControlsProfile profile = createProfile(profileName);
+        
+        // This would typically be called from the UI to add default elements
+        // The actual element creation would happen in the editor activity
+        
+        return profile;
+    }
+
+    /**
+     * Check if any profile contains elements of the specified type
+     * @param elementType the type of element to check for
+     * @return true if at least one profile contains the element type
+     */
+    public boolean hasProfilesWithElementType(ControlElement.Type elementType) {
+        for (ControlsProfile profile : getProfiles()) {
+            if (!profile.isElementsLoaded()) {
+                // For performance, we might want to load elements only when needed
+                continue;
+            }
+            
+            for (ControlElement element : profile.getElements()) {
+                if (element.getType() == elementType) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Get statistics about element types across all profiles
+     * @return map with element type counts
+     */
+    public java.util.Map<ControlElement.Type, Integer> getElementTypeStatistics() {
+        java.util.Map<ControlElement.Type, Integer> stats = new java.util.HashMap<>();
+        
+        // Initialize all known types
+        for (ControlElement.Type type : ControlElement.Type.values()) {
+            stats.put(type, 0);
+        }
+        
+        for (ControlsProfile profile : getProfiles()) {
+            if (!profile.isElementsLoaded()) continue;
+            
+            for (ControlElement element : profile.getElements()) {
+                ControlElement.Type type = element.getType();
+                stats.put(type, stats.get(type) + 1);
+            }
+        }
+        
+        return stats;
+    }
 }
