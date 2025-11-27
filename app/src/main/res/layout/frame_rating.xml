@@ -1,140 +1,227 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+<LinearLayout
+     xmlns:android="http://schemas.android.com/apk/res/android"
+     android:layout_height="wrap_content"
+     android:layout_width="wrap_content"
+     android:orientation="vertical">
 
     <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="2dp"
-        android:layout_marginTop="2dp"
-        android:layout_marginLeft="10dp"
-        android:gravity="center_vertical"
-        android:background="#33000000">
+         android:layout_height="wrap_content"
+         android:layout_width="wrap_content"
+         android:orientation="vertical"
+         android:id="@+id/LLContainer">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textStyle="bold"
-            android:textSize="12dp"
-            android:text="FPS:"
-            android:textColor="#0277bd"
-            android:includeFontPadding="false"
-            android:maxLines="1"
-            android:layout_marginRight="5dp" />
+        <ImageView
+             android:layout_height="24dp"
+             android:layout_width="24dp"
+             android:src="@drawable/ic_settings"
+             android:contentDescription="@string/settings"
+             android:background="#80000000"
+             android:padding="4dp"
+             android:layout_marginTop="4dp"
+             android:id="@+id/IVSettingsStart"
+             android:layout_gravity="start" />
 
-        <TextView
-            android:id="@+id/TVFPS"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textStyle="bold"
-            android:textSize="12dp"
-            android:text="0"
-            android:textColor="#ffffff"
-            android:includeFontPadding="false"
-            android:maxLines="1" />
+        <LinearLayout
+             android:layout_height="wrap_content"
+             android:layout_width="wrap_content"
+             android:background="#33000000"
+             android:padding="4dp"
+             android:orientation="horizontal"
+             android:id="@+id/FPSRow">
+
+            <TextView
+                 android:layout_height="wrap_content"
+                 android:layout_width="wrap_content"
+                 android:textSize="12sp"
+                 android:textColor="#FF0277BD"
+                 android:text="📈 FPS:"
+                 android:textStyle="bold" />
+
+            <TextView
+                 android:layout_height="wrap_content"
+                 android:layout_width="wrap_content"
+                 android:textSize="12sp"
+                 android:textColor="#FFFFFFFF"
+                 android:layout_marginStart="4dp"
+                 android:id="@+id/TVFPS"
+                 android:text="0.0" />
+
+        </LinearLayout>
+
+        <LinearLayout
+             android:layout_height="wrap_content"
+             android:layout_width="wrap_content"
+             android:background="#33000000"
+             android:padding="4dp"
+             android:orientation="horizontal"
+             android:id="@+id/RendererRow">
+
+            <TextView
+                 android:layout_height="wrap_content"
+                 android:layout_width="wrap_content"
+                 android:textSize="12sp"
+                 android:textColor="#FFFC0303"
+                 android:text="⚙️"
+                 android:textStyle="bold" />
+
+            <TextView
+                 android:layout_height="wrap_content"
+                 android:layout_width="wrap_content"
+                 android:textSize="12sp"
+                 android:textColor="#FFFFFFFF"
+                 android:layout_marginStart="4dp"
+                 android:id="@+id/TVRenderer"
+                 android:text="OpenGL" />
+
+        </LinearLayout>
+
+        <LinearLayout
+             android:layout_height="wrap_content"
+             android:layout_width="wrap_content"
+             android:background="#33000000"
+             android:padding="4dp"
+             android:orientation="horizontal"
+             android:id="@+id/GPURow">
+
+            <TextView
+                 android:layout_height="wrap_content"
+                 android:layout_width="wrap_content"
+                 android:textSize="12sp"
+                 android:textColor="#FF5C23A6"
+                 android:text="🖥️"
+                 android:textStyle="bold" />
+
+            <TextView
+                 android:layout_height="wrap_content"
+                 android:layout_width="wrap_content"
+                 android:textSize="12sp"
+                 android:textColor="#FFFFFFFF"
+                 android:layout_marginStart="4dp"
+                 android:id="@+id/TVGPU"
+                 android:text="GPU" />
+
+        </LinearLayout>
+
+        <LinearLayout
+             android:layout_height="wrap_content"
+             android:layout_width="wrap_content"
+             android:background="#33000000"
+             android:padding="4dp"
+             android:orientation="horizontal"
+             android:id="@+id/RAMRow">
+
+            <TextView
+                 android:layout_height="wrap_content"
+                 android:layout_width="wrap_content"
+                 android:textSize="12sp"
+                 android:textColor="#FF23A6A4"
+                 android:text="💾 RAM:"
+                 android:textStyle="bold" />
+
+            <TextView
+                 android:layout_height="wrap_content"
+                 android:layout_width="wrap_content"
+                 android:textSize="12sp"
+                 android:textColor="#FFFFFFFF"
+                 android:layout_marginStart="4dp"
+                 android:id="@+id/TVRAM"
+                 android:text="RAM" />
+
+        </LinearLayout>
+
+        <LinearLayout
+             android:layout_height="wrap_content"
+             android:layout_width="wrap_content"
+             android:background="#33000000"
+             android:padding="4dp"
+             android:orientation="horizontal"
+             android:id="@+id/TemperatureRow">
+
+            <TextView
+                 android:layout_height="wrap_content"
+                 android:layout_width="wrap_content"
+                 android:textSize="12sp"
+                 android:textColor="#FFFF9800"
+                 android:text="🌡️Temp:"
+                 android:textStyle="bold" />
+
+            <TextView
+                 android:layout_height="wrap_content"
+                 android:layout_width="wrap_content"
+                 android:textSize="12sp"
+                 android:textColor="#FFFFFFFF"
+                 android:layout_marginStart="4dp"
+                 android:id="@+id/TVTemperature"
+                 android:text="🔋Bat/🔲 CPU" />
+
+        </LinearLayout>
+
+        <LinearLayout
+             android:layout_height="wrap_content"
+             android:layout_width="wrap_content"
+             android:background="#33000000"
+             android:padding="4dp"
+             android:orientation="horizontal"
+             android:id="@+id/BatteryLevelRow">
+
+            <TextView
+                 android:layout_height="wrap_content"
+                 android:layout_width="wrap_content"
+                 android:textSize="12sp"
+                 android:textColor="#FF4CAF50"
+                 android:text="🔋Bat:"
+                 android:textStyle="bold" />
+
+            <TextView
+                 android:layout_height="wrap_content"
+                 android:layout_width="wrap_content"
+                 android:textSize="12sp"
+                 android:textColor="#FFFFFFFF"
+                 android:layout_marginStart="4dp"
+                 android:id="@+id/TVBatteryLevel"
+                 android:text="100%" />
+
+        </LinearLayout>
+
+        <LinearLayout
+             android:layout_height="wrap_content"
+             android:layout_width="wrap_content"
+             android:background="#33000000"
+             android:padding="4dp"
+             android:orientation="horizontal"
+             android:id="@+id/BatteryPowerRow">
+
+            <TextView
+                 android:layout_height="wrap_content"
+                 android:layout_width="wrap_content"
+                 android:textSize="12sp"
+                 android:textColor="#FF9C27B0"
+                 android:text="⚡ PWR:"
+                 android:textStyle="bold" />
+
+            <TextView
+                 android:layout_height="wrap_content"
+                 android:layout_width="wrap_content"
+                 android:textSize="12sp"
+                 android:textColor="#FFFFFFFF"
+                 android:layout_marginStart="4dp"
+                 android:id="@+id/TVBatteryPower"
+                 android:text="+0.00W" />
+
+        </LinearLayout>
+
+        <ImageView
+             android:layout_height="24dp"
+             android:layout_width="24dp"
+             android:src="@drawable/ic_settings"
+             android:contentDescription="@string/settings"
+             android:background="#80000000"
+             android:padding="4dp"
+             android:layout_marginTop="4dp"
+             android:id="@+id/IVSettings"
+             android:layout_gravity="end" />
+
     </LinearLayout>
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="2dp"
-        android:layout_marginTop="2dp"
-        android:layout_marginLeft="10dp"
-        android:gravity="center_vertical"
-        android:background="#33000000">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textStyle="bold"
-            android:textSize="12dp"
-            android:text="Renderer:"
-            android:textColor="#fc0303"
-            android:includeFontPadding="false"
-            android:maxLines="1"
-            android:layout_marginRight="5dp" />
-
-        <TextView
-            android:id="@+id/TVRenderer"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textStyle="bold"
-            android:textSize="12dp"
-            android:textColor="#ffffff"
-            android:includeFontPadding="false"
-            android:maxLines="1" />
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="2dp"
-        android:layout_marginTop="2dp"
-        android:layout_marginLeft="10dp"
-        android:gravity="center_vertical"
-        android:background="#33000000">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textStyle="bold"
-            android:textSize="12dp"
-            android:text="GPU:"
-            android:textColor="#5c23a6"
-            android:includeFontPadding="false"
-            android:maxLines="1"
-            android:layout_marginRight="5dp" />
-
-        <TextView
-            android:id="@+id/TVGPU"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textStyle="bold"
-            android:textSize="12dp"
-            android:textColor="#ffffff"
-            android:includeFontPadding="false"
-            android:maxLines="1" />
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="2dp"
-        android:layout_marginTop="2dp"
-        android:layout_marginLeft="10dp"
-        android:gravity="center_vertical"
-        android:background="#33000000">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textStyle="bold"
-            android:textSize="12dp"
-            android:text="RAM:"
-            android:textColor="#23a6a4"
-            android:includeFontPadding="false"
-            android:maxLines="1"
-            android:layout_marginRight="5dp" />
-
-        <TextView
-            android:id="@+id/TVRAM"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textStyle="bold"
-            android:textSize="12dp"
-            android:textColor="#ffffff"
-            android:includeFontPadding="false"
-            android:maxLines="1" />
-    </LinearLayout>
 </LinearLayout>
