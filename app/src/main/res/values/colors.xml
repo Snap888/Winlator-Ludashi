@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+<!-- Добавить в res/values/colors.xml -->
+<color name="button_text_color">#FFFFFF</color>
     <!-- Light Theme Colors -->
     <color name="window_background_color">#fafafa</color>
     <color name="colorPrimary">#607d8b</color>
