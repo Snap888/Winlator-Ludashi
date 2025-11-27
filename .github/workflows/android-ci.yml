@@ -26,7 +26,7 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew assembleDebug
 
-    - name: Attach APK as workflow artifact
+    - name: Upload APK as workflow artifact
       uses: actions/upload-artifact@v4
       with:
         name: Winlator Bionic apk
@@ -37,10 +37,26 @@ jobs:
 
     - name: Get Version
       run: |
-        VERSION=$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts)
+        FILE=""
+        if [ -f "app/build.gradle.kts" ]; then
+          FILE="app/build.gradle.kts"
+          VERSION=$(grep -oP 'versionName\s*=\s*"\K[^"]+' "$FILE" 2>/dev/null)
+        elif [ -f "app/build.gradle" ]; then
+          FILE="app/build.gradle"
+          VERSION=$(grep -oP 'versionName\s+"\K[^"]+' "$FILE" 2>/dev/null)
+        else
+          echo "Error: Neither app/build.gradle nor app/build.gradle.kts found!"
+          exit 1
+        fi
+
+        if [ -z "$VERSION" ]; then
+          echo "Error: versionName not found in $FILE"
+          exit 1
+        fi
+
         echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-    - name: List files in assets
+    - name: List assets (debug)
       run: ls -la app/src/main/assets
 
     - name: Create GitHub Release
@@ -49,7 +65,7 @@ jobs:
         tag_name: v${{ env.VERSION }}-${{ env.SHORT_SHA }}
         name: Release v${{ env.VERSION }} (${{ env.SHORT_SHA }})
         body: |
-          Automated release for version ${{ env.VERSION }}
+          Automated debug release for version ${{ env.VERSION }}  
           Commit: ${{ github.sha }}
         draft: false
         prerelease: false
