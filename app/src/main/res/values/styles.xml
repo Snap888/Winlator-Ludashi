@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Light Theme -->
+    <!-- Добавить в res/values/styles.xml -->
+<style name="Button">
+    <item name="android:layout_width">match_parent</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:background">@drawable/button_background</item>
+    <item name="android:textColor">@color/button_text_color</item>
+    <item name="android:padding">8dp</item>
+</style>
     <style name="AppTheme" parent="@style/Theme.AppCompat.Light.NoActionBar">
         <item name="colorAccent">@color/colorAccent</item>
         <item name="colorPrimary">@color/colorPrimary</item>
@@ -674,6 +682,14 @@
 
     <?xml version="1.0" encoding="utf-8"?>
     <resources>
+  
+<style name="Button">
+    <item name="android:layout_width">match_parent</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:background">@drawable/button_background</item>
+    <item name="android:textColor">@color/button_text_color</item>
+    <item name="android:padding">8dp</item>
+</style>
         <style name="AppTheme" parent="@style/Theme.AppCompat.Light.NoActionBar">
             <item name="colorAccent">@color/colorAccent</item>
             <item name="colorPrimary">@color/colorPrimary</item>
