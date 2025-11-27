@@ -26,23 +26,31 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
+import androidx.fragment.app.FragmentActivity;
 import androidx.preference.PreferenceManager;
 
 import com.winlator.cmod.R;
+import com.winlator.cmod.dialog.EditControlElementDialog;
 import com.winlator.cmod.inputcontrols.Binding;
 import com.winlator.cmod.inputcontrols.ControlElement;
 import com.winlator.cmod.inputcontrols.ControlsProfile;
 import com.winlator.cmod.inputcontrols.ExternalController;
 import com.winlator.cmod.inputcontrols.ExternalControllerBinding;
 import com.winlator.cmod.inputcontrols.GamepadState;
+import com.winlator.cmod.inputcontrols.InputControlsManager;
+import com.winlator.cmod.inputcontrols.MultiBinding;
 import com.winlator.cmod.math.Mathf;
 import com.winlator.cmod.winhandler.MouseEventFlags;
 import com.winlator.cmod.winhandler.WinHandler;
 import com.winlator.cmod.xserver.Pointer;
 import com.winlator.cmod.xserver.XServer;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -65,6 +73,7 @@ public class InputControlsView extends View {
     private TouchpadView touchpadView;
     private XServer xServer;
     private final Bitmap[] icons = new Bitmap[17];
+    private final Map<String, Bitmap> customIcons = new HashMap<>();
     private Timer mouseMoveTimer;
     private final PointF mouseMoveOffset = new PointF();
     private boolean showTouchscreenControls = true;
@@ -78,6 +87,17 @@ public class InputControlsView extends View {
 
     private boolean focusOnStick = false; // A flag to determine if we are focusing on the stick
 
+    // Profile switching handler
+    private Handler profileSwitchHandler = new Handler();
+
+    // Interface for element editing callbacks
+    public interface OnElementEditListener {
+        void onEditElement(ControlElement element);
+        void onElementUpdated(ControlElement element);
+    }
+    
+    private OnElementEditListener elementEditListener;
+
     public boolean isFocusedOnStick() {
         return focusOnStick;
     }
@@ -87,7 +107,9 @@ public class InputControlsView extends View {
         invalidate(); // Redraw the view with the new focus setting
     }
 
-
+    public void setOnElementEditListener(OnElementEditListener listener) {
+        this.elementEditListener = listener;
+    }
 
     @SuppressLint("ResourceType")
     public InputControlsView(Context context) {
@@ -100,6 +122,7 @@ public class InputControlsView extends View {
         setPointerIcon(PointerIcon.load(getResources(), R.drawable.hidden_pointer_arrow));
         setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         preferences = PreferenceManager.getDefaultSharedPreferences(this.getContext());
+        loadCustomIcons();
     }
 
     @SuppressLint("ResourceType")
@@ -115,6 +138,7 @@ public class InputControlsView extends View {
         setPointerIcon(PointerIcon.load(getResources(), R.drawable.hidden_pointer_arrow));
         setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         preferences = PreferenceManager.getDefaultSharedPreferences(this.getContext());
+        loadCustomIcons();
     }
 
     public InputControlsView(Context context, boolean focusOnStick) {
@@ -134,11 +158,202 @@ public class InputControlsView extends View {
         }
 
         preferences = PreferenceManager.getDefaultSharedPreferences(this.getContext());
+        loadCustomIcons();
     }
 
+    /**
+     * Open edit dialog for selected element
+     */
+    public void editSelectedElement() {
+        if (selectedElement != null && getContext() instanceof FragmentActivity) {
+            if (elementEditListener != null) {
+                elementEditListener.onEditElement(selectedElement);
+            } else {
+                // Fallback to default dialog
+                showEditElementDialog(selectedElement);
+            }
+        }
+    }
+
+    /**
+     * Show edit element dialog
+     */
+    private void showEditElementDialog(ControlElement element) {
+        if (getContext() instanceof FragmentActivity) {
+            FragmentActivity activity = (FragmentActivity) getContext();
+            EditControlElementDialog dialog = EditControlElementDialog.newInstance(element, this);
+            dialog.setOnElementUpdatedListener(new EditControlElementDialog.OnElementUpdatedListener() {
+                @Override
+                public void onElementUpdated(ControlElement element) {
+                    if (profile != null) {
+                        profile.save();
+                    }
+                    invalidate();
+                    
+                    if (elementEditListener != null) {
+                        elementEditListener.onElementUpdated(element);
+                    }
+                }
+            });
+            dialog.show(activity.getSupportFragmentManager(), "edit_element");
+        }
+    }
+
+    /**
+     * Load custom icons from app's internal storage with improved error handling
+     */
+    private void loadCustomIcons() {
+        customIcons.clear();
+        File iconsDir = new File(getContext().getFilesDir(), "custom_icons");
+        if (iconsDir.exists() && iconsDir.isDirectory()) {
+            File[] iconFiles = iconsDir.listFiles();
+            if (iconFiles != null) {
+                for (File iconFile : iconFiles) {
+                    if (iconFile.isFile() && iconFile.getName().toLowerCase().endsWith(".png")) {
+                        try (FileInputStream fis = new FileInputStream(iconFile)) {
+                            Bitmap bitmap = BitmapFactory.decodeStream(fis);
+                            if (bitmap != null) {
+                                String elementId = iconFile.getName().replace(".png", "");
+                                customIcons.put(elementId, bitmap);
+                                Log.d("InputControlsView", "Loaded custom icon: " + elementId);
+                            }
+                        } catch (IOException e) {
+                            Log.e("InputControlsView", "Error loading custom icon: " + iconFile.getName(), e);
+                        }
+                    }
+                }
+            }
+        } else {
+            // Create directory if it doesn't exist
+            if (!iconsDir.exists()) {
+                iconsDir.mkdirs();
+            }
+        }
+        Log.d("InputControlsView", "Loaded " + customIcons.size() + " custom icons");
+    }
+
+    /**
+     * Set custom icon for a control element with improved quality
+     */
+    public void setCustomIcon(String elementId, Bitmap icon) {
+        if (icon != null) {
+            // Use higher quality bitmap for better rendering
+            Bitmap highQualityIcon = ensureHighQualityBitmap(icon);
+            customIcons.put(elementId, highQualityIcon);
+            // Save to internal storage
+            saveCustomIconToStorage(elementId, highQualityIcon);
+            invalidate();
+            Log.d("InputControlsView", "Custom icon set for: " + elementId);
+        }
+    }
+
+    /**
+     * Ensure bitmap has good quality for display
+     */
+    private Bitmap ensureHighQualityBitmap(Bitmap original) {
+        // If bitmap is too small, scale it up for better quality
+        if (original.getWidth() < 64 || original.getHeight() < 64) {
+            int targetSize = Math.max(64, Math.max(original.getWidth(), original.getHeight()));
+            return Bitmap.createScaledBitmap(original, targetSize, targetSize, true);
+        }
+        return original;
+    }
+
+    /**
+     * Remove custom icon for a control element
+     */
+    public void removeCustomIcon(String elementId) {
+        Bitmap removed = customIcons.remove(elementId);
+        if (removed != null) {
+            // Remove from internal storage
+            removeCustomIconFromStorage(elementId);
+            invalidate();
+            Log.d("InputControlsView", "Custom icon removed for: " + elementId);
+        }
+    }
+
+    /**
+     * Remove custom icon completely from library (file system and cache)
+     */
+    public void removeCustomIconFromLibrary(String elementId) {
+        // Remove from memory cache
+        Bitmap removed = customIcons.remove(elementId);
+        
+        // Remove from file system
+        removeCustomIconFromStorage(elementId);
+        
+        if (removed != null) {
+            invalidate();
+            Log.d("InputControlsView", "Custom icon deleted from library: " + elementId);
+        }
+    }
+
+    /**
+     * Get custom icon for a control element
+     */
+    public Bitmap getCustomIcon(String elementId) {
+        return customIcons.get(elementId);
+    }
+
+    /**
+     * Save custom icon to internal storage with improved quality
+     */
+    private void saveCustomIconToStorage(String elementId, Bitmap icon) {
+        File iconsDir = new File(getContext().getFilesDir(), "custom_icons");
+        if (!iconsDir.exists()) {
+            iconsDir.mkdirs();
+        }
+        
+        File iconFile = new File(iconsDir, elementId + ".png");
+        try (java.io.FileOutputStream fos = new java.io.FileOutputStream(iconFile)) {
+            // Use PNG format with high quality
+            icon.compress(Bitmap.CompressFormat.PNG, 100, fos);
+            Log.d("InputControlsView", "Custom icon saved: " + iconFile.getAbsolutePath());
+        } catch (IOException e) {
+            Log.e("InputControlsView", "Error saving custom icon: " + elementId, e);
+        }
+    }
+
+    /**
+     * Remove custom icon from internal storage
+     */
+    private void removeCustomIconFromStorage(String elementId) {
+        File iconFile = new File(getContext().getFilesDir(), "custom_icons/" + elementId + ".png");
+        if (iconFile.exists()) {
+            boolean deleted = iconFile.delete();
+            if (deleted) {
+                Log.d("InputControlsView", "Custom icon file deleted: " + elementId);
+            } else {
+                Log.e("InputControlsView", "Failed to delete custom icon file: " + elementId);
+            }
+        }
+    }
+
+    /**
+     * Get all custom icon IDs for management purposes
+     */
+    public String[] getCustomIconIds() {
+        return customIcons.keySet().toArray(new String[0]);
+    }
+
+    /**
+     * Get icon for control element - tries custom icon first, then falls back to default
+     */
+    public Bitmap getIconForElement(ControlElement element, byte defaultIconId) {
+        if (element != null && element.hasCustomIcon()) {
+            Bitmap customIcon = getCustomIcon(element.getCustomIconId());
+            if (customIcon != null) {
+                return customIcon;
+            }
+        }
+        return getIcon(defaultIconId);
+    }
 
     public void setEditMode(boolean editMode) {
         this.editMode = editMode;
+        if (!editMode) {
+            deselectAllElements();
+        }
     }
 
     public void setOverlayOpacity(float overlayOpacity) {
@@ -185,13 +400,14 @@ public class InputControlsView extends View {
         if (profile != null && showTouchscreenControls && !isFocusedOnStick()) {
             if (!profile.isElementsLoaded()) profile.loadElements(this);
             for (ControlElement element : profile.getElements()) {
+                // Set edit mode for all elements to enable activation zone drawing
+                element.setEditMode(editMode);
                 element.draw(canvas);
             }
         }
 
         super.onDraw(canvas);
     }
-
 
     public void resetStickPosition() {
         if (stickElement != null) {
@@ -204,8 +420,6 @@ public class InputControlsView extends View {
         }
     }
 
-
-
     public void initializeStickElement(float x, float y, float scale) {
         stickElement = new ControlElement(this);
         stickElement.setType(ControlElement.Type.STICK); // Set type to STICK
@@ -215,7 +429,6 @@ public class InputControlsView extends View {
         invalidate(); // Force the view to redraw with the stick
     }
 
-
     public void updateStickPosition(float x, float y) {
         if (stickElement != null) {
             stickElement.getCurrentPosition().x = x;  // Update the thumbstick's position
@@ -223,7 +436,6 @@ public class InputControlsView extends View {
             invalidate(); // Redraw the view
         }
     }
-
 
     public ControlElement getStickElement() {
         return stickElement;
@@ -285,6 +497,11 @@ public class InputControlsView extends View {
 
     public synchronized boolean removeElement() {
         if (editMode && selectedElement != null && profile != null) {
+            // Remove any custom icon associated with this element
+            if (selectedElement.hasCustomIcon()) {
+                removeCustomIcon(selectedElement.getCustomIconId());
+            }
+            
             profile.removeElement(selectedElement);
             selectedElement = null;
             profile.save();
@@ -322,6 +539,8 @@ public class InputControlsView extends View {
         if (profile != null) {
             this.profile = profile;
             deselectAllElements();
+            // Reload custom icons when profile changes
+            loadCustomIcons();
         }
         else this.profile = null;
     }
@@ -346,6 +565,20 @@ public class InputControlsView extends View {
         if (profile != null) {
             for (ControlElement element : profile.getElements()) {
                 if (element.containsPoint(x, y)) return element;
+            }
+        }
+        return null;
+    }
+
+    // New method to find DYNAMIC_STICK elements in activation zone
+    private synchronized ControlElement findDynamicStickInActivationZone(float x, float y) {
+        if (profile != null) {
+            for (ControlElement element : profile.getElements()) {
+                if (element.getType() == ControlElement.Type.DYNAMIC_STICK && 
+                    element.isInActivationZone(x, y) && 
+                    element.getCurrentPointerId() == -1) {
+                    return element;
+                }
             }
         }
         return null;
@@ -388,6 +621,9 @@ public class InputControlsView extends View {
     protected void onDetachedFromWindow() {
         if (mouseMoveTimer != null)
             mouseMoveTimer.cancel();
+        if (profileSwitchHandler != null) {
+            profileSwitchHandler.removeCallbacksAndMessages(null);
+        }
         super.onDetachedFromWindow();
     }
 
@@ -410,32 +646,12 @@ public class InputControlsView extends View {
                             xServer.injectPointerMoveDelta(
                                 (int) (mouseMoveOffset.x * cursorSpeed * 10),
                                 (int) (mouseMoveOffset.y * cursorSpeed * 10)
-                        );
+                            );
                     }
                 }
             }, 0, 1000 / 60); // 60 FPS
         }
     }
-
-
-//    private void processJoystickInput(ExternalController controller) {
-//        ExternalControllerBinding controllerBinding;
-//        final int[] axes = {MotionEvent.AXIS_X, MotionEvent.AXIS_Y, MotionEvent.AXIS_Z, MotionEvent.AXIS_RZ, MotionEvent.AXIS_HAT_X, MotionEvent.AXIS_HAT_Y};
-//        final float[] values = {controller.state.thumbLX, controller.state.thumbLY, controller.state.thumbRX, controller.state.thumbRY, controller.state.getDPadX(), controller.state.getDPadY()};
-//
-//        for (byte i = 0; i < axes.length; i++) {
-//            if (Math.abs(values[i]) > ControlElement.STICK_DEAD_ZONE) {
-//                controllerBinding = controller.getControllerBinding(ExternalControllerBinding.getKeyCodeForAxis(axes[i], Mathf.sign(values[i])));
-//                if (controllerBinding != null) handleInputEvent(controllerBinding.getBinding(), true, values[i]);
-//            }
-//            else {
-//                controllerBinding = controller.getControllerBinding(ExternalControllerBinding.getKeyCodeForAxis(axes[i], (byte) 1));
-//                if (controllerBinding != null) handleInputEvent(controllerBinding.getBinding(), false, values[i]);
-//                controllerBinding = controller.getControllerBinding(ExternalControllerBinding.getKeyCodeForAxis(axes[i], (byte)-1));
-//                if (controllerBinding != null) handleInputEvent(controllerBinding.getBinding(), false, values[i]);
-//            }
-//        }
-//    }
 
     private void processJoystickInput(ExternalController controller) {
         final int[] axes = {
@@ -471,33 +687,11 @@ public class InputControlsView extends View {
         }
     }
 
-
-
-//    @Override
-//    public boolean onGenericMotionEvent(MotionEvent event) {
-//        if (!editMode && profile != null) {
-//            ExternalController controller = profile.getController(event.getDeviceId());
-//            if (controller != null && controller.updateStateFromMotionEvent(event)) {
-//                ExternalControllerBinding controllerBinding;
-//                controllerBinding = controller.getControllerBinding(KeyEvent.KEYCODE_BUTTON_L2);
-//                if (controllerBinding != null) handleInputEvent(controllerBinding.getBinding(), controller.state.isPressed(ExternalController.IDX_BUTTON_L2));
-//
-//                controllerBinding = controller.getControllerBinding(KeyEvent.KEYCODE_BUTTON_R2);
-//                if (controllerBinding != null) handleInputEvent(controllerBinding.getBinding(), controller.state.isPressed(ExternalController.IDX_BUTTON_R2));
-//
-//                processJoystickInput(controller);
-//                return true;
-//            }
-//        }
-//        return super.onGenericMotionEvent(event);
-//    }
-
     @Override
     public boolean dispatchGenericMotionEvent(MotionEvent event) {
         Log.d("InputControlsView", "dispatchGenericMotionEvent called. Source: " + event.getSource());
         return super.dispatchGenericMotionEvent(event);
     }
-
 
     @Override
     public boolean onGenericMotionEvent(MotionEvent event) {
@@ -505,7 +699,6 @@ public class InputControlsView extends View {
         Log.d("InputControlsView", "Motion event received. Source: " + event.getSource());
         Log.d("InputControlsView", "Device ID: " + event.getDeviceId());
         Log.d("InputControlsView", "Profile is " + (profile != null ? "set" : "null"));
-
 
         if (!editMode && profile != null) {
             // Retrieve the associated controller for this event
@@ -543,10 +736,8 @@ public class InputControlsView extends View {
         return super.onGenericMotionEvent(event);
     }
 
-
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-
         boolean hapticsEnabled = preferences.getBoolean("touchscreen_haptics_enabled", true);
 
         // Reset the timeout when touch events occur within InputControlsView
@@ -599,8 +790,11 @@ public class InputControlsView extends View {
                     float y = event.getY(actionIndex);
 
                     touchpadView.setPointerButtonLeftEnabled(true);
-                    for (ControlElement element : profile.getElements()) {
-                        if (element.handleTouchDown(pointerId, x, y)) {
+                    
+                    // First check for DYNAMIC_STICK in activation zone
+                    ControlElement dynamicStick = findDynamicStickInActivationZone(x, y);
+                    if (dynamicStick != null) {
+                        if (dynamicStick.handleTouchDown(pointerId, x, y)) {
                             handled = true;
 
                             // Trigger haptic feedback for input controls
@@ -612,15 +806,46 @@ public class InputControlsView extends View {
                                     } else {
                                         vibrator.vibrate(50); // Legacy method for older Android versions
                                     }
-
                                 }
-
                             }
                         }
-                        if (element.getBindingAt(0) == Binding.MOUSE_LEFT_BUTTON) {
-                            touchpadView.setPointerButtonLeftEnabled(false);
+                    }
+                    
+                    // If no DYNAMIC_STICK was activated, check other elements
+                    if (!handled) {
+                        for (ControlElement element : profile.getElements()) {
+                            if (element.getType() != ControlElement.Type.DYNAMIC_STICK) {
+                                if (element.handleTouchDown(pointerId, x, y)) {
+                                    handled = true;
+
+                                    // Check for MultiBinding first
+                                    if (element.isUseMultiBinding() && !element.getMultiBindingAt(0).isEmpty()) {
+                                        // MultiBinding handled in handleTouchDown
+                                    }
+                                    // Check for profile switching
+                                    else if (element.isEnableProfileSwitching() && element.getTargetProfileId() != 0) {
+                                        scheduleProfileSwitch(element);
+                                    }
+
+                                    // Trigger haptic feedback for input controls
+                                    if (hapticsEnabled) {
+                                        Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
+                                        if (vibrator != null && vibrator.hasVibrator()) {
+                                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                                                vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE));
+                                            } else {
+                                                vibrator.vibrate(50); // Legacy method for older Android versions
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if (element.getBindingAt(0) == Binding.MOUSE_LEFT_BUTTON) {
+                                touchpadView.setPointerButtonLeftEnabled(false);
+                            }
                         }
                     }
+                    
                     if (!handled) touchpadView.onTouchEvent(event);
                     break;
                 }
@@ -648,9 +873,51 @@ public class InputControlsView extends View {
         return true;
     }
 
+    /**
+     * Schedule profile switch with delay
+     */
+    private void scheduleProfileSwitch(ControlElement element) {
+        float delay = element.getSwitchDelay();
+        
+        // Remove any existing callbacks for this element
+        profileSwitchHandler.removeCallbacksAndMessages(element);
+        
+        if (delay == 0.0f) {
+            // Instant switch
+            switchProfileImmediately(element.getTargetProfileId());
+        } else {
+            // Delayed switch
+            profileSwitchHandler.postDelayed(() -> {
+                switchProfileImmediately(element.getTargetProfileId());
+            }, (long)(delay * 1000));
+        }
+    }
 
-
-
+    /**
+     * Switch to target profile immediately
+     */
+    private void switchProfileImmediately(int targetProfileId) {
+        if (targetProfileId == 0) return;
+        
+        Log.d("InputControlsView", "Switching to profile ID: " + targetProfileId);
+        
+        // Load the target profile
+        ControlsProfile newProfile = InputControlsManager.loadProfile(getContext(), 
+            ControlsProfile.getProfileFile(getContext(), targetProfileId));
+        
+        if (newProfile != null) {
+            setProfile(newProfile);
+            invalidate();
+            
+            // Show visual feedback (optional)
+            if (getContext() != null) {
+                // You could add a toast or other visual feedback here
+                Log.d("InputControlsView", "Successfully switched to profile: " + newProfile.getName());
+            }
+        } else {
+            Log.e("InputControlsView", "Failed to load target profile with ID: " + targetProfileId);
+        }
+    }
 
     private void resetTouchscreenTimeout() {
         Log.d("InputControlsView", "Touch detected, resetting timeout.");
@@ -738,7 +1005,18 @@ public class InputControlsView extends View {
                 if (isActionDown) {
                     if (pointerButton != null) {
                         if (xServer.isRelativeMouseMovement()) {
-                            int wheelDelta = pointerButton == Pointer.Button.BUTTON_SCROLL_UP ? MOUSE_WHEEL_DELTA : (pointerButton == Pointer.Button.BUTTON_SCROLL_DOWN ? -MOUSE_WHEEL_DELTA : 0);
+                            int wheelDelta = 0;
+                            if (binding.isMouseScrollContinuous()) {
+                                // Continuous scroll - use offset as intensity
+                                wheelDelta = (int)(offset * MOUSE_WHEEL_DELTA);
+                                if (binding == Binding.MOUSE_SCROLL_DOWN_CONTINUOUS) {
+                                    wheelDelta = -wheelDelta;
+                                }
+                            } else {
+                                // Discrete scroll
+                                wheelDelta = pointerButton == Pointer.Button.BUTTON_SCROLL_UP ? MOUSE_WHEEL_DELTA : 
+                                           (pointerButton == Pointer.Button.BUTTON_SCROLL_DOWN ? -MOUSE_WHEEL_DELTA : 0);
+                            }
                             winHandler.mouseEvent(MouseEventFlags.getFlagFor(pointerButton, true), 0, 0, wheelDelta);
                         } else {
                             xServer.injectPointerButtonPress(pointerButton);
@@ -760,7 +1038,57 @@ public class InputControlsView extends View {
         }
     }
 
+    /**
+     * Handle MultiBinding input events
+     */
+    public void handleMultiBinding(MultiBinding multiBinding, boolean isActionDown) {
+        if (multiBinding == null || multiBinding.isEmpty()) return;
+        
+        if (multiBinding.isSimultaneous()) {
+            // Одновременное нажатие всех клавиш
+            for (Binding binding : multiBinding.getBindings()) {
+                handleInputEvent(binding, isActionDown);
+            }
+        } else {
+            // Последовательное нажатие
+            if (isActionDown) {
+                // Для последовательных - запускаем в отдельном потоке чтобы не блокировать UI
+                new Thread(() -> {
+                    for (Binding binding : multiBinding.getBindings()) {
+                        // Нажимаем клавишу
+                        post(() -> handleInputEvent(binding, true));
+                        
+                        // Небольшая задержка между нажатиями
+                        try {
+                            Thread.sleep(50);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            return;
+                        }
+                        
+                        // Отпускаем клавишу
+                        post(() -> handleInputEvent(binding, false));
+                        
+                        // Задержка между действиями
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            return;
+                        }
+                    }
+                }).start();
+            }
+            // Для отпускания последовательных комбинаций ничего не делаем,
+            // так как каждая клавиша уже была отпущена в процессе нажатия
+        }
+    }
+
     public Bitmap getIcon(byte id) {
+        // Check array bounds to prevent ArrayIndexOutOfBoundsException
+        if (id < 0 || id >= icons.length) {
+            return null;
+        }
         if (icons[id] == null) {
             Context context = getContext();
             try (InputStream is = context.getAssets().open("inputcontrols/icons/"+id+".png")) {
@@ -769,5 +1097,12 @@ public class InputControlsView extends View {
             catch (IOException e) {}
         }
         return icons[id];
+    }
+
+    // Add getter for currentPointerId to use in findDynamicStickInActivationZone
+    public int getCurrentPointerId(ControlElement element) {
+        // This method would need to be implemented in ControlElement class
+        // For now, we'll use reflection or add the method to ControlElement
+        return element.getCurrentPointerId();
     }
 }
