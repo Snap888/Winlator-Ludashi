@@ -2,10 +2,13 @@ package com.winlator.cmod.contentdialog;
 
 
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.Icon;
+import android.net.Uri;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +17,7 @@ import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.SeekBar;
@@ -26,16 +30,20 @@ import com.google.android.material.tabs.TabLayout;
 import com.winlator.cmod.ContainerDetailFragment;
 import com.winlator.cmod.R;
 import com.winlator.cmod.ShortcutsFragment;
+import com.winlator.cmod.box64.Box64EditPresetDialog;
+import com.winlator.cmod.box64.Box64Preset;
 import com.winlator.cmod.box64.Box64PresetManager;
 import com.winlator.cmod.container.ContainerManager;
 import com.winlator.cmod.container.Shortcut;
 import com.winlator.cmod.contents.ContentProfile;
 import com.winlator.cmod.contents.ContentsManager;
 import com.winlator.cmod.core.AppUtils;
+import com.winlator.cmod.core.Callback;
 import com.winlator.cmod.core.DefaultVersion;
 import com.winlator.cmod.core.EnvVars;
 import com.winlator.cmod.core.StringUtils;
 import com.winlator.cmod.core.WineInfo;
+import com.winlator.cmod.fexcore.FEXCoreEditPresetDialog;
 import com.winlator.cmod.fexcore.FEXCoreManager;
 import com.winlator.cmod.fexcore.FEXCorePreset;
 import com.winlator.cmod.fexcore.FEXCorePresetManager;
@@ -47,6 +55,7 @@ import com.winlator.cmod.widget.EnvVarsView;
 import com.winlator.cmod.winhandler.WinHandler;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,6 +67,13 @@ public class ShortcutSettingsDialog extends ContentDialog {
     private InputControlsManager inputControlsManager;
     private TextView tvGraphicsDriverVersion;
     private String box64Version;
+
+    // --- НОВЫЕ КОНСТАНТЫ И ПЕРЕМЕННЫЕ ДЛЯ ИМПОРТА ---
+    private static final int REQUEST_CODE_IMPORT_SHORTCUT_BOX64_PRESET = 1006;
+    private static final int REQUEST_CODE_IMPORT_SHORTCUT_FEXCORE_PRESET = 1007;
+
+    private Callback<Uri> importBox64PresetCallback;
+    private Callback<Uri> importFEXCorePresetCallback;
 
 
     public ShortcutSettingsDialog(ShortcutsFragment fragment, Shortcut shortcut) {
@@ -104,22 +120,23 @@ public class ShortcutSettingsDialog extends ContentDialog {
         ContainerDetailFragment containerDetailFragment = new ContainerDetailFragment(shortcut.container.id);
 //        containerDetailFragment.loadScreenSizeSpinner(getContentView(), shortcut.getExtra("screenSize", shortcut.container.getScreenSize()));
 
+
         loadScreenSizeSpinner(getContentView(), shortcut.getExtra("screenSize", shortcut.container.getScreenSize()), isDarkMode);
 
 
         final Spinner sGraphicsDriver = findViewById(R.id.SGraphicsDriver);
-        
+
         final Spinner sDXWrapper = findViewById(R.id.SDXWrapper);
 
         final Spinner sBox64Version = findViewById(R.id.SBox64Version);
-        
+
         ContentsManager contentsManager = new ContentsManager(context);
-        
+
         contentsManager.syncContents();
 
         final View vGraphicsDriverConfig = findViewById(R.id.BTGraphicsDriverConfig);
         vGraphicsDriverConfig.setTag(shortcut.getExtra("graphicsDriverConfig", shortcut.container.getGraphicsDriverConfig()));
-        
+
         final View vDXWrapperConfig = findViewById(R.id.BTDXWrapperConfig);
         vDXWrapperConfig.setTag(shortcut.getExtra("dxwrapperConfig", shortcut.container.getDXWrapperConfig()));
 
@@ -212,6 +229,7 @@ public class ShortcutSettingsDialog extends ContentDialog {
         SDInputType.setSelection(((inputType & WinHandler.FLAG_DINPUT_MAPPER_STANDARD) == WinHandler.FLAG_DINPUT_MAPPER_STANDARD) ? 0 : 1);
         llDInputType.setVisibility(cbEnableDInput.isChecked()?View.VISIBLE:View.GONE);
 
+        // --- ИНИЦИАЛИЗАЦИЯ SPINNER'ОВ И КНОПОК ДЛЯ ПРЕСЕТОВ ---
         final Spinner sBox64Preset = findViewById(R.id.SBox64Preset);
         Box64PresetManager.loadSpinner("box64", sBox64Preset, shortcut.getExtra("box64Preset", shortcut.container.getBox64Preset()));
 
@@ -220,6 +238,9 @@ public class ShortcutSettingsDialog extends ContentDialog {
 
         final Spinner sFEXCorePreset = findViewById(R.id.SFEXCorePreset);
         FEXCorePresetManager.loadSpinner(sFEXCorePreset, shortcut.getExtra("fexcorePreset", shortcut.container.getFEXCorePreset()));
+
+        // --- ИНИЦИАЛИЗАЦИЯ КНОПОК И ВЫЗОВ МЕТОДА ДЛЯ НИХ ---
+        initializePresetButtons(sBox64Preset, sFEXCorePreset); // Передаем спиннеры в метод
 
         final Spinner sControlsProfile = findViewById(R.id.SControlsProfile);
         loadControlsProfileSpinner(sControlsProfile, shortcut.getExtra("controlsProfile", "0"));
@@ -376,6 +397,7 @@ public class ShortcutSettingsDialog extends ContentDialog {
                 String fexcoreVersion = sFEXCoreVersion.getSelectedItem().toString();
                 shortcut.putExtra("fexcoreVersion", fexcoreVersion);
 
+                // --- СОХРАНЕНИЕ ПРЕСЕТОВ ---
                 String fexcorePreset = FEXCorePresetManager.getSpinnerSelectedId(sFEXCorePreset);
                 shortcut.putExtra("fexcorePreset", fexcorePreset);
 
@@ -404,6 +426,228 @@ public class ShortcutSettingsDialog extends ContentDialog {
             }
         });
     }
+
+    // --- НОВЫЙ МЕТОД ДЛЯ ИНИЦИАЛИЗАЦИИ КНОПОК ---
+    private void initializePresetButtons(Spinner sBox64Preset, Spinner sFEXCorePreset) {
+        final Context context = fragment.getContext();
+
+        // --- Box64 Preset Buttons ---
+        View btAddBox64Preset = findViewById(R.id.BTAddBox64Preset);
+        View btEditBox64Preset = findViewById(R.id.BTEditBox64Preset);
+        View btDuplicateBox64Preset = findViewById(R.id.BTDuplicateBox64Preset);
+        View btRemoveBox64Preset = findViewById(R.id.BTRemoveBox64Preset);
+        View btExportBox64Preset = findViewById(R.id.BTExportBox64Preset);
+        View btImportBox64Preset = findViewById(R.id.BTImportBox64Preset);
+
+        Callback<String> updateBox64Spinner = (prefix) -> {
+            Box64PresetManager.loadSpinner(prefix, sBox64Preset, shortcut.getExtra(prefix + "_preset", shortcut.container.getBox64Preset()));
+        };
+
+        btAddBox64Preset.setOnClickListener(v -> onAddBox64Preset(context, sBox64Preset, updateBox64Spinner));
+        btEditBox64Preset.setOnClickListener(v -> onEditBox64Preset(context, sBox64Preset, updateBox64Spinner));
+        btDuplicateBox64Preset.setOnClickListener(v -> onDuplicateBox64Preset(context, sBox64Preset, updateBox64Spinner));
+        btRemoveBox64Preset.setOnClickListener(v -> onRemoveBox64Preset(context, sBox64Preset, updateBox64Spinner));
+        btExportBox64Preset.setOnClickListener(v -> onExportBox64Preset(context, sBox64Preset));
+        btImportBox64Preset.setOnClickListener(v -> onImportBox64Preset(context, sBox64Preset, updateBox64Spinner));
+
+        // --- FEXCore Preset Buttons ---
+        View btAddFEXCorePreset = findViewById(R.id.BTAddFEXCorePreset);
+        View btEditFEXCorePreset = findViewById(R.id.BTEditFEXCorePreset);
+        View btDuplicateFEXCorePreset = findViewById(R.id.BTDuplicateFEXCorePreset);
+        View btRemoveFEXCorePreset = findViewById(R.id.BTRemoveFEXCorePreset);
+        View btExportFEXCorePreset = findViewById(R.id.BTExportFEXCorePreset);
+        View btImportFEXCorePreset = findViewById(R.id.BTImportFEXCorePreset);
+
+        Callback<String> updateFEXCoreSpinner = (prefix) -> {
+            FEXCorePresetManager.loadSpinner(sFEXCorePreset, shortcut.getExtra("fexcore_preset", shortcut.container.getFEXCorePreset()));
+        };
+
+        btAddFEXCorePreset.setOnClickListener(v -> onAddFEXCorePreset(context, sFEXCorePreset, updateFEXCoreSpinner));
+        btEditFEXCorePreset.setOnClickListener(v -> onEditFEXCorePreset(context, sFEXCorePreset, updateFEXCoreSpinner));
+        btDuplicateFEXCorePreset.setOnClickListener(v -> onDuplicateFEXCorePreset(context, sFEXCorePreset, updateFEXCoreSpinner));
+        btRemoveFEXCorePreset.setOnClickListener(v -> onRemoveFEXCorePreset(context, sFEXCorePreset, updateFEXCoreSpinner));
+        btExportFEXCorePreset.setOnClickListener(v -> onExportFEXCorePreset(context, sFEXCorePreset));
+        btImportFEXCorePreset.setOnClickListener(v -> onImportFEXCorePreset(context, sFEXCorePreset, updateFEXCoreSpinner));
+    }
+
+    // --- Box64 Methods ---
+    private void onAddBox64Preset(Context context, Spinner spinner, Callback<String> updateCallback) {
+        Box64EditPresetDialog dialog = new Box64EditPresetDialog(context, "box64", null);
+        dialog.setOnConfirmCallback(() -> updateCallback.call("box64"));
+        dialog.show();
+    }
+
+    private void onEditBox64Preset(Context context, Spinner spinner, Callback<String> updateCallback) {
+        String selectedId = Box64PresetManager.getSpinnerSelectedId(spinner);
+        if (selectedId != null && !selectedId.isEmpty()) {
+            Box64EditPresetDialog dialog = new Box64EditPresetDialog(context, "box64", selectedId);
+            dialog.setOnConfirmCallback(() -> updateCallback.call("box64"));
+            dialog.show();
+        } else {
+            AppUtils.showToast(context, "No preset selected to edit.");
+        }
+    }
+
+    private void onDuplicateBox64Preset(Context context, Spinner spinner, Callback<String> updateCallback) {
+        String selectedId = Box64PresetManager.getSpinnerSelectedId(spinner);
+        if (selectedId != null && !selectedId.isEmpty()) {
+            Box64PresetManager.duplicatePreset("box64", shortcut.container.getManager().getContext(), selectedId);
+            updateCallback.call("box64");
+        } else {
+            AppUtils.showToast(context, "No preset selected to duplicate.");
+        }
+    }
+
+    private void onRemoveBox64Preset(Context context, Spinner spinner, Callback<String> updateCallback) {
+        String selectedId = Box64PresetManager.getSpinnerSelectedId(spinner);
+        if (selectedId != null && !selectedId.isEmpty()) {
+            if (!selectedId.startsWith(Box64Preset.CUSTOM)) {
+                AppUtils.showToast(context, R.string.you_cannot_remove_this_preset);
+                return;
+            }
+            ContentDialog.confirm(context, R.string.do_you_want_to_remove_this_preset, () -> {
+                Box64PresetManager.removePreset("box64", shortcut.container.getManager().getContext(), selectedId);
+                updateCallback.call("box64");
+            });
+        } else {
+            AppUtils.showToast(context, "No preset selected to remove.");
+        }
+    }
+
+    private void onExportBox64Preset(Context context, Spinner spinner) {
+        String selectedId = Box64PresetManager.getSpinnerSelectedId(spinner);
+        if (selectedId != null && !selectedId.isEmpty()) {
+            if (!selectedId.startsWith(Box64Preset.CUSTOM)) {
+                AppUtils.showToast(context, "Cannot export this preset");
+                return;
+            }
+            Box64PresetManager.exportPreset("box64", shortcut.container.getManager().getContext(), selectedId);
+        } else {
+            AppUtils.showToast(context, "No preset selected to export.");
+        }
+    }
+
+    private void onImportBox64Preset(Context context, Spinner spinner, Callback<String> updateCallback) {
+        importBox64PresetCallback = uri -> {
+            try {
+                Box64PresetManager.importPreset("box64", shortcut.container.getManager().getContext(), context.getContentResolver().openInputStream(uri));
+                updateCallback.call("box64");
+            } catch (IOException e) {
+                Log.e("ShortcutSettingsDialog", "Failed to import Box64 preset", e);
+                AppUtils.showToast(context, "Failed to import preset: " + e.getMessage());
+            } finally {
+                importBox64PresetCallback = null;
+            }
+        };
+        openFile(REQUEST_CODE_IMPORT_SHORTCUT_BOX64_PRESET);
+    }
+
+
+    // --- FEXCore Methods ---
+    private void onAddFEXCorePreset(Context context, Spinner spinner, Callback<String> updateCallback) {
+        FEXCoreEditPresetDialog dialog = new FEXCoreEditPresetDialog(context, null);
+        dialog.setOnConfirmCallback(() -> updateCallback.call("fexcore"));
+        dialog.show();
+    }
+
+    private void onEditFEXCorePreset(Context context, Spinner spinner, Callback<String> updateCallback) {
+        String selectedId = FEXCorePresetManager.getSpinnerSelectedId(spinner);
+        if (selectedId != null && !selectedId.isEmpty()) {
+            FEXCoreEditPresetDialog dialog = new FEXCoreEditPresetDialog(context, selectedId);
+            dialog.setOnConfirmCallback(() -> updateCallback.call("fexcore"));
+            dialog.show();
+        } else {
+            AppUtils.showToast(context, "No preset selected to edit.");
+        }
+    }
+
+    private void onDuplicateFEXCorePreset(Context context, Spinner spinner, Callback<String> updateCallback) {
+        String selectedId = FEXCorePresetManager.getSpinnerSelectedId(spinner);
+        if (selectedId != null && !selectedId.isEmpty()) {
+            FEXCorePresetManager.duplicatePreset(shortcut.container.getManager().getContext(), selectedId);
+            updateCallback.call("fexcore");
+        } else {
+            AppUtils.showToast(context, "No preset selected to duplicate.");
+        }
+    }
+
+    private void onRemoveFEXCorePreset(Context context, Spinner spinner, Callback<String> updateCallback) {
+        String selectedId = FEXCorePresetManager.getSpinnerSelectedId(spinner);
+        if (selectedId != null && !selectedId.isEmpty()) {
+            if (!selectedId.startsWith(FEXCorePreset.CUSTOM)) {
+                AppUtils.showToast(context, R.string.you_cannot_remove_this_preset);
+                return;
+            }
+            ContentDialog.confirm(context, R.string.do_you_want_to_remove_this_preset, () -> {
+                FEXCorePresetManager.removePreset(shortcut.container.getManager().getContext(), selectedId);
+                updateCallback.call("fexcore");
+            });
+        } else {
+            AppUtils.showToast(context, "No preset selected to remove.");
+        }
+    }
+
+    private void onExportFEXCorePreset(Context context, Spinner spinner) {
+        String selectedId = FEXCorePresetManager.getSpinnerSelectedId(spinner);
+        if (selectedId != null && !selectedId.isEmpty()) {
+            if (!selectedId.startsWith(FEXCorePreset.CUSTOM)) {
+                AppUtils.showToast(context, "Cannot export this preset");
+                return;
+            }
+            FEXCorePresetManager.exportPreset(shortcut.container.getManager().getContext(), selectedId);
+        } else {
+            AppUtils.showToast(context, "No preset selected to export.");
+        }
+    }
+
+    private void onImportFEXCorePreset(Context context, Spinner spinner, Callback<String> updateCallback) {
+        importFEXCorePresetCallback = uri -> {
+            try {
+                FEXCorePresetManager.importPreset(shortcut.container.getManager().getContext(), context.getContentResolver().openInputStream(uri));
+                updateCallback.call("fexcore");
+            } catch (IOException e) {
+                Log.e("ShortcutSettingsDialog", "Failed to import FEXCore preset", e);
+                AppUtils.showToast(context, "Failed to import preset: " + e.getMessage());
+            } finally {
+                importFEXCorePresetCallback = null;
+            }
+        };
+        openFile(REQUEST_CODE_IMPORT_SHORTCUT_FEXCORE_PRESET);
+    }
+
+
+    // --- Вспомогательный метод для открытия файла ---
+    private void openFile(int requestCode) {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        fragment.startActivityForResult(intent, requestCode);
+    }
+
+    // --- Публичный метод для обработки результатов активности из фрагмента ---
+    public void handleActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == Activity.RESULT_OK && data != null) {
+            Uri uri = data.getData();
+            if (uri != null) {
+                switch (requestCode) {
+                    case REQUEST_CODE_IMPORT_SHORTCUT_BOX64_PRESET:
+                        if (importBox64PresetCallback != null) {
+                            importBox64PresetCallback.call(uri);
+                        }
+                        break;
+                    case REQUEST_CODE_IMPORT_SHORTCUT_FEXCORE_PRESET:
+                        if (importFEXCorePresetCallback != null) {
+                            importFEXCorePresetCallback.call(uri);
+                        }
+                        break;
+                    default:
+                        // Не обрабатываем другие коды здесь
+                        break;
+                }
+            }
+        }
+    }
+
 
     // Utility method to apply styles to dynamically added TextViews based on their content
     private void applyFieldSetLabelStylesDynamically(ViewGroup rootView, boolean isDarkMode) {
@@ -486,7 +730,7 @@ public class ShortcutSettingsDialog extends ContentDialog {
         Spinner sFEXCoreVersion = view.findViewById(R.id.SFEXCoreVersion);
         Spinner sFEXCorePreset = view.findViewById(R.id.SFEXCorePreset);
         Spinner sStartupSelection = findViewById(R.id.SStartupSelection);
-        
+
 
         // Set dark or light mode background for spinners
         sGraphicsDriver.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
@@ -655,14 +899,14 @@ public class ShortcutSettingsDialog extends ContentDialog {
         }
         spinner.setAdapter(new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, itemList));
     }
-    
+
     public void loadGraphicsDriverSpinner(final Spinner sGraphicsDriver, final Spinner sDXWrapper, final View vGraphicsDriverConfig, String selectedGraphicsDriver, String selectedDXWrapper) {
         final Context context = sGraphicsDriver.getContext();
-        
+
         ContainerDetailFragment.updateGraphicsDriverSpinner(context, sGraphicsDriver);
-        
+
         final String[] dxwrapperEntries = context.getResources().getStringArray(R.array.dxwrapper_entries);
-        
+
         Runnable update = () -> {
             String graphicsDriver = StringUtils.parseIdentifier(sGraphicsDriver.getSelectedItem());
             String graphicsDriverConfig = vGraphicsDriverConfig.getTag().toString();
