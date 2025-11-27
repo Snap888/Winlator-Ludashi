@@ -56,6 +56,9 @@ public class ContentsFragment extends Fragment {
 
     private boolean isDarkMode;
 
+    // --- НОВОЕ: Константа для аргумента типа контента ---
+    public static final String ARG_CONTENT_TYPE = "content_type";
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -67,6 +70,20 @@ public class ContentsFragment extends Fragment {
         // Initialize isDarkMode based on shared preferences or theme
         isDarkMode = PreferenceManager.getDefaultSharedPreferences(getContext())
                 .getBoolean("dark_mode", false);
+
+        // --- НОВОЕ: Проверка аргументов ---
+        Bundle args = getArguments();
+        if (args != null && args.containsKey(ARG_CONTENT_TYPE)) {
+            try {
+                // Получаем строку и конвертируем в enum
+                String contentTypeString = args.getString(ARG_CONTENT_TYPE);
+                currentContentType = ContentProfile.ContentType.valueOf(contentTypeString);
+            } catch (IllegalArgumentException e) {
+                // Если строка не является валидным значением enum, используем значение по умолчанию
+                currentContentType = ContentProfile.ContentType.CONTENT_TYPE_WINE;
+                AppUtils.showToast(getContext(), "Invalid content type provided, defaulting to Wine.");
+            }
+        }
     }
 
     @Override
@@ -78,7 +95,6 @@ public class ContentsFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-
 
         new Thread(() -> {
             String contentsURL = sp.getString("downloadable_contents_url", ContentsManager.REMOTE_PROFILES);
@@ -105,6 +121,11 @@ public class ContentsFragment extends Fragment {
 
         sContentType = layout.findViewById(R.id.SContentType);
         updateContentTypeSpinner(sContentType);
+
+        // --- НОВОЕ: Установка выбранного элемента на основе currentContentType ---
+        int spinnerPosition = currentContentType.ordinal();
+        sContentType.setSelection(spinnerPosition, false); // false - не прокручивать до элемента
+
         sContentType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -114,7 +135,8 @@ public class ContentsFragment extends Fragment {
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-
+                // Опционально: установить значение по умолчанию
+                // currentContentType = ContentProfile.ContentType.CONTENT_TYPE_WINE;
             }
         });
 
@@ -157,7 +179,8 @@ public class ContentsFragment extends Fragment {
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-
+                // Опционально: установить значение по умолчанию
+                // currentContentType = ContentProfile.ContentType.CONTENT_TYPE_WINE;
             }
         });
     }
@@ -167,6 +190,9 @@ public class ContentsFragment extends Fragment {
         if (profiles.isEmpty()) {
             recyclerView.setVisibility(View.GONE);
             emptyText.setVisibility(View.VISIBLE);
+        } else {
+            recyclerView.setVisibility(View.VISIBLE);
+            emptyText.setVisibility(View.GONE);
         }
     }
 
