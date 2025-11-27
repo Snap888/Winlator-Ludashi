@@ -4,6 +4,92 @@
     <!ENTITY TERMUX_X11_APP_NAME "Winlator:X11">
     ]>
 <resources>
+
+<!-- Vertical Scroll Bar related strings -->
+<string name="binding_scroll_up">Scroll Up</string>
+<string name="binding_scroll_down">Scroll Down</string>
+<string name="vertical_scroll_bar">Vertical Scroll Bar</string>
+
+
+    <!-- Новые строки для переключения профилей -->
+    <string name="enable_profile_switching">Enable Profile Switching</string>
+    <string name="profile_switching">Profile Switching</string>
+    <string name="target_profile">Target Profile</string>
+    <string name="switch_delay">Switch Delay</string>
+    <string name="switch_delay_summary">Delay before switching profiles (0-3 seconds)</string>
+    <string name="instant_switch">Instant</string>
+    <string name="seconds">seconds</string>
+    <string name="allow_profile_switching">Allow this button to switch between control profiles</string>
+    <string name="select_target_profile">Select which profile to switch to when this button is pressed</string>
+
+    <!-- Новые строки для Dynamic Stick улучшений -->
+    <string name="show_activation_zone">Show Activation Zone</string>
+    <string name="activation_zone_width">Activation Zone Width</string>
+    <string name="activation_zone_height">Activation Zone Height</string>
+    <string name="activation_zone_visual_settings">Activation Zone Visual Settings</string>
+    <string name="show_activation_zone_in_editor">Show Activation Zone in Editor</string>
+    <string name="adjust_zone_width">Adjust the width of the activation zone (50-600px)</string>
+    <string name="adjust_zone_height">Adjust the height of the activation zone (50-600px)</string>
+    <string name="display_activation_zone_boundaries">Display the activation zone boundaries in editor mode</string>
+
+    <!-- Существующие строки Dynamic Stick -->
+    <string name="dynamic_stick">Dynamic Stick</string>
+    <string name="activation_radius">Activation Radius</string>
+    <string name="stick_activation_zone">Stick Activation Zone</string>
+    <string name="stick_active">Stick Active</string>
+
+    <!-- Custom Icon Strings -->
+    <string name="custom_icon">Custom Icon</string>
+    <string name="default_icons">Default Icons</string>
+    <string name="select_custom_icon">Select Custom Icon</string>
+    <string name="remove_custom_icon">Remove Custom Icon</string>
+    <string name="custom_icon_set">Custom icon set</string>
+    <string name="custom_icon_removed">Custom icon removed</string>
+    <string name="error_loading_image">Error loading image</string>
+    <string name="no_file_browser">No file browser available</string>
+
+    <!-- Icon Size Strings -->
+    <string name="icon_size">Icon Size</string>
+    <string name="icon_size_summary">Adjust the size of the icon displayed on the control element</string>
+    
+    <!-- Добавить в strings.xml -->
+    <string name="binding_1">Binding 1</string>
+    <string name="binding_2">Binding 2</string>
+    <string name="binding_3">Binding 3</string>
+    <string name="binding_4">Binding 4</string>
+
+    <!-- Icon selection messages -->
+   
+    <!-- Frame Rating Settings -->
+
+    <string name="cpu_temperature">CPU Temperature</string>
+    <string name="battery_temperature">Battery Temperature</string>
+    <string name="battery_level">Battery Level</string>
+    <string name="battery_power">Battery Power</string>
+
+    <string name="fps_limit">Ограничение FPS</string>
+    <string name="no_limit">Без ограничения</string>
+    <string name="fps_limit_summary">Установите ограничение частоты кадров (0 = без ограничения)</string>
+    
+    <!-- Новые строки для MangoHud отображения -->
+    <string name="mangohud_display">Отображение MangoHud</string>
+    <string name="show_mangohud">Показывать MangoHud</string>
+    <string name="mangohud_display_summary">Отключите для скрытия оверлея MangoHud (ограничение FPS продолжит работать)</string>
+
+    <string name="frame_rating_settings">Frame Rating Settings</string>
+    <string name="button_transparency">Button Transparency</string>
+    <string name="display_elements">Display Elements</string>
+
+    <string name="show_renderer">Show Renderer</string>
+    <string name="show_gpu">Show GPU</string>
+    <string name="show_ram">Show RAM</string>
+    <string name="layout_orientation">Layout Orientation</string>
+    <string name="vertical_layout">Vertical</string>
+    <string name="horizontal_layout">Horizontal</string>
+    <string name="transparency_settings">Transparency Settings</string>
+    <string name="background_transparency">Background</string>
+    <string name="text_transparency">Text</string>
+    <string name="wine_dxvk">Wine/DXVK</string>
     <string name="app_name">Winlator</string>
     <string name="run">Run</string>
     <string name="edit">Edit</string>
@@ -249,7 +335,7 @@
     <string name="fexcore_env_var_help__vectortsoenabled">Makes vector load/stores atomic when TSO is enabled.</string>
     <string name="fexcore_env_var_help__halfbarriertsoenabled">Uses half-barrier atomics for unaligned loads/stores under TSO.</string>
     <string name="fexcore_env_var_help__memcpysettsoenabled">Makes REP MOVS / REP STOS atomic under TSO.</string>
-    <string name="fexcore_env_var_help__multiblock">Enables multiblock code compilation. Can cause longer JIT compilation and stutter.</string>
+    <string name="fexcore_env_var_help__multiblock">Enables multibblock code compilation. Can cause longer JIT compilation and stutter.</string>
     <string name="fexcore_env_var_help__hostfeatures">Controls CPU feature forcing.</string>
     <string name="fexcore_env_var_help__smalltscscale">Scales TSC on low-frequency systems.</string>
     <string name="fexcore_env_var_help__smc_checks">Self-Modifying Code checks.</string>
@@ -498,8 +584,6 @@
     <string name="invert_y_axis_right">Invert Y Axis (Right Stick)</string>
     <string name="save">Save</string>
     <string name="use_xr">Use OpenXR integration</string>
-
-
 
     <string name="not_connected">Not connected</string>
     <string name="preferences_button_text">   PREFERENCES   </string>
