@@ -13,7 +13,7 @@ This is a fork of the **Winlator Bionic** project by [Pipetto-crypto](https://gi
 
 # Installation
 
-1.  Download and install the latest APK from this repository's [Releases section]() .
+1.  Download and install the latest APK from this repository's [Releases section](https://github.com/Snap888/Winlator-Ludashi/releases) .
 2.  Launch the app and wait for the installation process to finish.
 
 # Useful Tips
@@ -56,6 +56,7 @@ Many thanks to [ptitseb](https://github.com/ptitSeb) (Box86/Box64), [Danylo](htt
 
 Thank you to
 all the people who believe in this project.
+
 
 
 
