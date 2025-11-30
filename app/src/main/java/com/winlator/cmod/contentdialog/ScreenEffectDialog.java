@@ -2,6 +2,8 @@ package com.winlator.cmod.contentdialog;
 
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -27,10 +29,10 @@ import com.winlator.cmod.widget.SeekBar;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.Locale;
 import java.util.Set;
 
 public class ScreenEffectDialog extends ContentDialog {
-
     private final XServerDisplayActivity activity;
     private final CheckBox cbEnableCRTShader;
     private final CheckBox cbEnableFXAA;
@@ -41,15 +43,35 @@ public class ScreenEffectDialog extends ContentDialog {
     private final SeekBar sbBrightness;
     private final SeekBar sbContrast;
     private final SeekBar sbGamma;
+    private final SeekBar sbSharpness;
+    private final TextView tvBrightness;
+    private final TextView tvContrast;
+    private final TextView tvGamma;
+    private final TextView tvSharpness;
+    private final Handler handler;
+    private final Runnable applyEffectsRunnable;
+    private boolean isApplyingEffects = false;
 
     private static final String TAG = "ScreenEffectDialog";
-
+    private static final int APPLY_DELAY_MS = 100; // Задержка для динамического применения
 
     public ScreenEffectDialog(XServerDisplayActivity activity) {
         super(activity, R.layout.screen_effect_dialog);
         this.activity = activity;
 
         preferences = PreferenceManager.getDefaultSharedPreferences(activity);
+        handler = new Handler(Looper.getMainLooper());
+        
+        applyEffectsRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (!isApplyingEffects) {
+                    isApplyingEffects = true;
+                    applyEffectsInRealTime();
+                    isApplyingEffects = false;
+                }
+            }
+        };
 
         boolean isDarkMode = preferences.getBoolean("dark_mode", false);
 
@@ -60,12 +82,15 @@ public class ScreenEffectDialog extends ContentDialog {
         sbBrightness = findViewById(R.id.SBBrightness);
         sbContrast = findViewById(R.id.SBContrast);
         sbGamma = findViewById(R.id.SBGamma);
+        sbSharpness = findViewById(R.id.SBSharpness);
+        tvBrightness = findViewById(R.id.TVBrightness);
+        tvContrast = findViewById(R.id.TVContrast);
+        tvGamma = findViewById(R.id.TVGamma);
+        tvSharpness = findViewById(R.id.TVSharpness);
         cbEnableFXAA = findViewById(R.id.CBEnableFXAA);
         cbEnableCRTShader = findViewById(R.id.CBEnableCRTShader);
-
         cbEnableToonShader = findViewById(R.id.CBEnableToonShader);
         cbEnableNTSCEffect = findViewById(R.id.CBEnableNTSCEffect);
-
 
         GLRenderer renderer = activity.getXServerView().getRenderer();
         if (renderer == null) {
@@ -81,15 +106,8 @@ public class ScreenEffectDialog extends ContentDialog {
 
         Log.d(TAG, "ScreenEffectDialog initialized");
 
-        if (colorEffect != null) {
-            Log.d(TAG, "ColorEffect found");
-            sbBrightness.setValue(colorEffect.getBrightness() * 100);
-            sbContrast.setValue(colorEffect.getContrast() * 100);
-            sbGamma.setValue(colorEffect.getGamma());
-        } else {
-            Log.d(TAG, "ColorEffect not found, resetting settings");
-            resetSettings();
-        }
+        setupSeekBars(colorEffect);
+        setupCheckBoxes();
 
         cbEnableFXAA.setChecked(fxaaEffect != null);
         cbEnableCRTShader.setChecked(crtEffect != null);
@@ -103,6 +121,7 @@ public class ScreenEffectDialog extends ContentDialog {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 if (position > 0) {
                     loadProfile(sProfile.getSelectedItem().toString());
+                    scheduleApplyEffects();
                 }
             }
 
@@ -112,50 +131,142 @@ public class ScreenEffectDialog extends ContentDialog {
 
         Button resetButton = findViewById(R.id.BTReset);
         resetButton.setVisibility(View.VISIBLE);
-        resetButton.setOnClickListener(v -> resetSettings());
-
-        findViewById(R.id.BTConfirm).setOnClickListener(v -> {
-            Log.d(TAG, "BTConfirm clicked. Preparing to save profile and apply effects.");
-            saveProfile(sProfile);
-            Log.d(TAG, "Profile saved.");
-
-            // Directly calling applyEffects to ensure it's triggered
-            Log.d(TAG, "Calling applyEffects() directly.");
-            applyEffects(colorEffect, renderer, fxaaEffect, crtEffect, toonEffect, ntscEffect);
-
-            Log.d(TAG, "Effects applied. Dismissing dialog.");
-            dismiss(); // Close the dialog
-            Log.d(TAG, "Dialog dismissed.");
+        resetButton.setOnClickListener(v -> {
+            resetSettings();
+            scheduleApplyEffects();
         });
 
-
+        // Убираем дублирующиеся кнопки - используем только стандартные кнопки диалога
+        setOnConfirmCallback(() -> {
+            Log.d(TAG, "OnConfirm callback triggered. Saving profile and applying effects.");
+            saveProfile(sProfile);
+            applyEffectsFinal();
+            Log.d(TAG, "Effects applied from callback.");
+        });
 
         findViewById(R.id.BTAddProfile).setOnClickListener(v -> promptAddProfile());
         findViewById(R.id.BTRemoveProfile).setOnClickListener(v -> promptDeleteProfile());
+    }
 
-        setOnConfirmCallback(() -> {
-            Log.d(TAG, "OnConfirm callback triggered. Applying effects.");
-            applyEffects(colorEffect, renderer, fxaaEffect, crtEffect, toonEffect, ntscEffect);
-            Log.d(TAG, "Effects applied from callback.");
+    private void setupSeekBars(ColorEffect colorEffect) {
+        if (colorEffect != null) {
+            Log.d(TAG, "ColorEffect found, setting up seek bars with fine-tuned ranges");
+            
+            // Устанавливаем начальные значения (только положительные)
+            sbBrightness.setValue((int)((colorEffect.getBrightness() + 1.0f) * 50)); // Преобразуем [-1,1] в [0,100]
+            sbContrast.setValue((int)((colorEffect.getContrast() + 0.5f) * 100)); // Преобразуем [-0.5,0.5] в [0,100]
+            sbGamma.setValue((int)(colorEffect.getGamma() * 100));
+            
+            // Резкость ограничена до 40 (0-40 в значениях ползунка)
+            sbSharpness.setMaxValue(40); // Ограничиваем максимальное значение до 40
+            sbSharpness.setValue((int)(colorEffect.getSharpness() * 100));
+            
+            updateDisplayValues();
 
-            // Optionally dismiss after applying effects in callback
-            dismiss();
-            Log.d(TAG, "Dialog dismissed after callback.");
-        });
+            // Слушатели для динамического применения
+            SeekBar.OnValueChangeListener valueChangeListener = new SeekBar.OnValueChangeListener() {
+                @Override
+                public void onValueChanged(SeekBar seekBar, int value) {
+                    updateDisplayValues();
+                    scheduleApplyEffects();
+                }
+            };
 
+            sbBrightness.setOnValueChangeListener(valueChangeListener);
+            sbContrast.setOnValueChangeListener(valueChangeListener);
+            sbGamma.setOnValueChangeListener(valueChangeListener);
+            sbSharpness.setOnValueChangeListener(valueChangeListener);
+
+        } else {
+            Log.d(TAG, "ColorEffect not found, resetting settings");
+            resetSettings();
+        }
+    }
+
+    private void setupCheckBoxes() {
+        View.OnClickListener checkboxClickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                scheduleApplyEffects();
+            }
+        };
+
+        cbEnableFXAA.setOnClickListener(checkboxClickListener);
+        cbEnableCRTShader.setOnClickListener(checkboxClickListener);
+        cbEnableToonShader.setOnClickListener(checkboxClickListener);
+        cbEnableNTSCEffect.setOnClickListener(checkboxClickListener);
+    }
+
+    private void scheduleApplyEffects() {
+        handler.removeCallbacks(applyEffectsRunnable);
+        handler.postDelayed(applyEffectsRunnable, APPLY_DELAY_MS);
+    }
+
+    private void updateDisplayValues() {
+        // Преобразуем значения ползунков в реальные значения эффектов
+        float brightness = (sbBrightness.getValue() / 50.0f) - 1.0f; // [0,100] -> [-1,1]
+        float contrast = (sbContrast.getValue() / 100.0f) - 0.5f; // [0,100] -> [-0.5,0.5]
+        float gamma = sbGamma.getValue() / 100.0f;
+        float sharpness = sbSharpness.getValue() / 100.0f; // [0,40] -> [0,0.4]
+        
+        updateBrightnessText(brightness);
+        updateContrastText(contrast);
+        updateGammaText(gamma);
+        updateSharpnessText(sharpness);
+    }
+
+    private void applyEffectsInRealTime() {
+        GLRenderer renderer = activity.getXServerView().getRenderer();
+        if (renderer == null) return;
+
+        ColorEffect colorEffect = (ColorEffect) renderer.getEffectComposer().getEffect(ColorEffect.class);
+        FXAAEffect fxaaEffect = (FXAAEffect) renderer.getEffectComposer().getEffect(FXAAEffect.class);
+        CRTEffect crtEffect = (CRTEffect) renderer.getEffectComposer().getEffect(CRTEffect.class);
+        ToonEffect toonEffect = (ToonEffect) renderer.getEffectComposer().getEffect(ToonEffect.class);
+        NTSCCombinedEffect ntscEffect = (NTSCCombinedEffect) renderer.getEffectComposer().getEffect(NTSCCombinedEffect.class);
+
+        applyEffects(colorEffect, renderer, fxaaEffect, crtEffect, toonEffect, ntscEffect);
+    }
+
+    private void applyEffectsFinal() {
+        GLRenderer renderer = activity.getXServerView().getRenderer();
+        if (renderer == null) return;
+
+        ColorEffect colorEffect = (ColorEffect) renderer.getEffectComposer().getEffect(ColorEffect.class);
+        FXAAEffect fxaaEffect = (FXAAEffect) renderer.getEffectComposer().getEffect(FXAAEffect.class);
+        CRTEffect crtEffect = (CRTEffect) renderer.getEffectComposer().getEffect(CRTEffect.class);
+        ToonEffect toonEffect = (ToonEffect) renderer.getEffectComposer().getEffect(ToonEffect.class);
+        NTSCCombinedEffect ntscEffect = (NTSCCombinedEffect) renderer.getEffectComposer().getEffect(NTSCCombinedEffect.class);
+
+        applyEffects(colorEffect, renderer, fxaaEffect, crtEffect, toonEffect, ntscEffect);
+        
+        // Принудительно запрашиваем рендер для немедленного отображения
+        activity.getXServerView().requestRender();
+    }
+
+    private void updateBrightnessText(float brightness) {
+        tvBrightness.setText(String.format(Locale.ENGLISH, "%.2f", brightness));
+    }
+
+    private void updateContrastText(float contrast) {
+        tvContrast.setText(String.format(Locale.ENGLISH, "%.2f", contrast));
+    }
+
+    private void updateGammaText(float gamma) {
+        tvGamma.setText(String.format(Locale.ENGLISH, "%.2f", gamma));
+    }
+
+    private void updateSharpnessText(float sharpness) {
+        tvSharpness.setText(String.format(Locale.ENGLISH, "%.2f", sharpness));
     }
 
     private static void applyFieldSetLabelStyle(TextView textView, boolean isDarkMode) {
-//        Context context = textView.getContext();
-
         if (isDarkMode) {
-            // Apply dark mode-specific attributes
-            textView.setTextColor(Color.parseColor("#cccccc")); // Set text color to #cccccc
-            textView.setBackgroundResource(R.color.window_background_color_dark); // Set dark background color
+            textView.setTextColor(Color.parseColor("#cccccc"));
+            textView.setBackgroundResource(R.color.window_background_color_dark);
         } else {
-            // Apply light mode-specific attributes (original FieldSetLabel)
-            textView.setTextColor(Color.parseColor("#bdbdbd")); // Set text color to #bdbdbd
-            textView.setBackgroundResource(R.color.window_background_color); // Set light background color
+            textView.setTextColor(Color.parseColor("#bdbdbd"));
+            textView.setBackgroundResource(R.color.window_background_color);
         }
     }
 
@@ -208,9 +319,20 @@ public class ScreenEffectDialog extends ContentDialog {
             String[] parts = profile.split(":");
             if (parts[0].equals(name) && parts.length > 1 && !parts[1].isEmpty()) {
                 KeyValueSet settings = new KeyValueSet(parts[1]);
-                sbBrightness.setValue(settings.getFloat("brightness", 0));
-                sbContrast.setValue(settings.getFloat("contrast", 1.0f));
-                sbGamma.setValue(settings.getFloat("gamma", 1.0f));
+                
+                float brightness = settings.getFloat("brightness", 0);
+                float contrast = settings.getFloat("contrast", 0);
+                float gamma = settings.getFloat("gamma", 1.0f);
+                float sharpness = settings.getFloat("sharpness", 0);
+                
+                // Преобразуем реальные значения в значения ползунков
+                sbBrightness.setValue((int)((brightness + 1.0f) * 50));
+                sbContrast.setValue((int)((contrast + 0.5f) * 100));
+                sbGamma.setValue((int)(gamma * 100));
+                sbSharpness.setValue((int)(sharpness * 100)); // [0,0.4] -> [0,40]
+                
+                updateDisplayValues();
+                
                 cbEnableFXAA.setChecked(settings.getBoolean("fxaa", false));
                 cbEnableCRTShader.setChecked(settings.getBoolean("crt_shader", false));
                 cbEnableToonShader.setChecked(settings.getBoolean("toon_shader", false));
@@ -229,9 +351,13 @@ public class ScreenEffectDialog extends ContentDialog {
     }
 
     private void resetSettings() {
-        sbBrightness.setValue(0);
-        sbContrast.setValue(0);
-        sbGamma.setValue(1.0f);
+        sbBrightness.setValue(50); // 0 в реальных значениях
+        sbContrast.setValue(50); // 0 в реальных значениях
+        sbGamma.setValue(100); // 1.0
+        sbSharpness.setValue(0); // 0 резкости
+        
+        updateDisplayValues();
+        
         cbEnableFXAA.setChecked(false);
         cbEnableCRTShader.setChecked(false);
         cbEnableToonShader.setChecked(false);
@@ -243,10 +369,18 @@ public class ScreenEffectDialog extends ContentDialog {
             String selectedProfile = sProfile.getSelectedItem().toString();
             Set<String> oldProfiles = new LinkedHashSet<>(preferences.getStringSet("screen_effect_profiles", new LinkedHashSet<>()));
             Set<String> newProfiles = new LinkedHashSet<>();
+            
+            // Получаем реальные значения из ползунков
+            float brightness = (sbBrightness.getValue() / 50.0f) - 1.0f;
+            float contrast = (sbContrast.getValue() / 100.0f) - 0.5f;
+            float gamma = sbGamma.getValue() / 100.0f;
+            float sharpness = sbSharpness.getValue() / 100.0f; // [0,40] -> [0,0.4]
+            
             KeyValueSet settings = new KeyValueSet();
-            settings.put("brightness", sbBrightness.getValue());
-            settings.put("contrast", sbContrast.getValue());
-            settings.put("gamma", sbGamma.getValue());
+            settings.put("brightness", brightness);
+            settings.put("contrast", contrast);
+            settings.put("gamma", gamma);
+            settings.put("sharpness", sharpness);
             settings.put("fxaa", cbEnableFXAA.isChecked());
             settings.put("crt_shader", cbEnableCRTShader.isChecked());
             settings.put("toon_shader", cbEnableToonShader.isChecked());
@@ -266,26 +400,6 @@ public class ScreenEffectDialog extends ContentDialog {
     }
 
     public void applyEffects(ColorEffect colorEffect, GLRenderer renderer, FXAAEffect fxaaEffect, CRTEffect crtEffect, ToonEffect toonEffect, NTSCCombinedEffect ntscEffect) {
-        Log.d(TAG, "applyEffects() called");
-
-        float brightness = sbBrightness.getValue();
-        float contrast = sbContrast.getValue();
-        float gamma = sbGamma.getValue();
-        boolean enableFXAA = cbEnableFXAA.isChecked();
-        boolean enableCRTShader = cbEnableCRTShader.isChecked();
-        boolean enableToonShader = cbEnableToonShader.isChecked();
-        boolean enableNTSCEffect = cbEnableNTSCEffect.isChecked();
-
-        Log.d(TAG, "Settings - Brightness: " + brightness + ", Contrast: " + contrast + ", Gamma: " + gamma);
-        Log.d(TAG, "FXAA Enabled: " + enableFXAA + ", CRT Shader Enabled: " + enableCRTShader);
-
-        // Check ColorEffect state
-        if (colorEffect == null) {
-            Log.d(TAG, "ColorEffect is null, creating new instance.");
-            colorEffect = new ColorEffect();
-        }
-
-        // Check if renderer and effect composer are non-null
         if (renderer == null) {
             Log.e(TAG, "Renderer is null!");
             return;
@@ -296,97 +410,76 @@ public class ScreenEffectDialog extends ContentDialog {
             return;
         }
 
+        // Получаем реальные значения из ползунков
+        float brightness = (sbBrightness.getValue() / 50.0f) - 1.0f;
+        float contrast = (sbContrast.getValue() / 100.0f) - 0.5f;
+        float gamma = sbGamma.getValue() / 100.0f;
+        float sharpness = sbSharpness.getValue() / 100.0f; // [0,40] -> [0,0.4]
+        boolean enableFXAA = cbEnableFXAA.isChecked();
+        boolean enableCRTShader = cbEnableCRTShader.isChecked();
+        boolean enableToonShader = cbEnableToonShader.isChecked();
+        boolean enableNTSCEffect = cbEnableNTSCEffect.isChecked();
+
         // Apply or remove ColorEffect
-        if (brightness == 0 && contrast == 0 && gamma == 1.0f) {
-            Log.d(TAG, "No adjustments are applied. Removing ColorEffect if it exists.");
+        if (brightness == 0 && contrast == 0 && gamma == 1.0f && sharpness == 0) {
             renderer.getEffectComposer().removeEffect(colorEffect);
         } else {
-            Log.d(TAG, "Applying ColorEffect adjustments.");
-            colorEffect.setBrightness(brightness / 100f);
-            colorEffect.setContrast(contrast / 100f);
+            if (colorEffect == null) {
+                colorEffect = new ColorEffect();
+                colorEffect.setRenderer(renderer);
+            }
+            
+            colorEffect.setBrightness(brightness);
+            colorEffect.setContrast(contrast);
             colorEffect.setGamma(gamma);
+            colorEffect.setSharpness(sharpness);
             renderer.getEffectComposer().addEffect(colorEffect);
-            Log.d(TAG, "ColorEffect added/updated.");
         }
 
         // Apply or remove FXAAEffect
         if (enableFXAA) {
             if (fxaaEffect == null) {
-                Log.d(TAG, "FXAAEffect is null, creating and adding new instance.");
                 fxaaEffect = new FXAAEffect();
                 renderer.getEffectComposer().addEffect(fxaaEffect);
-            } else {
-                Log.d(TAG, "FXAAEffect is already added.");
             }
         } else if (fxaaEffect != null) {
-            Log.d(TAG, "FXAA is disabled. Removing FXAAEffect.");
             renderer.getEffectComposer().removeEffect(fxaaEffect);
         }
 
         // Apply or remove CRTEffect
         if (enableCRTShader) {
             if (crtEffect == null) {
-                Log.d(TAG, "CRTEffect is null, creating and adding new instance.");
                 crtEffect = new CRTEffect();
                 renderer.getEffectComposer().addEffect(crtEffect);
-            } else {
-                Log.d(TAG, "CRTEffect is already added.");
             }
         } else if (crtEffect != null) {
-            Log.d(TAG, "CRT Shader is disabled. Removing CRTEffect.");
             renderer.getEffectComposer().removeEffect(crtEffect);
         }
-
 
         // Apply or remove ToonEffect
         if (enableToonShader) {
             if (toonEffect == null) {
-                Log.d(TAG, "ToonEffect is null, creating and adding new instance.");
                 toonEffect = new ToonEffect();
                 renderer.getEffectComposer().addEffect(toonEffect);
-            } else {
-                Log.d(TAG, "ToonEffect is already added.");
             }
         } else if (toonEffect != null) {
-            Log.d(TAG, "Toon Shader is disabled. Removing ToonEffect.");
             renderer.getEffectComposer().removeEffect(toonEffect);
         }
-
 
         // Apply or remove NTSCCombinedEffect
         if (enableNTSCEffect) {
             if (ntscEffect == null) {
-                Log.d(TAG, "NTSCCombinedEffect is null, creating and adding new instance.");
                 ntscEffect = new NTSCCombinedEffect();
                 renderer.getEffectComposer().addEffect(ntscEffect);
-            } else {
-                Log.d(TAG, "NTSCCombinedEffect is already added.");
             }
         } else if (ntscEffect != null) {
-            Log.d(TAG, "NTSC Effect is disabled. Removing NTSCCombinedEffect.");
             renderer.getEffectComposer().removeEffect(ntscEffect);
         }
-
-//        // Toggle ToonEffect
-//        if (renderer != null && renderer.getEffectComposer() != null) {
-//            if (enableToonShader) {
-//                renderer.getEffectComposer().toggleToonEffect();
-//            } else {
-//                ToonEffect toonEffect = renderer.getEffectComposer().getEffect(ToonEffect.class);
-//                if (toonEffect != null) {
-//                    renderer.getEffectComposer().removeEffect(toonEffect);
-//                }
-//            }
-//        }
-
-        saveProfile(sProfile);
-        Log.d(TAG, "Profile saved after applying effects.");
     }
 
-    public void setOnConfirmCallback(Runnable confirmCallback) {
-        Log.d(TAG, "Setting OnConfirm callback.");
-        this.onConfirmCallback = confirmCallback;
+    @Override
+    public void dismiss() {
+        handler.removeCallbacks(applyEffectsRunnable);
+        super.dismiss();
     }
-
-
 }
