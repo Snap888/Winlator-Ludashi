@@ -203,11 +203,14 @@ public class SeekBar extends AppCompatImageView {
                 break;
             case android.view.MotionEvent.ACTION_MOVE:
                 setNormalizedValue(event.getX());
+                if (onValueChangeListener != null) {
+                    onValueChangeListener.onValueChanged(this, (int)getValue());
+                }
                 break;
             case android.view.MotionEvent.ACTION_UP:
                 setPressed(false);
                 if (onValueChangeListener != null) {
-                    onValueChangeListener.onValueChangeListener(this, getValue());
+                    onValueChangeListener.onValueChanged(this, (int)getValue());
                 }
                 break;
             case android.view.MotionEvent.ACTION_CANCEL:
@@ -225,9 +228,9 @@ public class SeekBar extends AppCompatImageView {
         normalizedValue = Mathf.roundTo(newValue, step / (maxValue - minValue));
     }
 
-    // Listener for changes in value
+    // Новый интерфейс для слушателя изменений
     public interface OnValueChangeListener {
-        void onValueChangeListener(SeekBar seekBar, float value);
+        void onValueChanged(SeekBar seekBar, int value);
     }
 
     // Change from private to public
@@ -237,5 +240,4 @@ public class SeekBar extends AppCompatImageView {
         int b = Mathf.clamp(Color.blue(colorSecondary) - 30, 0, 255);
         return Color.rgb(r, g, b);
     }
-
 }
