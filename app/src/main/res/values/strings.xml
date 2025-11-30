@@ -554,6 +554,7 @@
     <string name="brightness">Brightness</string>
     <string name="contrast">Contrast</string>
     <string name="gamma">Gamma</string>
+    <string name="sharpness">Резкость</string>
     <string name="color_adjustment">Color Adjustment</string>
     <string name="enable_fxaa">Enable FXAA</string>
     <string name="enable_crt_shader">Enable CRT Shader</string>
