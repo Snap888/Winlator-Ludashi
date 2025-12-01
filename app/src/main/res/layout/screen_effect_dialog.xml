@@ -1,92 +1,333 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView android:layout_width="wrap_content" android:layout_height="400dp"
-    xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
-    <LinearLayout android:orientation="vertical" android:layout_width="wrap_content" android:layout_height="wrap_content">
-        <LinearLayout android:orientation="horizontal" android:layout_width="520.0dip" android:layout_height="wrap_content">
-            <LinearLayout android:orientation="vertical" android:layout_width="0.0dip" android:layout_height="wrap_content" android:layout_weight="1.0">
-                <FrameLayout android:layout_width="fill_parent" android:layout_height="wrap_content">
-                    <LinearLayout style="@style/FieldSet">
+<ScrollView 
+    xmlns:android="http://schemas.android.com/apk/res/android" 
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" 
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+    
+    <LinearLayout 
+        android:orientation="vertical" 
+        android:layout_width="match_parent" 
+        android:layout_height="wrap_content"
+        android:padding="8dp">
+        
+        <LinearLayout 
+            android:orientation="horizontal" 
+            android:layout_width="match_parent" 
+            android:layout_height="wrap_content">
+            
+            <LinearLayout 
+                android:orientation="vertical" 
+                android:layout_width="0dp" 
+                android:layout_height="wrap_content" 
+                android:layout_weight="1.0"
+                android:paddingEnd="8dp">
+                
+                <FrameLayout 
+                    android:layout_width="match_parent" 
+                    android:layout_height="wrap_content">
+                    
+                    <LinearLayout 
+                        style="@style/FieldSet"
+                        android:layout_width="match_parent" 
+                        android:layout_height="wrap_content">
+                        
                         <!-- Яркость с числовым отображением -->
-                        <LinearLayout android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="wrap_content"
+                        <LinearLayout 
+                            android:orientation="horizontal" 
+                            android:layout_width="match_parent" 
+                            android:layout_height="wrap_content"
                             android:gravity="center_vertical">
-                            <TextView android:layout_width="0dp" android:layout_height="wrap_content" 
-                                android:text="@string/brightness" android:layout_weight="1" android:textSize="12sp" />
-                            <TextView android:id="@+id/TVBrightness" android:layout_width="40dp" 
-                                android:layout_height="wrap_content" android:gravity="center"
-                                android:text="0.00" android:textSize="11sp" />
+                            <TextView 
+                                android:layout_width="0dp" 
+                                android:layout_height="wrap_content" 
+                                android:text="@string/brightness" 
+                                android:layout_weight="1" 
+                                android:textSize="12sp" />
+                            <TextView 
+                                android:id="@+id/TVBrightness" 
+                                android:layout_width="40dp" 
+                                android:layout_height="wrap_content" 
+                                android:gravity="center"
+                                android:text="0.00" 
+                                android:textSize="11sp" />
                         </LinearLayout>
                         <com.winlator.cmod.widget.SeekBar
-                            android:id="@+id/SBBrightness" android:layout_width="fill_parent" android:layout_height="50dp" 
-                            app:maxValue="100" app:minValue="0" app:step="1" />
+                            android:id="@+id/SBBrightness" 
+                            android:layout_width="match_parent" 
+                            android:layout_height="50dp" 
+                            app:maxValue="100" 
+                            app:minValue="0" 
+                            app:step="1" />
                         
                         <!-- Контраст с числовым отображением -->
-                        <LinearLayout android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="wrap_content"
+                        <LinearLayout 
+                            android:orientation="horizontal" 
+                            android:layout_width="match_parent" 
+                            android:layout_height="wrap_content"
                             android:gravity="center_vertical">
-                            <TextView android:layout_width="0dp" android:layout_height="wrap_content" 
-                                android:text="@string/contrast" android:layout_weight="1" android:textSize="12sp" />
-                            <TextView android:id="@+id/TVContrast" android:layout_width="40dp" 
-                                android:layout_height="wrap_content" android:gravity="center"
-                                android:text="0.00" android:textSize="11sp" />
+                            <TextView 
+                                android:layout_width="0dp" 
+                                android:layout_height="wrap_content" 
+                                android:text="@string/contrast" 
+                                android:layout_weight="1" 
+                                android:textSize="12sp" />
+                            <TextView 
+                                android:id="@+id/TVContrast" 
+                                android:layout_width="40dp" 
+                                android:layout_height="wrap_content" 
+                                android:gravity="center"
+                                android:text="0.00" 
+                                android:textSize="11sp" />
                         </LinearLayout>
                         <com.winlator.cmod.widget.SeekBar
-                            android:id="@+id/SBContrast" android:layout_width="fill_parent" android:layout_height="50dp" 
-                            app:maxValue="100" app:minValue="0" app:step="1" />
+                            android:id="@+id/SBContrast" 
+                            android:layout_width="match_parent" 
+                            android:layout_height="50dp" 
+                            app:maxValue="100" 
+                            app:minValue="0" 
+                            app:step="1" />
                         
                         <!-- Гамма с числовым отображением -->
-                        <LinearLayout android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="wrap_content"
+                        <LinearLayout 
+                            android:orientation="horizontal" 
+                            android:layout_width="match_parent" 
+                            android:layout_height="wrap_content"
                             android:gravity="center_vertical">
-                            <TextView android:layout_width="0dp" android:layout_height="wrap_content" 
-                                android:text="@string/gamma" android:layout_weight="1" android:textSize="12sp" />
-                            <TextView android:id="@+id/TVGamma" android:layout_width="40dp" 
-                                android:layout_height="wrap_content" android:gravity="center"
-                                android:text="1.00" android:textSize="11sp" />
+                            <TextView 
+                                android:layout_width="0dp" 
+                                android:layout_height="wrap_content" 
+                                android:text="@string/gamma" 
+                                android:layout_weight="1" 
+                                android:textSize="12sp" />
+                            <TextView 
+                                android:id="@+id/TVGamma" 
+                                android:layout_width="40dp" 
+                                android:layout_height="wrap_content" 
+                                android:gravity="center"
+                                android:text="1.00" 
+                                android:textSize="11sp" />
                         </LinearLayout>
                         <com.winlator.cmod.widget.SeekBar
-                            android:id="@+id/SBGamma" android:layout_width="fill_parent" android:layout_height="50dp" 
-                            app:maxValue="300" app:minValue="10" app:step="1" />
+                            android:id="@+id/SBGamma" 
+                            android:layout_width="match_parent" 
+                            android:layout_height="50dp" 
+                            app:maxValue="300" 
+                            app:minValue="10" 
+                            app:step="1" />
                         
                         <!-- Резкость с числовым отображением -->
-                        <LinearLayout android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="wrap_content"
+                        <LinearLayout 
+                            android:orientation="horizontal" 
+                            android:layout_width="match_parent" 
+                            android:layout_height="wrap_content"
                             android:gravity="center_vertical">
-                            <TextView android:layout_width="0dp" android:layout_height="wrap_content" 
-                                android:text="Резкость" android:layout_weight="1" android:textSize="12sp" />
-                            <TextView android:id="@+id/TVSharpness" android:layout_width="40dp" 
-                                android:layout_height="wrap_content" android:gravity="center"
-                                android:text="0.00" android:textSize="11sp" />
+                            <TextView 
+                                android:layout_width="0dp" 
+                                android:layout_height="wrap_content" 
+                                android:text="Резкость" 
+                                android:layout_weight="1" 
+                                android:textSize="12sp" />
+                            <TextView 
+                                android:id="@+id/TVSharpness" 
+                                android:layout_width="40dp" 
+                                android:layout_height="wrap_content" 
+                                android:gravity="center"
+                                android:text="0.00" 
+                                android:textSize="11sp" />
                         </LinearLayout>
                         <com.winlator.cmod.widget.SeekBar
-                            android:id="@+id/SBSharpness" android:layout_width="fill_parent" android:layout_height="50dp" 
-                            app:maxValue="40" app:minValue="0" app:step="1" />
+                            android:id="@+id/SBSharpness" 
+                            android:layout_width="match_parent" 
+                            android:layout_height="50dp" 
+                            app:maxValue="40" 
+                            app:minValue="0" 
+                            app:step="1" />
+
+                        <!-- Сила глубины с числовым отображением -->
+                        <LinearLayout 
+                            android:orientation="horizontal" 
+                            android:layout_width="match_parent" 
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical">
+                            <TextView 
+                                android:layout_width="0dp" 
+                                android:layout_height="wrap_content" 
+                                android:text="Сила глубины" 
+                                android:layout_weight="1" 
+                                android:textSize="12sp" />
+                            <TextView 
+                                android:id="@+id/TVDepthStrength" 
+                                android:layout_width="40dp" 
+                                android:layout_height="wrap_content" 
+                                android:gravity="center"
+                                android:text="0.00" 
+                                android:textSize="11sp" />
+                        </LinearLayout>
+                        <com.winlator.cmod.widget.SeekBar
+                            android:id="@+id/SBDepthStrength" 
+                            android:layout_width="match_parent" 
+                            android:layout_height="50dp" 
+                            app:maxValue="100" 
+                            app:minValue="0" 
+                            app:step="1" />
+
+                        <!-- Фокус глубины с числовым отображением -->
+                        <LinearLayout 
+                            android:orientation="horizontal" 
+                            android:layout_width="match_parent" 
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical">
+                            <TextView 
+                                android:layout_width="0dp" 
+                                android:layout_height="wrap_content" 
+                                android:text="Фокус глубины" 
+                                android:layout_weight="1" 
+                                android:textSize="12sp" />
+                            <TextView 
+                                android:id="@+id/TVDepthFocus" 
+                                android:layout_width="40dp" 
+                                android:layout_height="wrap_content" 
+                                android:gravity="center"
+                                android:text="0.50" 
+                                android:textSize="11sp" />
+                        </LinearLayout>
+                        <com.winlator.cmod.widget.SeekBar
+                            android:id="@+id/SBDepthFocus" 
+                            android:layout_width="match_parent" 
+                            android:layout_height="50dp" 
+                            app:maxValue="100" 
+                            app:minValue="0" 
+                            app:step="1" />
+
+                        <!-- Насыщенность с числовым отображением -->
+                        <LinearLayout 
+                            android:orientation="horizontal" 
+                            android:layout_width="match_parent" 
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical">
+                            <TextView 
+                                android:layout_width="0dp" 
+                                android:layout_height="wrap_content" 
+                                android:text="Насыщенность" 
+                                android:layout_weight="1" 
+                                android:textSize="12sp" />
+                            <TextView 
+                                android:id="@+id/TVSaturation" 
+                                android:layout_width="40dp" 
+                                android:layout_height="wrap_content" 
+                                android:gravity="center"
+                                android:text="1.00" 
+                                android:textSize="11sp" />
+                        </LinearLayout>
+                        <com.winlator.cmod.widget.SeekBar
+                            android:id="@+id/SBSaturation" 
+                            android:layout_width="match_parent" 
+                            android:layout_height="50dp" 
+                            app:maxValue="100" 
+                            app:minValue="0" 
+                            app:step="1" />
                     </LinearLayout>
-                    <TextView android:background="#ffffffff" android:text="@string/color_adjustment" 
-                        style="@style/FieldSetLabel" android:id="@+id/LBLColorAdjustment" />
+                    <TextView 
+                        android:background="#ffffffff" 
+                        android:text="@string/color_adjustment" 
+                        style="@style/FieldSetLabel" 
+                        android:id="@+id/LBLColorAdjustment" />
                 </FrameLayout>
             </LinearLayout>
-            <View style="@style/VerticalLine" />
-            <LinearLayout android:orientation="vertical" android:layout_width="0.0dip" android:layout_height="wrap_content" android:layout_weight="1.0">
+            
+            <View 
+                style="@style/VerticalLine" 
+                android:layout_width="1dp" 
+                android:layout_height="match_parent" 
+                android:layout_marginHorizontal="8dp" />
+            
+            <LinearLayout 
+                android:orientation="vertical" 
+                android:layout_width="0dp" 
+                android:layout_height="wrap_content" 
+                android:layout_weight="1.0"
+                android:paddingStart="8dp">
+                
                 <!-- Профили -->
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" 
-                    android:text="@string/profile" android:textSize="12sp" />
-                <LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="wrap_content">
-                    <Spinner android:id="@+id/SProfile" android:layout_width="0.0dip" android:layout_height="wrap_content" android:layout_weight="1.0" style="@style/ComboBox" />
-                    <LinearLayout style="@style/Toolbox">
-                        <ImageButton android:id="@+id/BTAddProfile" android:src="@drawable/icon_add" style="@style/ListMenuButton" />
-                        <ImageButton android:id="@+id/BTRemoveProfile" android:layout_marginRight="0.0dip" android:src="@drawable/icon_remove" style="@style/ListMenuButton" />
+                <TextView 
+                    android:layout_width="wrap_content" 
+                    android:layout_height="wrap_content" 
+                    android:text="@string/profile" 
+                    android:textSize="12sp" />
+                <LinearLayout 
+                    android:gravity="center_vertical" 
+                    android:orientation="horizontal" 
+                    android:layout_width="match_parent" 
+                    android:layout_height="wrap_content">
+                    <Spinner 
+                        android:id="@+id/SProfile" 
+                        android:layout_width="0dp" 
+                        android:layout_height="wrap_content" 
+                        android:layout_weight="1.0" 
+                        style="@style/ComboBox" />
+                    <LinearLayout 
+                        style="@style/Toolbox">
+                        <ImageButton 
+                            android:id="@+id/BTAddProfile" 
+                            android:src="@drawable/icon_add" 
+                            style="@style/ListMenuButton" />
+                        <ImageButton 
+                            android:id="@+id/BTRemoveProfile" 
+                            android:layout_marginRight="0dp" 
+                            android:src="@drawable/icon_remove" 
+                            style="@style/ListMenuButton" />
                     </LinearLayout>
                 </LinearLayout>
                 
                 <!-- Эффекты -->
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" 
-                    android:text="Эффекты" android:layout_marginTop="16dp" android:textStyle="bold" android:textSize="12sp" />
+                <TextView 
+                    android:layout_width="wrap_content" 
+                    android:layout_height="wrap_content" 
+                    android:text="Эффекты" 
+                    android:layout_marginTop="16dp" 
+                    android:textStyle="bold" 
+                    android:textSize="12sp" />
                     
-                <CheckBox android:id="@+id/CBEnableFXAA" android:layout_width="wrap_content" android:layout_height="wrap_content" 
-                    android:layout_marginTop="8.0dip" android:text="@string/enable_fxaa" android:textSize="12sp" />
-                <CheckBox android:id="@+id/CBEnableCRTShader" android:layout_width="wrap_content" android:layout_height="wrap_content" 
-                    android:text="@string/enable_crt_shader" android:textSize="12sp" />
-                <CheckBox android:id="@+id/CBEnableToonShader" android:layout_width="wrap_content" android:layout_height="wrap_content" 
-                    android:text="@string/enable_toon_shader" android:textSize="12sp" />
-                <CheckBox android:id="@+id/CBEnableNTSCEffect" android:layout_width="wrap_content" android:layout_height="wrap_content" 
-                    android:text="@string/enable_ntsc_effect" android:textSize="12sp" />
+                <CheckBox 
+                    android:id="@+id/CBEnableFXAA" 
+                    android:layout_width="wrap_content" 
+                    android:layout_height="wrap_content" 
+                    android:layout_marginTop="8dp" 
+                    android:text="@string/enable_fxaa" 
+                    android:textSize="12sp" />
+                <CheckBox 
+                    android:id="@+id/CBEnableCRTShader" 
+                    android:layout_width="wrap_content" 
+                    android:layout_height="wrap_content" 
+                    android:text="@string/enable_crt_shader" 
+                    android:textSize="12sp" />
+                <CheckBox 
+                    android:id="@+id/CBEnableToonShader" 
+                    android:layout_width="wrap_content" 
+                    android:layout_height="wrap_content" 
+                    android:text="@string/enable_toon_shader" 
+                    android:textSize="12sp" />
+                <CheckBox 
+                    android:id="@+id/CBEnableNTSCEffect" 
+                    android:layout_width="wrap_content" 
+                    android:layout_height="wrap_content" 
+                    android:text="@string/enable_ntsc_effect" 
+                    android:textSize="12sp" />
+                <!-- Новые чекбоксы для глубины и насыщенности -->
+                <CheckBox 
+                    android:id="@+id/CBEnableDepthEffect" 
+                    android:layout_width="wrap_content" 
+                    android:layout_height="wrap_content" 
+                    android:text="Включить эффект глубины" 
+                    android:textSize="12sp" />
+                <CheckBox 
+                    android:id="@+id/CBEnableSaturation" 
+                    android:layout_width="wrap_content" 
+                    android:layout_height="wrap_content" 
+                    android:text="Включить насыщенность" 
+                    android:textSize="12sp" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
