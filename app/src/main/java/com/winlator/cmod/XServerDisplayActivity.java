@@ -2,6 +2,9 @@ package com.winlator.cmod;
 
 import static com.winlator.cmod.core.AppUtils.showToast;
 
+import com.winlator.cmod.renderer.effects.DepthEffect;
+import com.winlator.cmod.renderer.effects.SaturationEffect;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -896,7 +899,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                 }
                 drawerLayout.closeDrawers();
                 break;
-            case R.id.main_menu_screen_effects:
+                                    case R.id.main_menu_screen_effects:
                 Log.d("ScreenEffectDialog", "Initializing ScreenEffectDialog");
                 ScreenEffectDialog screenEffectDialog = new ScreenEffectDialog(this);
                 screenEffectDialog.setOnConfirmCallback(() -> {
@@ -907,6 +910,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                     CRTEffect crtEffect = (CRTEffect) currentRenderer.getEffectComposer().getEffect(CRTEffect.class);
                     ToonEffect toonEffect = (ToonEffect) currentRenderer.getEffectComposer().getEffect(ToonEffect.class);
                     NTSCCombinedEffect ntscEffect = (NTSCCombinedEffect) currentRenderer.getEffectComposer().getEffect(NTSCCombinedEffect.class);
+                    DepthEffect depthEffect = (DepthEffect) currentRenderer.getEffectComposer().getEffect(DepthEffect.class); // Новое получение
+                    SaturationEffect saturationEffect = (SaturationEffect) currentRenderer.getEffectComposer().getEffect(SaturationEffect.class); // Новое получение
 
                     // Check if effects are null before applying
                     Log.d("ScreenEffectDialog", "ColorEffect: " + (colorEffect != null));
@@ -914,9 +919,11 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                     Log.d("ScreenEffectDialog", "CRTEffect: " + (crtEffect != null));
                     Log.d("ScreenEffectDialog", "ToonEffect: " + (toonEffect != null));
                     Log.d("ScreenEffectDialog", "NTSCCombinedEffect: " + (ntscEffect != null));
+                    Log.d("ScreenEffectDialog", "DepthEffect: " + (depthEffect != null)); // Новый лог
+                    Log.d("ScreenEffectDialog", "SaturationEffect: " + (saturationEffect != null)); // Новый лог
 
                     Log.d("ScreenEffectDialog", "Calling applyEffects()");
-                    screenEffectDialog.applyEffects(colorEffect, currentRenderer, fxaaEffect, crtEffect, toonEffect, ntscEffect);
+                    screenEffectDialog.applyEffects(colorEffect, currentRenderer, fxaaEffect, crtEffect, toonEffect, ntscEffect, depthEffect, saturationEffect); // Передаём depthEffect и saturationEffect
                     Log.d("ScreenEffectDialog", "applyEffects() called.");
                 });
                 Log.d("ScreenEffectDialog", "Showing ScreenEffectDialog");
