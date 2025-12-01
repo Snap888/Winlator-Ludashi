@@ -21,4 +21,3 @@ public class ScreenMaterial extends ShaderMaterial {
                 "}"
         });
     }
-}
