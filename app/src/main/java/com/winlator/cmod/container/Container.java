@@ -74,6 +74,10 @@ public class Container {
     private String box64Version;
     private String emulator;
 
+    // --- НОВОЕ ПОЛЕ ДЛЯ SCREEN EFFECT PROFILE ---
+    private String screenEffectProfile = null; // Используем null как значение по умолчанию, что означает "не установлен"
+
+
     private ContainerManager containerManager;
 
 
@@ -273,6 +277,16 @@ public class Container {
         return this.emulator;
     }
 
+    // --- ГЕТТЕР И СЕТТЕР ДЛЯ SCREEN EFFECT PROFILE ---
+    public String getScreenEffectProfile() {
+        return screenEffectProfile;
+    }
+
+    public void setScreenEffectProfile(String screenEffectProfile) {
+        this.screenEffectProfile = screenEffectProfile != null && !screenEffectProfile.isEmpty() ? screenEffectProfile : null;
+    }
+
+
     public File getRootDir() {
         return rootDir;
     }
@@ -412,6 +426,8 @@ public class Container {
             data.put("lc_all", lc_all);
             data.put("primaryController", primaryController);
             data.put("controllerMapping", controllerMapping);
+            // --- СОХРАНЕНИЕ SCREEN EFFECT PROFILE ---
+            if (screenEffectProfile != null) data.put("screenEffectProfile", screenEffectProfile);
             if (!WineInfo.isMainWineVersion(wineVersion)) data.put("wineVersion", wineVersion);
             FileUtils.writeString(getConfigFile(), data.toString());
         }
@@ -481,6 +497,10 @@ public class Container {
                     setExtraData(extraData);
                     break;
                 }
+                // --- ЗАГРУЗКА SCREEN EFFECT PROFILE ---
+                case "screenEffectProfile" :
+                    setScreenEffectProfile(data.getString(key));
+                    break;
                 case "wineVersion" :
                     setWineVersion(data.getString(key));
                     break;
