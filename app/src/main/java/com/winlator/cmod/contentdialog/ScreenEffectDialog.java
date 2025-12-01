@@ -22,10 +22,10 @@ import com.winlator.cmod.core.KeyValueSet;
 import com.winlator.cmod.renderer.GLRenderer;
 import com.winlator.cmod.renderer.effects.ColorEffect;
 import com.winlator.cmod.renderer.effects.CRTEffect;
-import com.winlator.cmod.renderer.effects.DepthEffect; // Импорт DepthEffect
+import com.winlator.cmod.renderer.effects.DepthEffect;
 import com.winlator.cmod.renderer.effects.FXAAEffect;
 import com.winlator.cmod.renderer.effects.NTSCCombinedEffect;
-import com.winlator.cmod.renderer.effects.SaturationEffect; // Импорт SaturationEffect
+import com.winlator.cmod.renderer.effects.SaturationEffect;
 import com.winlator.cmod.renderer.effects.ToonEffect;
 import com.winlator.cmod.widget.SeekBar;
 
@@ -40,30 +40,30 @@ public class ScreenEffectDialog extends ContentDialog {
     private final CheckBox cbEnableFXAA;
     private final CheckBox cbEnableToonShader;
     private final CheckBox cbEnableNTSCEffect;
-    private final CheckBox cbEnableDepthEffect; // Новый чекбокс
-    private final CheckBox cbEnableSaturation; // Новый чекбокс
+    private final CheckBox cbEnableDepthEffect;
+    private final CheckBox cbEnableSaturation;
     private final SharedPreferences preferences;
     private final Spinner sProfile;
     private final SeekBar sbBrightness;
     private final SeekBar sbContrast;
     private final SeekBar sbGamma;
     private final SeekBar sbSharpness;
-    private final SeekBar sbDepthStrength; // Новый SeekBar
-    private final SeekBar sbDepthFocus;    // Новый SeekBar
-    private final SeekBar sbSaturation; // Новый SeekBar
+    private final SeekBar sbDepthStrength;
+    private final SeekBar sbDepthFocus;
+    private final SeekBar sbSaturation;
     private final TextView tvBrightness;
     private final TextView tvContrast;
     private final TextView tvGamma;
     private final TextView tvSharpness;
-    private final TextView tvDepthStrength; // Новый TextView
-    private final TextView tvDepthFocus;    // Новый TextView
-    private final TextView tvSaturation; // Новый TextView
+    private final TextView tvDepthStrength;
+    private final TextView tvDepthFocus;
+    private final TextView tvSaturation;
     private final Handler handler;
     private final Runnable applyEffectsRunnable;
     private boolean isApplyingEffects = false;
 
     private static final String TAG = "ScreenEffectDialog";
-    private static final int APPLY_DELAY_MS = 100; // Задержка для динамического применения
+    private static final int APPLY_DELAY_MS = 100;
 
     public ScreenEffectDialog(XServerDisplayActivity activity) {
         super(activity, R.layout.screen_effect_dialog);
@@ -94,22 +94,22 @@ public class ScreenEffectDialog extends ContentDialog {
         sbContrast = findViewById(R.id.SBContrast);
         sbGamma = findViewById(R.id.SBGamma);
         sbSharpness = findViewById(R.id.SBSharpness);
-        sbDepthStrength = findViewById(R.id.SBDepthStrength); // Инициализация
-        sbDepthFocus = findViewById(R.id.SBDepthFocus);       // Инициализация
-        sbSaturation = findViewById(R.id.SBSaturation); // Инициализация
+        sbDepthStrength = findViewById(R.id.SBDepthStrength);
+        sbDepthFocus = findViewById(R.id.SBDepthFocus);
+        sbSaturation = findViewById(R.id.SBSaturation);
         tvBrightness = findViewById(R.id.TVBrightness);
         tvContrast = findViewById(R.id.TVContrast);
         tvGamma = findViewById(R.id.TVGamma);
         tvSharpness = findViewById(R.id.TVSharpness);
-        tvDepthStrength = findViewById(R.id.TVDepthStrength); // Инициализация
-        tvDepthFocus = findViewById(R.id.TVDepthFocus);       // Инициализация
-        tvSaturation = findViewById(R.id.TVSaturation); // Инициализация
+        tvDepthStrength = findViewById(R.id.TVDepthStrength);
+        tvDepthFocus = findViewById(R.id.TVDepthFocus);
+        tvSaturation = findViewById(R.id.TVSaturation);
         cbEnableFXAA = findViewById(R.id.CBEnableFXAA);
         cbEnableCRTShader = findViewById(R.id.CBEnableCRTShader);
         cbEnableToonShader = findViewById(R.id.CBEnableToonShader);
         cbEnableNTSCEffect = findViewById(R.id.CBEnableNTSCEffect);
-        cbEnableDepthEffect = findViewById(R.id.CBEnableDepthEffect); // Инициализация
-        cbEnableSaturation = findViewById(R.id.CBEnableSaturation); // Инициализация
+        cbEnableDepthEffect = findViewById(R.id.CBEnableDepthEffect);
+        cbEnableSaturation = findViewById(R.id.CBEnableSaturation);
 
         GLRenderer renderer = activity.getXServerView().getRenderer();
         if (renderer == null) {
@@ -122,8 +122,8 @@ public class ScreenEffectDialog extends ContentDialog {
         CRTEffect crtEffect = (CRTEffect) renderer.getEffectComposer().getEffect(CRTEffect.class);
         ToonEffect toonEffect = (ToonEffect) renderer.getEffectComposer().getEffect(ToonEffect.class);
         NTSCCombinedEffect ntscEffect = (NTSCCombinedEffect) renderer.getEffectComposer().getEffect(NTSCCombinedEffect.class);
-        DepthEffect depthEffect = (DepthEffect) renderer.getEffectComposer().getEffect(DepthEffect.class); // Новый эффект
-        SaturationEffect saturationEffect = (SaturationEffect) renderer.getEffectComposer().getEffect(SaturationEffect.class); // Новый эффект
+        DepthEffect depthEffect = (DepthEffect) renderer.getEffectComposer().getEffect(DepthEffect.class);
+        SaturationEffect saturationEffect = (SaturationEffect) renderer.getEffectComposer().getEffect(SaturationEffect.class);
 
         Log.d(TAG, "ScreenEffectDialog initialized. Initial effects - Color: " + (colorEffect != null) + ", Depth: " + (depthEffect != null) + ", Saturation: " + (saturationEffect != null));
 
@@ -134,30 +134,47 @@ public class ScreenEffectDialog extends ContentDialog {
         cbEnableCRTShader.setChecked(crtEffect != null);
         cbEnableToonShader.setChecked(toonEffect != null);
         cbEnableNTSCEffect.setChecked(ntscEffect != null);
-        cbEnableDepthEffect.setChecked(depthEffect != null); // Установка состояния чекбокса
-        cbEnableSaturation.setChecked(saturationEffect != null); // Установка состояния чекбокса
+        cbEnableDepthEffect.setChecked(depthEffect != null);
+        cbEnableSaturation.setChecked(saturationEffect != null);
 
         loadProfileSpinner(sProfile, activity.getScreenEffectProfile());
 
         sProfile.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (position > 0) {
-                    Log.d(TAG, "Profile selected: " + sProfile.getSelectedItem().toString());
-                    loadProfile(sProfile.getSelectedItem().toString());
-                    scheduleApplyEffects();
+                Log.d(TAG, "onItemSelected called, position: " + position);
+                if (position > 0) { // Проверяем, что выбран не дефолтный профиль
+                    String selectedProfileName = sProfile.getSelectedItem().toString();
+                    Log.d(TAG, "Profile selected: " + selectedProfileName);
+                    loadProfile(selectedProfileName); // Загружаем данные профиля
+                    scheduleApplyEffects(); // Планируем применение эффектов
+                } else {
+                    Log.d(TAG, "Default profile selected, resetting settings.");
+                    resetSettings(); // Сбрасываем настройки при выборе дефолтного профиля
+                    scheduleApplyEffects(); // Применяем сброшенные настройки
                 }
             }
 
             @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
+            public void onNothingSelected(AdapterView<?> parent) {
+                Log.d(TAG, "onNothingSelected called.");
+            }
         });
 
+        // Find and set click listeners for the Apply and Reset buttons defined in the XML
         Button resetButton = findViewById(R.id.BTReset);
-        resetButton.setVisibility(View.VISIBLE);
         resetButton.setOnClickListener(v -> {
+            Log.d(TAG, "Reset button clicked");
             resetSettings();
             scheduleApplyEffects();
+        });
+
+        Button applyButton = findViewById(R.id.BTApply);
+        applyButton.setOnClickListener(v -> {
+            Log.d(TAG, "Apply button clicked. Saving profile and applying effects.");
+            saveProfile(sProfile);
+            applyEffectsFinal();
+            Log.d(TAG, "Effects applied from Apply button.");
         });
 
         // Убираем дублирующиеся кнопки - используем только стандартные кнопки диалога
@@ -227,9 +244,9 @@ public class ScreenEffectDialog extends ContentDialog {
         sbContrast.setOnValueChangeListener(valueChangeListener);
         sbGamma.setOnValueChangeListener(valueChangeListener);
         sbSharpness.setOnValueChangeListener(valueChangeListener);
-        sbDepthStrength.setOnValueChangeListener(valueChangeListener); // Новый слушатель
-        sbDepthFocus.setOnValueChangeListener(valueChangeListener);    // Новый слушатель
-        sbSaturation.setOnValueChangeListener(valueChangeListener); // Новый слушатель
+        sbDepthStrength.setOnValueChangeListener(valueChangeListener);
+        sbDepthFocus.setOnValueChangeListener(valueChangeListener);
+        sbSaturation.setOnValueChangeListener(valueChangeListener);
     }
 
     private void setupCheckBoxes() {
@@ -245,8 +262,8 @@ public class ScreenEffectDialog extends ContentDialog {
         cbEnableCRTShader.setOnClickListener(checkboxClickListener);
         cbEnableToonShader.setOnClickListener(checkboxClickListener);
         cbEnableNTSCEffect.setOnClickListener(checkboxClickListener);
-        cbEnableDepthEffect.setOnClickListener(checkboxClickListener); // Новый слушатель
-        cbEnableSaturation.setOnClickListener(checkboxClickListener); // Новый слушатель
+        cbEnableDepthEffect.setOnClickListener(checkboxClickListener);
+        cbEnableSaturation.setOnClickListener(checkboxClickListener);
     }
 
     private void scheduleApplyEffects() {
@@ -264,14 +281,14 @@ public class ScreenEffectDialog extends ContentDialog {
         float depthStrength = sbDepthStrength.getValue() / 100.0f; // [0,100] -> [0,1]
         float depthFocus = sbDepthFocus.getValue() / 100.0f;       // [0,100] -> [0,1]
         float saturation = sbSaturation.getValue() / 50.0f; // [0,100] -> [0,2]
-        
+
         updateBrightnessText(brightness);
         updateContrastText(contrast);
         updateGammaText(gamma);
         updateSharpnessText(sharpness);
-        updateDepthStrengthText(depthStrength); // Новый вызов
-        updateDepthFocusText(depthFocus);       // Новый вызов
-        updateSaturationText(saturation); // Новый вызов
+        updateDepthStrengthText(depthStrength);
+        updateDepthFocusText(depthFocus);
+        updateSaturationText(saturation);
     }
 
     private void applyEffectsInRealTime() {
@@ -288,12 +305,12 @@ public class ScreenEffectDialog extends ContentDialog {
         CRTEffect crtEffect = (CRTEffect) renderer.getEffectComposer().getEffect(CRTEffect.class);
         ToonEffect toonEffect = (ToonEffect) renderer.getEffectComposer().getEffect(ToonEffect.class);
         NTSCCombinedEffect ntscEffect = (NTSCCombinedEffect) renderer.getEffectComposer().getEffect(NTSCCombinedEffect.class);
-        DepthEffect depthEffect = (DepthEffect) renderer.getEffectComposer().getEffect(DepthEffect.class); // Новый эффект
-        SaturationEffect saturationEffect = (SaturationEffect) renderer.getEffectComposer().getEffect(SaturationEffect.class); // Новый эффект
+        DepthEffect depthEffect = (DepthEffect) renderer.getEffectComposer().getEffect(DepthEffect.class);
+        SaturationEffect saturationEffect = (SaturationEffect) renderer.getEffectComposer().getEffect(SaturationEffect.class);
 
         Log.d(TAG, "Current effects in composer for RT: Color: " + (colorEffect != null) + ", Depth: " + (depthEffect != null) + ", Saturation: " + (saturationEffect != null));
 
-        applyEffects(colorEffect, renderer, fxaaEffect, crtEffect, toonEffect, ntscEffect, depthEffect, saturationEffect); // Передаем depthEffect и saturationEffect
+        applyEffects(colorEffect, renderer, fxaaEffect, crtEffect, toonEffect, ntscEffect, depthEffect, saturationEffect);
     }
 
     private void applyEffectsFinal() {
@@ -310,12 +327,12 @@ public class ScreenEffectDialog extends ContentDialog {
         CRTEffect crtEffect = (CRTEffect) renderer.getEffectComposer().getEffect(CRTEffect.class);
         ToonEffect toonEffect = (ToonEffect) renderer.getEffectComposer().getEffect(ToonEffect.class);
         NTSCCombinedEffect ntscEffect = (NTSCCombinedEffect) renderer.getEffectComposer().getEffect(NTSCCombinedEffect.class);
-        DepthEffect depthEffect = (DepthEffect) renderer.getEffectComposer().getEffect(DepthEffect.class); // Новый эффект
-        SaturationEffect saturationEffect = (SaturationEffect) renderer.getEffectComposer().getEffect(SaturationEffect.class); // Новый эффект
+        DepthEffect depthEffect = (DepthEffect) renderer.getEffectComposer().getEffect(DepthEffect.class);
+        SaturationEffect saturationEffect = (SaturationEffect) renderer.getEffectComposer().getEffect(SaturationEffect.class);
 
         Log.d(TAG, "Current effects in composer for Final: Color: " + (colorEffect != null) + ", Depth: " + (depthEffect != null) + ", Saturation: " + (saturationEffect != null));
 
-        applyEffects(colorEffect, renderer, fxaaEffect, crtEffect, toonEffect, ntscEffect, depthEffect, saturationEffect); // Передаем depthEffect и saturationEffect
+        applyEffects(colorEffect, renderer, fxaaEffect, crtEffect, toonEffect, ntscEffect, depthEffect, saturationEffect);
         
         // Принудительно запрашиваем рендер для немедленного отображения
         activity.getXServerView().requestRender();
@@ -337,15 +354,15 @@ public class ScreenEffectDialog extends ContentDialog {
         tvSharpness.setText(String.format(Locale.ENGLISH, "%.2f", sharpness));
     }
 
-    private void updateDepthStrengthText(float depthStrength) { // Новый метод
+    private void updateDepthStrengthText(float depthStrength) {
         tvDepthStrength.setText(String.format(Locale.ENGLISH, "%.2f", depthStrength));
     }
 
-    private void updateDepthFocusText(float depthFocus) { // Новый метод
+    private void updateDepthFocusText(float depthFocus) {
         tvDepthFocus.setText(String.format(Locale.ENGLISH, "%.2f", depthFocus));
     }
 
-    private void updateSaturationText(float saturation) { // Новый метод
+    private void updateSaturationText(float saturation) {
         tvSaturation.setText(String.format(Locale.ENGLISH, "%.2f", saturation));
     }
 
@@ -414,11 +431,11 @@ public class ScreenEffectDialog extends ContentDialog {
                 float contrast = settings.getFloat("contrast", 0);
                 float gamma = settings.getFloat("gamma", 1.0f);
                 float sharpness = settings.getFloat("sharpness", 0);
-                float depthStrength = settings.getFloat("depth_strength", 0); // Новое значение
-                float depthFocus = settings.getFloat("depth_focus", 0.5f);    // Новое значение
-                float saturation = settings.getFloat("saturation", 1.0f); // Новое значение
+                float depthStrength = settings.getFloat("depth_strength", 0);
+                float depthFocus = settings.getFloat("depth_focus", 0.5f);
+                float saturation = settings.getFloat("saturation", 1.0f);
                 
-                Log.d(TAG, "Loaded settings - Bright: " + brightness + ", Contrast: " + contrast + ", Gamma: " + gamma + ", Sharp: " + sharpness + ", DepthStr: " + depthStrength + ", DepthFocus: " + depthFocus + ", Saturation: " + saturation);
+                Log.d(TAG, "Loaded settings from profile '" + name + "' - Bright: " + brightness + ", Contrast: " + contrast + ", Gamma: " + gamma + ", Sharp: " + sharpness + ", DepthStr: " + depthStrength + ", DepthFocus: " + depthFocus + ", Saturation: " + saturation);
                 
                 // Преобразуем реальные значения в значения ползунков
                 sbBrightness.setValue((int)((brightness + 1.0f) * 50));
@@ -428,19 +445,23 @@ public class ScreenEffectDialog extends ContentDialog {
                 sbDepthStrength.setValue((int)(depthStrength * 100)); // [0,1] -> [0,100]
                 sbDepthFocus.setValue((int)(depthFocus * 100));       // [0,1] -> [0,100]
                 sbSaturation.setValue((int)(saturation * 50.0f)); // [0,2] -> [0,100]
-                
-                updateDisplayValues();
+
+                updateDisplayValues(); // Обновляем отображаемые значения после загрузки
                 
                 cbEnableFXAA.setChecked(settings.getBoolean("fxaa", false));
                 cbEnableCRTShader.setChecked(settings.getBoolean("crt_shader", false));
                 cbEnableToonShader.setChecked(settings.getBoolean("toon_shader", false));
                 cbEnableNTSCEffect.setChecked(settings.getBoolean("ntsc_effect", false));
-                cbEnableDepthEffect.setChecked(settings.getBoolean("depth_effect", false)); // Новое значение
-                cbEnableSaturation.setChecked(settings.getBoolean("saturation_effect", false)); // Новое значение
-                return;
+                cbEnableDepthEffect.setChecked(settings.getBoolean("depth_effect", false));
+                cbEnableSaturation.setChecked(settings.getBoolean("saturation_effect", false));
+                
+                Log.d(TAG, "Profile '" + name + "' loaded into UI controls successfully.");
+                return; // Важно: выходим после загрузки найденного профиля
             }
         }
-        Log.d(TAG, "Profile not found: " + name);
+        Log.d(TAG, "Profile not found or has no settings: " + name);
+        // Если профиль не найден, можно сбросить настройки
+        resetSettings();
     }
 
     private void removeProfile(String targetName, Spinner sProfile) {
@@ -468,8 +489,8 @@ public class ScreenEffectDialog extends ContentDialog {
         cbEnableCRTShader.setChecked(false);
         cbEnableToonShader.setChecked(false);
         cbEnableNTSCEffect.setChecked(false);
-        cbEnableDepthEffect.setChecked(false); // Сброс чекбокса
-        cbEnableSaturation.setChecked(false); // Сброс чекбокса
+        cbEnableDepthEffect.setChecked(false);
+        cbEnableSaturation.setChecked(false);
     }
 
     private void saveProfile(Spinner sProfile) {
@@ -493,8 +514,8 @@ public class ScreenEffectDialog extends ContentDialog {
             boolean enableCRTShader = cbEnableCRTShader.isChecked();
             boolean enableToonShader = cbEnableToonShader.isChecked();
             boolean enableNTSCEffect = cbEnableNTSCEffect.isChecked();
-            boolean enableDepthEffect = cbEnableDepthEffect.isChecked(); // Новое значение
-            boolean enableSaturation = cbEnableSaturation.isChecked(); // Новое значение
+            boolean enableDepthEffect = cbEnableDepthEffect.isChecked();
+            boolean enableSaturation = cbEnableSaturation.isChecked();
 
             Log.d(TAG, "Saving settings - Bright: " + brightness + ", Contrast: " + contrast + ", Gamma: " + gamma + ", Sharp: " + sharpness + ", DepthStr: " + depthStrength + ", DepthFocus: " + depthFocus + ", Saturation: " + saturation + ", DepthEnabled: " + enableDepthEffect + ", SaturationEnabled: " + enableSaturation);
 
@@ -503,15 +524,15 @@ public class ScreenEffectDialog extends ContentDialog {
             settings.put("contrast", contrast);
             settings.put("gamma", gamma);
             settings.put("sharpness", sharpness);
-            settings.put("depth_strength", depthStrength); // Новое значение
-            settings.put("depth_focus", depthFocus);       // Новое значение
-            settings.put("saturation", saturation); // Новое значение
+            settings.put("depth_strength", depthStrength);
+            settings.put("depth_focus", depthFocus);
+            settings.put("saturation", saturation);
             settings.put("fxaa", enableFXAA);
             settings.put("crt_shader", enableCRTShader);
             settings.put("toon_shader", enableToonShader);
             settings.put("ntsc_effect", enableNTSCEffect);
-            settings.put("depth_effect", enableDepthEffect); // Новое значение
-            settings.put("saturation_effect", enableSaturation); // Новое значение
+            settings.put("depth_effect", enableDepthEffect);
+            settings.put("saturation_effect", enableSaturation);
 
             for (String profile : oldProfiles) {
                 String[] parts = profile.split(":");
@@ -529,7 +550,7 @@ public class ScreenEffectDialog extends ContentDialog {
         }
     }
 
-    // Обновленный метод applyEffects, включающий DepthEffect и SaturationEffect
+    // Обновленный метод applyEffects, без BloomEffect
     public void applyEffects(ColorEffect colorEffect, GLRenderer renderer, FXAAEffect fxaaEffect, CRTEffect crtEffect, ToonEffect toonEffect, NTSCCombinedEffect ntscEffect, DepthEffect depthEffect, SaturationEffect saturationEffect) {
         Log.d(TAG, "applyEffects called. Effects passed - Color: " + (colorEffect != null) + ", Depth: " + (depthEffect != null) + ", Saturation: " + (saturationEffect != null));
 
@@ -555,8 +576,8 @@ public class ScreenEffectDialog extends ContentDialog {
         boolean enableCRTShader = cbEnableCRTShader.isChecked();
         boolean enableToonShader = cbEnableToonShader.isChecked();
         boolean enableNTSCEffect = cbEnableNTSCEffect.isChecked();
-        boolean enableDepthEffect = cbEnableDepthEffect.isChecked(); // Новое значение
-        boolean enableSaturation = cbEnableSaturation.isChecked(); // Новое значение
+        boolean enableDepthEffect = cbEnableDepthEffect.isChecked();
+        boolean enableSaturation = cbEnableSaturation.isChecked();
 
         Log.d(TAG, "Applying settings - Bright: " + brightness + ", Contrast: " + contrast + ", Gamma: " + gamma + ", Sharp: " + sharpness + ", DepthStr: " + depthStrength + ", DepthFocus: " + depthFocus + ", Saturation: " + saturation + ", DepthEnabled: " + enableDepthEffect + ", SaturationEnabled: " + enableSaturation);
 
@@ -631,37 +652,35 @@ public class ScreenEffectDialog extends ContentDialog {
 
         // Apply or remove DepthEffect
         if (enableDepthEffect) {
-            if (depthEffect == null) { // Проверяем, существует ли уже эффект в композере
+            if (depthEffect == null) {
                 Log.d(TAG, "Creating new DepthEffect and adding to composer");
-                depthEffect = new DepthEffect(); // Создаём новый
-                renderer.getEffectComposer().addEffect(depthEffect); // Добавляем в композер
+                depthEffect = new DepthEffect();
+                renderer.getEffectComposer().addEffect(depthEffect);
             } else {
                 Log.d(TAG, "Using existing DepthEffect from composer, updating parameters");
             }
-            // Настройка параметров всегда происходит, если эффект включён
             depthEffect.setDepthStrength(depthStrength);
             depthEffect.setDepthFocus(depthFocus);
-        } else if (depthEffect != null) { // Если эффект выключен и он существовал в композере
+        } else if (depthEffect != null) {
             Log.d(TAG, "Removing DepthEffect from composer");
-            renderer.getEffectComposer().removeEffect(depthEffect); // Удаляем его
+            renderer.getEffectComposer().removeEffect(depthEffect);
         } else {
             Log.d(TAG, "DepthEffect is disabled and not present in composer, nothing to do.");
         }
 
         // Apply or remove SaturationEffect
         if (enableSaturation) {
-            if (saturationEffect == null) { // Проверяем, существует ли уже эффект в композере
+            if (saturationEffect == null) {
                 Log.d(TAG, "Creating new SaturationEffect and adding to composer");
-                saturationEffect = new SaturationEffect(); // Создаём новый
-                renderer.getEffectComposer().addEffect(saturationEffect); // Добавляем в композер
+                saturationEffect = new SaturationEffect();
+                renderer.getEffectComposer().addEffect(saturationEffect);
             } else {
                 Log.d(TAG, "Using existing SaturationEffect from composer, updating parameters");
             }
-            // Настройка параметров всегда происходит, если эффект включён
             saturationEffect.setSaturation(saturation);
-        } else if (saturationEffect != null) { // Если эффект выключен и он существовал в композере
+        } else if (saturationEffect != null) {
             Log.d(TAG, "Removing SaturationEffect from composer");
-            renderer.getEffectComposer().removeEffect(saturationEffect); // Удаляем его
+            renderer.getEffectComposer().removeEffect(saturationEffect);
         } else {
             Log.d(TAG, "SaturationEffect is disabled and not present in composer, nothing to do.");
         }
