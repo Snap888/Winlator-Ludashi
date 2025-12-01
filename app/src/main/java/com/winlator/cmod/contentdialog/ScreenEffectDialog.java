@@ -426,7 +426,7 @@ public class ScreenEffectDialog extends ContentDialog {
         } else {
             if (colorEffect == null) {
                 colorEffect = new ColorEffect();
-                colorEffect.setRenderer(renderer);
+                colorEffect.setTextureSize(renderer.getViewportWidth(), renderer.getViewportHeight());
             }
             
             colorEffect.setBrightness(brightness);
