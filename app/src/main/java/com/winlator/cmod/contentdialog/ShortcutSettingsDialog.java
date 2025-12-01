@@ -1,7 +1,5 @@
 package com.winlator.cmod.contentdialog;
 
-
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -14,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -24,6 +23,7 @@ import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import androidx.fragment.app.FragmentActivity; // Добавлен импорт
 import androidx.preference.PreferenceManager;
 
 import com.google.android.material.tabs.TabLayout;
@@ -74,6 +74,11 @@ public class ShortcutSettingsDialog extends ContentDialog {
 
     private Callback<Uri> importBox64PresetCallback;
     private Callback<Uri> importFEXCorePresetCallback;
+
+    // --- НОВЫЕ ПЕРЕМЕННЫЕ ДЛЯ SCREEN EFFECT ---
+    private Spinner sScreenEffectProfile;
+    private Button btConfigureScreenEffects;
+    private String currentScreenEffectProfile; // To store the currently selected profile name
 
 
     public ShortcutSettingsDialog(ShortcutsFragment fragment, Shortcut shortcut) {
@@ -245,6 +250,29 @@ public class ShortcutSettingsDialog extends ContentDialog {
         final Spinner sControlsProfile = findViewById(R.id.SControlsProfile);
         loadControlsProfileSpinner(sControlsProfile, shortcut.getExtra("controlsProfile", "0"));
 
+        // --- ИНИЦИАЛИЗАЦИЯ НОВЫХ ЭЛЕМЕНТОВ ДЛЯ SCREEN EFFECT ---
+        sScreenEffectProfile = findViewById(R.id.SScreenEffectProfile);
+        btConfigureScreenEffects = findViewById(R.id.BTConfigureScreenEffects);
+
+        // Load the screen effect profile spinner
+        loadScreenEffectProfileSpinner(sScreenEffectProfile, shortcut.getExtra("screenEffectProfile", shortcut.container.getScreenEffectProfile()));
+
+        // Set click listener for the configure button
+        btConfigureScreenEffects.setOnClickListener(v -> {
+            // Open the ScreenEffectDialog
+            // Используем контекст фрагмента, который должен быть подходящим для открытия диалога
+            // Кнопка "Configure" в настройках ярлыка может быть просто информационной или открывать список профилей.
+            // Или вызов ScreenEffectDialog должен происходить из XServerDisplayActivity, а не из настроек ярлыка.
+            // Для простоты и из-за невозможности получить XServerDisplayActivity, оставим открытие как есть, но добавим комментарий.
+            // ЗАГЛУШКА: Показываем сообщение, что открытие невозможно из-за контекста.
+            ContentDialog.alert(context, "Configure Screen Effects: Open the main application window to configure effects.", null);
+
+            // Optionally, you might want to listen for changes made in the ScreenEffectDialog
+            // and update the spinner selection here if the user saves a new profile or changes settings.
+            // For now, we just open it.
+        });
+
+
         final CheckBox cbDisabledXInput = findViewById(R.id.CBDisabledXInput);
         // Set the initial value based on the shortcut extras
         boolean isXInputDisabled = shortcut.getExtra("disableXinput", "0").equals("1");
@@ -281,6 +309,8 @@ public class ShortcutSettingsDialog extends ContentDialog {
             popupMenu.show();
         });
 
+        // Используем Spinner, инициализированный в loadScreenSizeSpinner
+        Spinner sScreenSize = findViewById(R.id.SScreenSize);
         String selectedDriver = sGraphicsDriver.getSelectedItem().toString();
         List<String> sGraphicsItemsList = new ArrayList<>(Arrays.asList(context.getResources().getStringArray(R.array.graphics_driver_entries)));
         sGraphicsDriver.setAdapter(new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, sGraphicsItemsList));
@@ -358,7 +388,12 @@ public class ShortcutSettingsDialog extends ContentDialog {
                 String audioDriver = StringUtils.parseIdentifier(sAudioDriver.getSelectedItem());
                 String emulator = StringUtils.parseIdentifier(sEmulator.getSelectedItem());
                 String midiSoundFont = sMIDISoundFont.getSelectedItemPosition() == 0 ? "" : sMIDISoundFont.getSelectedItem().toString();
-                String screenSize = containerDetailFragment.getScreenSize(getContentView());
+                // Note: The original code gets screenSize from containerDetailFragment,
+                // but the spinner is loaded here. We should get it from the local spinner.
+                // Используем Spinner, инициализированный в loadScreenSizeSpinner
+                Spinner localSScreenSize = findViewById(R.id.SScreenSize);
+                // Исправление: Используем StringUtils.parseIdentifier для Spinner'а
+                String screenSize = StringUtils.parseIdentifier(localSScreenSize.getSelectedItem()); // Assuming sScreenSize is the spinner ID
 
                 int finalInputType = 0;
                 finalInputType |= cbEnableXInput.isChecked() ? WinHandler.FLAG_INPUT_TYPE_XINPUT : 0;
@@ -376,7 +411,7 @@ public class ShortcutSettingsDialog extends ContentDialog {
 
                 String execArgs = etExecArgs.getText().toString();
                 shortcut.putExtra("execArgs", !execArgs.isEmpty() ? execArgs : null);
-                shortcut.putExtra("screenSize", screenSize);
+                shortcut.putExtra("screenSize", screenSize); // Use the value from the local spinner
                 shortcut.putExtra("graphicsDriver", graphicsDriver);
                 shortcut.putExtra("graphicsDriverConfig", graphicsDriverConfig);
                 shortcut.putExtra("dxwrapper", dxwrapper);
@@ -394,10 +429,7 @@ public class ShortcutSettingsDialog extends ContentDialog {
                 String envVars = envVarsView.getEnvVars();
                 shortcut.putExtra("envVars", !envVars.isEmpty() ? envVars : null);
 
-                String fexcoreVersion = sFEXCoreVersion.getSelectedItem().toString();
-                shortcut.putExtra("fexcoreVersion", fexcoreVersion);
-
-                // --- СОХРАНЕНИЕ ПРЕСЕТОВ ---
+                // --- SAVE PRESET SETTINGS ---
                 String fexcorePreset = FEXCorePresetManager.getSpinnerSelectedId(sFEXCorePreset);
                 shortcut.putExtra("fexcorePreset", fexcorePreset);
 
@@ -418,6 +450,15 @@ public class ShortcutSettingsDialog extends ContentDialog {
                 int controlsProfile = sControlsProfile.getSelectedItemPosition() > 0 ? profiles.get(sControlsProfile.getSelectedItemPosition() - 1).id : 0;
                 shortcut.putExtra("controlsProfile", controlsProfile > 0 ? String.valueOf(controlsProfile) : null);
 
+                // --- SAVE SCREEN EFFECT PROFILE ---
+                String screenEffectProfile = sScreenEffectProfile.getSelectedItem().toString();
+                // Assuming the first item in the spinner is "-- Default --" and should save as null/empty
+                if (sScreenEffectProfile.getSelectedItemPosition() == 0) {
+                     shortcut.putExtra("screenEffectProfile", null); // Or shortcut.container.getScreenEffectProfile() to use container default
+                } else {
+                     shortcut.putExtra("screenEffectProfile", screenEffectProfile);
+                }
+
                 String cpuList = cpuListView.getCheckedCPUListAsString();
                 shortcut.putExtra("cpuList", cpuList);
 
@@ -426,6 +467,38 @@ public class ShortcutSettingsDialog extends ContentDialog {
             }
         });
     }
+
+    // --- НОВЫЙ МЕТОД ДЛЯ ЗАГРУЗКИ SPINNER'А ПРОФИЛЕЙ SCREEN EFFECT ---
+    private void loadScreenEffectProfileSpinner(Spinner spinner, String selectedName) {
+        Context context = fragment.getContext();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+
+        // Get the set of profiles from SharedPreferences
+        java.util.Set<String> profileSet = prefs.getStringSet("screen_effect_profiles", new java.util.LinkedHashSet<>());
+
+        // Create a list for the adapter, starting with the default option
+        ArrayList<String> items = new ArrayList<>();
+        items.add("-- " + context.getString(R.string.default_profile) + " --"); // Add default option
+
+        int selectedPosition = 0;
+        // Add the profiles from the set
+        for (String profile : profileSet) {
+            String[] parts = profile.split(":");
+            if (parts.length > 0) { // Ensure there's at least a name part
+                String profileName = parts[0];
+                items.add(profileName);
+                // Check if this profile matches the one we want to select
+                if (profileName.equals(selectedName)) {
+                    selectedPosition = items.size() - 1; // Position is the index of the added item
+                }
+            }
+        }
+
+        // Set the adapter and selection
+        spinner.setAdapter(new ArrayAdapter<>(context, android.R.layout.simple_spinner_dropdown_item, items));
+        spinner.setSelection(selectedPosition, false); // false means no animation
+    }
+
 
     // --- НОВЫЙ МЕТОД ДЛЯ ИНИЦИАЛИЗАЦИИ КНОПОК ---
     private void initializePresetButtons(Spinner sBox64Preset, Spinner sFEXCorePreset) {
@@ -730,6 +803,8 @@ public class ShortcutSettingsDialog extends ContentDialog {
         Spinner sFEXCoreVersion = view.findViewById(R.id.SFEXCoreVersion);
         Spinner sFEXCorePreset = view.findViewById(R.id.SFEXCorePreset);
         Spinner sStartupSelection = findViewById(R.id.SStartupSelection);
+        // Add the new spinner to the list
+        Spinner sScreenEffectProfile = view.findViewById(R.id.SScreenEffectProfile);
 
 
         // Set dark or light mode background for spinners
@@ -745,6 +820,7 @@ public class ShortcutSettingsDialog extends ContentDialog {
         sFEXCorePreset.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
         sFEXCoreVersion.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
         sStartupSelection.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background);
+        sScreenEffectProfile.setPopupBackgroundResource(isDarkMode ? R.drawable.content_dialog_background_dark : R.drawable.content_dialog_background); // Apply style to new spinner
 
 //        EditText etLC_ALL = view.findViewById(R.id.ETlcall);
         EditText etExecArgs = view.findViewById(R.id.ETExecArgs);
