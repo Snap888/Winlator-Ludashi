@@ -1,25 +1,24 @@
 package com.winlator.cmod.renderer.material;
 
 public class ScreenMaterial extends ShaderMaterial {
-    private static final String VERTEX_SHADER = String.join("\n",
-        "attribute vec2 position;",
-        "varying vec2 vUV;",
-        "void main() {",
-        "    // Input 'position' is in UV space [0,1] for both x and y",
-        "    vUV = position;",
-        "    // Convert UV [0,1] to NDC [-1,1]",
-        "    gl_Position = vec4(position * 2.0 - 1.0, 0.0, 1.0);",
-        "}"
-    );
-
+    // Constructor for ScreenMaterial
     public ScreenMaterial() {
-        super();
-        // Only include truly universal uniforms.
-        setUniformNames("screenTexture");
+        super(); // Calls the constructor of the superclass ShaderMaterial
+        // Sets the uniform names that will be used in the shaders
+        setUniformNames(new String[]{"resolution", "screenTexture"});
     }
 
     @Override
     protected String getVertexShader() {
-        return VERTEX_SHADER;
+        // Returns the GLSL vertex shader as a string.
+        // This shader calculates the position and texture coordinates for rendering the screen quad.
+        return String.join("\n", new CharSequence[]{
+                "attribute vec2 position;",
+                "varying vec2 vUV;",
+                "void main() {",
+                "    vUV = position;",
+                "    gl_Position = vec4(2.0 * position.x - 1.0, 2.0 * position.y - 1.0, 0.0, 1.0);",
+                "}"
+        });
     }
 }
