@@ -12,60 +12,44 @@ public class ShaderMaterial {
 
     public void setUniformNames(String... names) {
         uniforms.clear();
-        for (String name : names) {
-            uniforms.put(name, -1);
-        }
+        for (String name : names) uniforms.put(name, -1);
     }
 
     protected static int compileShaders(String vertexShader, String fragmentShader) {
+        int beginIndex = vertexShader.indexOf("void main() {");
+        vertexShader = vertexShader.substring(0, beginIndex) +
+            "vec2 applyXForm(vec2 p, float xform[6]) {\n" +
+                "return vec2(xform[0] * p.x + xform[2] * p.y + xform[4], xform[1] * p.x + xform[3] * p.y + xform[5]);\n" +
+            "}\n" +
+        vertexShader.substring(beginIndex);
+
         int programId = GLES20.glCreateProgram();
         int[] compiled = new int[1];
 
-        // Compile vertex shader
         int vertexShaderId = GLES20.glCreateShader(GLES20.GL_VERTEX_SHADER);
         GLES20.glShaderSource(vertexShaderId, vertexShader);
         GLES20.glCompileShader(vertexShaderId);
 
         GLES20.glGetShaderiv(vertexShaderId, GLES20.GL_COMPILE_STATUS, compiled, 0);
         if (compiled[0] == 0) {
-            String log = GLES20.glGetShaderInfoLog(vertexShaderId);
-            GLES20.glDeleteShader(vertexShaderId);
-            throw new RuntimeException("Could not compile vertex shader:\n" + log);
+            throw new RuntimeException("Could not compile vertex shader: \n" + GLES20.glGetShaderInfoLog(vertexShaderId));
         }
         GLES20.glAttachShader(programId, vertexShaderId);
 
-        // Compile fragment shader
         int fragmentShaderId = GLES20.glCreateShader(GLES20.GL_FRAGMENT_SHADER);
         GLES20.glShaderSource(fragmentShaderId, fragmentShader);
         GLES20.glCompileShader(fragmentShaderId);
 
         GLES20.glGetShaderiv(fragmentShaderId, GLES20.GL_COMPILE_STATUS, compiled, 0);
         if (compiled[0] == 0) {
-            String log = GLES20.glGetShaderInfoLog(fragmentShaderId);
-            GLES20.glDeleteShader(vertexShaderId);
-            GLES20.glDeleteShader(fragmentShaderId);
-            GLES20.glDeleteProgram(programId);
-            throw new RuntimeException("Could not compile fragment shader:\n" + log);
+            throw new RuntimeException("Could not compile fragment shader: \n" + GLES20.glGetShaderInfoLog(fragmentShaderId));
         }
         GLES20.glAttachShader(programId, fragmentShaderId);
 
-        // Link program
         GLES20.glLinkProgram(programId);
 
-        int[] linked = new int[1];
-        GLES20.glGetProgramiv(programId, GLES20.GL_LINK_STATUS, linked, 0);
-        if (linked[0] == 0) {
-            String log = GLES20.glGetProgramInfoLog(programId);
-            GLES20.glDeleteShader(vertexShaderId);
-            GLES20.glDeleteShader(fragmentShaderId);
-            GLES20.glDeleteProgram(programId);
-            throw new RuntimeException("Could not link shader program:\n" + log);
-        }
-
-        // Clean up shaders
         GLES20.glDeleteShader(vertexShaderId);
         GLES20.glDeleteShader(fragmentShaderId);
-
         return programId;
     }
 
@@ -78,48 +62,40 @@ public class ShaderMaterial {
     }
 
     public void use() {
-        if (programId == 0) {
-            programId = compileShaders(getVertexShader(), getFragmentShader());
-            // Cache all uniform locations once
-            for (int i = 0; i < uniforms.size(); i++) {
+        if (programId == 0) programId = compileShaders(getVertexShader(), getFragmentShader());
+        GLES20.glUseProgram(programId);
+
+        for (int i = 0; i < uniforms.size(); i++) {
+            int location = uniforms.valueAt(i);
+            if (location == -1) {
                 String name = uniforms.keyAt(i);
-                int location = GLES20.glGetUniformLocation(programId, name);
-                uniforms.setValueAt(i, location);
+                uniforms.put(name, GLES20.glGetUniformLocation(programId, name));
             }
         }
-        GLES20.glUseProgram(programId);
     }
 
     public int getUniformLocation(String name) {
         Integer location = uniforms.get(name);
         if (location == null) {
-            Log.e("ShaderMaterial", "Uniform '" + name + "' is not registered in setUniformNames().");
+            Log.e("ShaderMaterial", "Uniform " + name + " is not registered in setUniformNames().");
             return -1;
         }
         if (location == -1) {
-            Log.w("ShaderMaterial", "Uniform '" + name + "' is not active in the shader (location = -1).");
+            Log.e("ShaderMaterial", "Uniform " + name + " location not found in shader program.");
         }
         return location;
     }
 
+
     public void destroy() {
-        if (programId != 0) {
-            GLES20.glDeleteProgram(programId);
-            programId = 0;
-        }
+        GLES20.glDeleteProgram(programId);
+        programId = 0;
     }
 
     public void setUniformVec2(String uniformName, float x, float y) {
         int location = getUniformLocation(uniformName);
         if (location != -1) {
             GLES20.glUniform2f(location, x, y);
-        }
-    }
-
-    public void setUniformVec3(String uniformName, float x, float y, float z) {
-        int location = getUniformLocation(uniformName);
-        if (location != -1) {
-            GLES20.glUniform3f(location, x, y, z);
         }
     }
 
@@ -130,12 +106,15 @@ public class ShaderMaterial {
         }
     }
 
-    public void setUniformFloat(String uniformName, float value) {
-        int location = getUniformLocation(uniformName);
-        if (location != -1) {
+    public void setUniformFloat(String name, float value) {
+        int location = getUniformLocation(name);
+        if (location >= 0) {
             GLES20.glUniform1f(location, value);
+        } else {
+            Log.e("ScreenMaterial", "Uniform location for " + name + " not found!");
         }
     }
+
 
     public void setUniformFloatArray(String uniformName, float[] values) {
         int location = getUniformLocation(uniformName);
@@ -147,10 +126,22 @@ public class ShaderMaterial {
     public void setUniformColor(String uniformName, int color) {
         int location = getUniformLocation(uniformName);
         if (location != -1) {
-            float r = Color.red(color) / 255.0f;
-            float g = Color.green(color) / 255.0f;
-            float b = Color.blue(color) / 255.0f;
-            GLES20.glUniform3f(location, r, g, b);
+            float red = Color.red(color) / 255.0f;
+            float green = Color.green(color) / 255.0f;
+            float blue = Color.blue(color) / 255.0f;
+            GLES20.glUniform3f(location, red, green, blue);
         }
     }
+
+    public void setUniformVec3(String uniformName, float x, float y, float z) {
+        int location = getUniformLocation(uniformName);
+        if (location != -1) {
+            GLES20.glUniform3f(location, x, y, z);
+        } else {
+            Log.e("ShaderMaterial", "Uniform location for " + uniformName + " not found!");
+        }
+    }
+
+
+
 }
