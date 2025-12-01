@@ -8,7 +8,7 @@ public class ColorEffect extends Effect {
     private float brightness;
     private float contrast;
     private float gamma;
-    private float sharpness;
+    private float sharpness; // Теперь используется для изначальной резкости
     private GLRenderer renderer;
 
     public ColorEffect() {
@@ -16,7 +16,7 @@ public class ColorEffect extends Effect {
         this.brightness = 0.0f;
         this.contrast = 0.0f;
         this.gamma = 1.0f;
-        this.sharpness = 0.0f;
+        this.sharpness = 0.0f; // [0.0, 0.4]
     }
 
     public void setRenderer(GLRenderer renderer) {
@@ -34,7 +34,7 @@ public class ColorEffect extends Effect {
     }
 
     public void setBrightness(float brightness) {
-        this.brightness = brightness;
+        this.brightness = Math.max(-1.0f, Math.min(1.0f, brightness)); // Ограничение [-1.0, 1.0]
     }
 
     public float getContrast() {
@@ -42,7 +42,7 @@ public class ColorEffect extends Effect {
     }
 
     public void setContrast(float contrast) {
-        this.contrast = contrast;
+        this.contrast = Math.max(-0.5f, Math.min(1.0f, contrast)); // Ограничение [-0.5, 1.0]
     }
 
     public float getGamma() {
@@ -50,7 +50,7 @@ public class ColorEffect extends Effect {
     }
 
     public void setGamma(float gamma) {
-        this.gamma = gamma;
+        this.gamma = Math.max(0.1f, Math.min(3.0f, gamma)); // Ограничение [0.1, 3.0]
     }
 
     public float getSharpness() {
@@ -58,8 +58,8 @@ public class ColorEffect extends Effect {
     }
 
     public void setSharpness(float sharpness) {
-        // Ограничиваем резкость до 40 (0.4 в реальных значениях)
-        this.sharpness = Math.min(sharpness, 0.4f);
+        // Ограничиваем резкость до 40% (0.4 в реальных значениях)
+        this.sharpness = Math.min(Math.max(0.0f, sharpness), 0.4f);
     }
 
     private class ColorEffectMaterial extends ScreenMaterial {
@@ -80,7 +80,7 @@ public class ColorEffect extends Effect {
                     "uniform float sharpness;",
                     "varying vec2 vUV;",
                     
-                    // Усиленный фильтр резкости с расширенным ядром
+                    // Усиленный фильтр резкости с расширенным ядром (изначальная реализация)
                     "vec3 applySharpness(vec2 uv, vec3 originalColor) {",
                     "    if (sharpness == 0.0) return originalColor;",
                     "    ",
