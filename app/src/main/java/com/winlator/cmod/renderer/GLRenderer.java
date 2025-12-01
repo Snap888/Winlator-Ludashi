@@ -108,7 +108,6 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
             fullscreen = !fullscreen;
             toggleFullscreen = false;
             viewportNeedsUpdate = true;
-
         }
 
         drawFrame();
@@ -126,8 +125,7 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
         if (viewportNeedsUpdate && magnifierEnabled) {
             if (fullscreen) {
                 GLES20.glViewport(0, 0, surfaceWidth, surfaceHeight);
-            }
-            else {
+            } else {
                 GLES20.glViewport(viewTransformation.viewOffsetX, viewTransformation.viewOffsetY, viewTransformation.viewWidth, viewTransformation.viewHeight);
             }
             viewportNeedsUpdate = false;
@@ -194,7 +192,6 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
         }
     }
 
-
     @Override
     public void onMapWindow(Window window) {
         xServerView.queueEvent(this::updateScene);
@@ -222,8 +219,7 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
     public void onUpdateWindowGeometry(final Window window, boolean resized) {
         if (resized) {
             xServerView.queueEvent(this::updateScene);
-        }
-        else xServerView.queueEvent(() -> updateWindowPosition(window));
+        } else xServerView.queueEvent(() -> updateWindowPosition(window));
         xServerView.requestRender();
     }
 
@@ -237,7 +233,6 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
         xServerView.requestRender();
     }
 
-
     private void renderDrawable(Drawable drawable, int x, int y, ShaderMaterial material) {
         if (drawable == null) return;
         synchronized (drawable.renderLock) {
@@ -245,7 +240,6 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
             texture.updateFromDrawable(drawable);
 
             XForm.set(tmpXForm1, x, y, drawable.width, drawable.height);
-
             XForm.multiply(tmpXForm1, tmpXForm1, tmpXForm2);
 
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
@@ -274,7 +268,6 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
         if (error != GLES20.GL_NO_ERROR) {
             Log.e("GLRenderer", "OpenGL Error: " + error);
         }
-
     }
 
     private void renderCursor() {
@@ -290,8 +283,7 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
 
             if (cursor != null) {
                 if (cursor.isVisible()) renderDrawable(cursor.cursorImage, x - cursor.hotSpotX, y - cursor.hotSpotY, cursorMaterial);
-            }
-            else renderDrawable(rootCursorDrawable, x, y, cursorMaterial);
+            } else renderDrawable(rootCursorDrawable, x, y, cursorMaterial);
         }
 
         quadVertices.disable();
@@ -412,12 +404,11 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
         return quadVertices;
     }
 
-    public EffectComposer getEffectComposer (){
+    public EffectComposer getEffectComposer() {
         return effectComposer;
     }
 
     private void renderWindowEffect(Drawable drawable, int x, int y, ShaderMaterial material) {
-        // Implement the rendering effect logic here
         synchronized (drawable.renderLock) {
             Texture texture = drawable.getTexture();
             texture.updateFromDrawable(drawable);
@@ -440,5 +431,14 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
 
     public void setUnviewableWMClasses(String... unviewableWMNames) {
         this.unviewableWMClasses = unviewableWMNames;
+    }
+
+    // --- Added for effect compatibility ---
+    public int getViewportWidth() {
+        return surfaceWidth;
+    }
+
+    public int getViewportHeight() {
+        return surfaceHeight;
     }
 }
