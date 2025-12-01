@@ -201,7 +201,8 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
     private boolean isDarkMode;
 
-    private String screenEffectProfile;
+    private String screenEffectProfile = null; // Для хранения имени профиля
+    private boolean screenEffectsApplied = false; // Флаг для отслеживания применения эффектов
 
     private GuestProgramLauncherComponent guestProgramLauncherComponent;
     private EnvVars overrideEnvVars;
@@ -711,10 +712,11 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         }
     }
 
-
     @Override
     public void onResume() {
         super.onResume();
+        Log.d("XServerDisplayActivity", "onResume called");
+        
         boolean gyroEnabled = preferences.getBoolean("gyro_enabled", true);
 
         if (gyroEnabled) {
@@ -726,6 +728,14 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             xServerView.onResume();
             environment.onResume();
         }
+        
+        // Убедитесь, что xServerView и Renderer инициализированы
+        if (xServerView != null && xServerView.getRenderer() != null) {
+            initializeScreenEffects(); // Вызываем метод при возобновлении
+        } else {
+            Log.w("XServerDisplayActivity", "Renderer not ready in onResume, effects not applied yet.");
+        }
+        
         startTime = System.currentTimeMillis();
         handler.postDelayed(savePlaytimeRunnable, SAVE_INTERVAL_MS);
         ProcessHelper.resumeAllWineProcesses();
@@ -734,6 +744,9 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
     @Override
     public void onPause() {
         super.onPause();
+        // Флаг сбрасывается, чтобы эффекты могли быть применены снова при возврате
+        screenEffectsApplied = false;
+        
         boolean gyroEnabled = preferences.getBoolean("gyro_enabled", true);
 
         if (gyroEnabled) {
@@ -753,6 +766,13 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         savePlaytimeData();
         handler.removeCallbacks(savePlaytimeRunnable);
         ProcessHelper.pauseAllWineProcesses();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Убедитесь, что флаг сброшен при уничтожении активности
+        screenEffectsApplied = false;
     }
 
 
@@ -815,11 +835,6 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                 AppUtils.restartApplication(getApplicationContext());
             }
         }, 1000);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
     }
 
     @Override
@@ -899,7 +914,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                 }
                 drawerLayout.closeDrawers();
                 break;
-                                    case R.id.main_menu_screen_effects:
+            case R.id.main_menu_screen_effects:
                 Log.d("ScreenEffectDialog", "Initializing ScreenEffectDialog");
                 ScreenEffectDialog screenEffectDialog = new ScreenEffectDialog(this);
                 screenEffectDialog.setOnConfirmCallback(() -> {
@@ -1896,6 +1911,207 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         this.screenEffectProfile = screenEffectProfile;
     }
 
+    /**
+     * Инициализирует и применяет профиль Screen Effect, если он задан.
+     * Этот метод должен вызываться после инициализации GLRenderer.
+     */
+    private void initializeScreenEffects() {
+        if (screenEffectsApplied) {
+            Log.d("XServerDisplayActivity", "Screen effects already applied or profile not set, skipping.");
+            return; // Избегаем повторного применения
+        }
+
+        String profileToApply = null;
+if (shortcut != null) {
+    // Get the profile specified in the shortcut
+    profileToApply = shortcut.getExtra("screenEffectProfile", null);
+    Log.d("XServerDisplayActivity", "Attempting to apply screen effect profile from shortcut: " + profileToApply);
+    if (profileToApply == null) {
+        // If no profile is set in the shortcut, use the container's default
+        profileToApply = container.getScreenEffectProfile();
+        Log.d("XServerDisplayActivity", "No profile in shortcut, using container default: " + profileToApply);
+    }
+} else {
+    // If no shortcut, use the activity's stored profile or container's default
+    profileToApply = screenEffectProfile != null ? screenEffectProfile : container.getScreenEffectProfile();
+    Log.d("XServerDisplayActivity", "Attempting to apply screen effect profile (container/default): " + profileToApply);
 }
 
+if (profileToApply != null && !profileToApply.isEmpty()) {
+    Log.d("XServerDisplayActivity", "Applying screen effect profile: " + profileToApply);
+    applyScreenEffectProfile(profileToApply);
+    screenEffectsApplied = true;
+} else {
+    Log.d("XServerDisplayActivity", "No screen effect profile specified or found, skipping application.");
+    screenEffectsApplied = true; // Consider effects "applied" as "no profile" state
+}
+    }
 
+    /**
+     * Применяет конкретный профиль Screen Effect.
+     * @param profileName Имя профиля для применения.
+     */
+    private void applyScreenEffectProfile(String profileName) {
+        GLRenderer renderer = xServerView.getRenderer();
+        if (renderer == null) {
+            Log.e("XServerDisplayActivity", "Cannot apply screen effect profile: Renderer is null.");
+            return;
+        }
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        java.util.Set<String> profileSet = prefs.getStringSet("screen_effect_profiles", new java.util.LinkedHashSet<>());
+
+        // Поиск данных профиля
+        String profileData = null;
+        for (String profile : profileSet) {
+            String[] parts = profile.split(":", 2); // Разделение на имя и данные, максимум 2 части
+            if (parts.length == 2 && parts[0].equals(profileName)) {
+                profileData = parts[1];
+                break;
+            }
+        }
+
+        if (profileData == null || profileData.isEmpty()) {
+            Log.w("XServerDisplayActivity", "Screen effect profile '" + profileName + "' not found in SharedPreferences.");
+            return;
+        }
+
+        Log.d("XServerDisplayActivity", "Found profile data for '" + profileName + "': " + profileData);
+
+        // Парсинг данных профиля
+        KeyValueSet settings = new KeyValueSet(profileData);
+
+        // Загрузка параметров из профиля
+        float brightness = settings.getFloat("brightness", 0);
+        float contrast = settings.getFloat("contrast", 0);
+        float gamma = settings.getFloat("gamma", 1.0f);
+        float sharpness = settings.getFloat("sharpness", 0);
+        float depthStrength = settings.getFloat("depth_strength", 0);
+        float depthFocus = settings.getFloat("depth_focus", 0.5f);
+        float saturation = settings.getFloat("saturation", 1.0f);
+
+        boolean enableFXAA = settings.getBoolean("fxaa", false);
+        boolean enableCRTShader = settings.getBoolean("crt_shader", false);
+        boolean enableToonShader = settings.getBoolean("toon_shader", false);
+        boolean enableNTSCEffect = settings.getBoolean("ntsc_effect", false);
+        boolean enableDepthEffect = settings.getBoolean("depth_effect", false);
+        boolean enableSaturation = settings.getBoolean("saturation_effect", false);
+
+        Log.d("XServerDisplayActivity", "Applying loaded settings - Bright: " + brightness + ", Contrast: " + contrast + ", Gamma: " + gamma + ", Sharp: " + sharpness + ", DepthStr: " + depthStrength + ", DepthFocus: " + depthFocus + ", Saturation: " + saturation + ", DepthEnabled: " + enableDepthEffect + ", SaturationEnabled: " + enableSaturation);
+
+        // --- Применение к рендереру ---
+        // Применение ColorEffect
+        ColorEffect colorEffect = (ColorEffect) renderer.getEffectComposer().getEffect(ColorEffect.class);
+        if (brightness == 0 && contrast == 0 && gamma == 1.0f && sharpness == 0) {
+            Log.d("XServerDisplayActivity", "Removing ColorEffect (default values)");
+            if (colorEffect != null) {
+                renderer.getEffectComposer().removeEffect(colorEffect);
+            }
+        } else {
+            if (colorEffect == null) {
+                Log.d("XServerDisplayActivity", "Creating new ColorEffect");
+                colorEffect = new ColorEffect();
+                colorEffect.setRenderer(renderer); // Убедитесь, что рендерер установлен
+            }
+            colorEffect.setBrightness(brightness);
+            colorEffect.setContrast(contrast);
+            colorEffect.setGamma(gamma);
+            colorEffect.setSharpness(sharpness);
+            Log.d("XServerDisplayActivity", "Adding/Updating ColorEffect in composer");
+            renderer.getEffectComposer().addEffect(colorEffect);
+        }
+
+        // Применение FXAAEffect
+        FXAAEffect fxaaEffect = (FXAAEffect) renderer.getEffectComposer().getEffect(FXAAEffect.class);
+        if (enableFXAA) {
+            if (fxaaEffect == null) {
+                Log.d("XServerDisplayActivity", "Creating new FXAAEffect");
+                fxaaEffect = new FXAAEffect();
+                renderer.getEffectComposer().addEffect(fxaaEffect);
+            }
+        } else if (fxaaEffect != null) {
+            Log.d("XServerDisplayActivity", "Removing FXAAEffect");
+            renderer.getEffectComposer().removeEffect(fxaaEffect);
+        }
+
+        // Применение CRTEffect
+        CRTEffect crtEffect = (CRTEffect) renderer.getEffectComposer().getEffect(CRTEffect.class);
+        if (enableCRTShader) {
+            if (crtEffect == null) {
+                Log.d("XServerDisplayActivity", "Creating new CRTEffect");
+                crtEffect = new CRTEffect();
+                renderer.getEffectComposer().addEffect(crtEffect);
+            }
+        } else if (crtEffect != null) {
+            Log.d("XServerDisplayActivity", "Removing CRTEffect");
+            renderer.getEffectComposer().removeEffect(crtEffect);
+        }
+
+        // Применение ToonEffect
+        ToonEffect toonEffect = (ToonEffect) renderer.getEffectComposer().getEffect(ToonEffect.class);
+        if (enableToonShader) {
+            if (toonEffect == null) {
+                Log.d("XServerDisplayActivity", "Creating new ToonEffect");
+                toonEffect = new ToonEffect();
+                renderer.getEffectComposer().addEffect(toonEffect);
+            }
+        } else if (toonEffect != null) {
+            Log.d("XServerDisplayActivity", "Removing ToonEffect");
+            renderer.getEffectComposer().removeEffect(toonEffect);
+        }
+
+        // Применение NTSCCombinedEffect
+        NTSCCombinedEffect ntscEffect = (NTSCCombinedEffect) renderer.getEffectComposer().getEffect(NTSCCombinedEffect.class);
+        if (enableNTSCEffect) {
+            if (ntscEffect == null) {
+                Log.d("XServerDisplayActivity", "Creating new NTSCCombinedEffect");
+                ntscEffect = new NTSCCombinedEffect();
+                renderer.getEffectComposer().addEffect(ntscEffect);
+            }
+        } else if (ntscEffect != null) {
+            Log.d("XServerDisplayActivity", "Removing NTSCCombinedEffect");
+            renderer.getEffectComposer().removeEffect(ntscEffect);
+        }
+
+        // Применение DepthEffect
+        DepthEffect depthEffect = (DepthEffect) renderer.getEffectComposer().getEffect(DepthEffect.class);
+        if (enableDepthEffect) {
+            if (depthEffect == null) {
+                Log.d("XServerDisplayActivity", "Creating new DepthEffect and adding to composer");
+                depthEffect = new DepthEffect();
+                renderer.getEffectComposer().addEffect(depthEffect);
+            } else {
+                Log.d("XServerDisplayActivity", "Using existing DepthEffect from composer, updating parameters");
+            }
+            depthEffect.setDepthStrength(depthStrength);
+            depthEffect.setDepthFocus(depthFocus);
+        } else if (depthEffect != null) {
+            Log.d("XServerDisplayActivity", "Removing DepthEffect from composer");
+            renderer.getEffectComposer().removeEffect(depthEffect);
+        } else {
+            Log.d("XServerDisplayActivity", "DepthEffect is disabled and not present in composer, nothing to do.");
+        }
+
+        // Применение SaturationEffect
+        SaturationEffect saturationEffect = (SaturationEffect) renderer.getEffectComposer().getEffect(SaturationEffect.class);
+        if (enableSaturation) {
+            if (saturationEffect == null) {
+                Log.d("XServerDisplayActivity", "Creating new SaturationEffect and adding to composer");
+                saturationEffect = new SaturationEffect();
+                renderer.getEffectComposer().addEffect(saturationEffect);
+            } else {
+                Log.d("XServerDisplayActivity", "Using existing SaturationEffect from composer, updating parameters");
+            }
+            saturationEffect.setSaturation(saturation);
+        } else if (saturationEffect != null) {
+            Log.d("XServerDisplayActivity", "Removing SaturationEffect from composer");
+            renderer.getEffectComposer().removeEffect(saturationEffect);
+        } else {
+            Log.d("XServerDisplayActivity", "SaturationEffect is disabled and not present in composer, nothing to do.");
+        }
+
+        // Принудительный рендер для применения эффектов
+        xServerView.requestRender();
+        Log.d("XServerDisplayActivity", "Screen effect profile '" + profileName + "' applied successfully.");
+    }
+}
