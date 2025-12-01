@@ -45,11 +45,13 @@ public class EffectComposer {
     }
 
     public synchronized void addEffect(Effect effect) {
-        if (!effects.contains(effect)) {
+        if (effect != null && !effects.contains(effect)) { // <--- Проверка на null
             effects.add(effect);
-//            Log.d(TAG, "Effect added: " + effect.getClass().getSimpleName());
+            Log.d(TAG, "Effect added: " + effect.getClass().getSimpleName()); // Включаем лог
+        } else if (effect == null) { // <--- Лог для null
+            Log.e(TAG, "Attempted to add a null effect.");
         } else {
-//            Log.d(TAG, "Effect already present: " + effect.getClass().getSimpleName());
+            Log.d(TAG, "Effect already present: " + effect.getClass().getSimpleName()); // Включаем лог
         }
         // Move this call to the end of a batch effect addition or modification to prevent immediate rendering
         renderer.xServerView.requestRender();
@@ -59,15 +61,15 @@ public class EffectComposer {
 
     // Gets an effect by its class type
     public synchronized <T extends Effect> T getEffect(Class<T> effectClass) {
-//        Log.d(TAG, "getEffect() called for: " + effectClass.getSimpleName());
+        Log.d(TAG, "getEffect() called for: " + effectClass.getSimpleName()); // Включаем лог
 
         for (Effect effect : effects) {
             if (effect.getClass() == effectClass) {
-//                Log.d(TAG, "Effect found: " + effectClass.getSimpleName());
+                Log.d(TAG, "Effect found: " + effectClass.getSimpleName()); // Включаем лог
                 return effectClass.cast(effect);
             }
         }
-//        Log.d(TAG, "Effect not found: " + effectClass.getSimpleName());
+        Log.d(TAG, "Effect not found: " + effectClass.getSimpleName()); // Включаем лог
         return null;
     }
 
@@ -80,10 +82,12 @@ public class EffectComposer {
 
     // Removes a specific effect from the composer
     public synchronized void removeEffect(Effect effect) {
-        if (effects.remove(effect)) {
-//            Log.d(TAG, "Effect removed: " + effect.getClass().getSimpleName());
+        if (effect != null && effects.remove(effect)) { // <--- Проверка на null
+            Log.d(TAG, "Effect removed: " + effect.getClass().getSimpleName()); // Включаем лог
+        } else if (effect == null) { // <--- Лог для null
+            Log.e(TAG, "Attempted to remove a null effect.");
         } else {
-//            Log.d(TAG, "Effect not found for removal: " + effect.getClass().getSimpleName());
+            Log.d(TAG, "Effect not found for removal: " + effect.getClass().getSimpleName()); // Включаем лог
         }
         renderer.xServerView.requestRender();
     }
@@ -98,7 +102,7 @@ public class EffectComposer {
 
         isRendering = true; // Set flag to true
 
-//        Log.d(TAG, "render() called");
+        Log.d(TAG, "render() called"); // Включаем лог
 
         initBuffers();
 
@@ -117,6 +121,7 @@ public class EffectComposer {
 
         // Iterate through each effect and render it
         for (Effect effect : effects) {
+            Log.d(TAG, "Processing effect in loop: " + effect.getClass().getSimpleName()); // Включаем лог
             boolean renderToScreen = effect == effects.get(effects.size() - 1);
             int targetFramebuffer = renderToScreen ? 0 : writeBuffer.getFramebuffer();
 
@@ -146,35 +151,39 @@ public class EffectComposer {
 
     // Renders a single effect
     private void renderEffect(Effect effect) {
-//        Log.d(TAG, "renderEffect() called for: " + effect.getClass().getSimpleName());
+        Log.d(TAG, "renderEffect() called for: " + effect.getClass().getSimpleName()); // Включаем лог
 
         ShaderMaterial material = effect.getMaterial();
         if (material == null) {
-//            Log.e(TAG, "Material is null for effect: " + effect.getClass().getSimpleName());
+            Log.e(TAG, "Material is null for effect: " + effect.getClass().getSimpleName()); // Включаем лог
             return;
         }
 
-        material.use();
-//        Log.d(TAG, "ShaderMaterial used: " + material.getClass().getSimpleName());
+        Log.d(TAG, "About to call material.use() for: " + effect.getClass().getSimpleName()); // Включаем лог
+        material.use(); // Вот тут должен вызваться use() DepthEffectMaterial
+        Log.d(TAG, "material.use() called for: " + effect.getClass().getSimpleName()); // Включаем лог
 
         // Bind the quad vertices to the shader program
         renderer.getQuadVertices().bind(material.programId);
-//        Log.d(TAG, "Quad vertices bound to program ID: " + material.programId);
+        Log.d(TAG, "Quad vertices bound to program ID: " + material.programId + " for: " + effect.getClass().getSimpleName()); // Включаем лог
 
         // Set uniform values
         material.setUniformVec2("resolution", renderer.surfaceWidth, renderer.surfaceHeight);
+        Log.d(TAG, "Set resolution uniform: " + renderer.surfaceWidth + "x" + renderer.surfaceHeight + " for: " + effect.getClass().getSimpleName()); // Включаем лог
+
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, readBuffer.getTextureId());
+        Log.d(TAG, "Bound texture ID: " + readBuffer.getTextureId() + " to GL_TEXTURE0 for: " + effect.getClass().getSimpleName()); // Включаем лог
         material.setUniformInt("screenTexture", 0);
-//        Log.d(TAG, "Uniforms set: resolution=" + renderer.surfaceWidth + "x" + renderer.surfaceHeight + ", screenTexture=" + readBuffer.getTextureId());
+        Log.d(TAG, "Set screenTexture uniform to 0 for: " + effect.getClass().getSimpleName()); // Включаем лог
 
         // Draw the quad
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, renderer.quadVertices.count());
-//        Log.d(TAG, "Quad drawn");
+        Log.d(TAG, "Quad drawn for: " + effect.getClass().getSimpleName()); // Включаем лог
 
         // Unbind the texture
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
-//        Log.d(TAG, "Texture unbound");
+        Log.d(TAG, "Texture unbound from GL_TEXTURE0 after: " + effect.getClass().getSimpleName()); // Включаем лог
     }
 
     // Swaps the read and write buffers
