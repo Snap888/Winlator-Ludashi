@@ -25,7 +25,6 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.winlator.cmod.R;
 import com.winlator.cmod.dialog.MultiBindingDialog;
 import com.winlator.cmod.inputcontrols.Binding;
 import com.winlator.cmod.inputcontrols.ControlElement;
@@ -123,13 +122,16 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
             view.findViewById(R.id.LLMultiBinding).setVisibility(View.GONE);
             view.findViewById(R.id.LLScrollBarOptions).setVisibility(View.GONE);
 
-            if (type == ControlElement.Type.BUTTON) {
+            if (type == ControlElement.Type.BUTTON || type == ControlElement.Type.TOUCH) {
                 view.findViewById(R.id.LLShape).setVisibility(View.VISIBLE);
-                view.findViewById(R.id.CBToggleSwitch).setVisibility(View.VISIBLE);
                 view.findViewById(R.id.LLCustomTextIcon).setVisibility(View.VISIBLE);
                 view.findViewById(R.id.LLShowOutline).setVisibility(View.VISIBLE);
-                view.findViewById(R.id.LLProfileSwitching).setVisibility(View.VISIBLE);
-                view.findViewById(R.id.LLMultiBinding).setVisibility(View.VISIBLE);
+                
+                if (type == ControlElement.Type.BUTTON) {
+                    view.findViewById(R.id.CBToggleSwitch).setVisibility(View.VISIBLE);
+                    view.findViewById(R.id.LLProfileSwitching).setVisibility(View.VISIBLE);
+                    view.findViewById(R.id.LLMultiBinding).setVisibility(View.VISIBLE);
+                }
             }
             else if (type == ControlElement.Type.RANGE_BUTTON) {
                 view.findViewById(R.id.LLRangeOptions).setVisibility(View.VISIBLE);
@@ -527,6 +529,7 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
         sbIconOpacity.setProgress((int)(element.getIconOpacity() * 100));
 
         CheckBox cbToggleSwitch = view.findViewById(R.id.CBToggleSwitch);
+        cbToggleSwitch.setVisibility(element.getType() == ControlElement.Type.BUTTON ? View.VISIBLE : View.GONE);
         cbToggleSwitch.setChecked(element.isToggleSwitch());
         cbToggleSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             element.setToggleSwitch(isChecked);
@@ -821,12 +824,15 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
     }
 
     private void loadTypeSpinner(final ControlElement element, Spinner spinner, Runnable callback) {
-        spinner.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, ControlElement.Type.names()));
+        // Add TOUCH to the list of available types
+        String[] typeNames = ControlElement.Type.names();
+        spinner.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, typeNames));
         spinner.setSelection(element.getType().ordinal(), false);
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                element.setType(ControlElement.Type.values()[position]);
+                ControlElement.Type newType = ControlElement.Type.values()[position];
+                element.setType(newType);
                 profile.save();
                 callback.run();
                 inputControlsView.invalidate();
@@ -858,7 +864,7 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
         container.removeAllViews();
 
         ControlElement.Type type = element.getType();
-        if (type == ControlElement.Type.BUTTON) {
+        if (type == ControlElement.Type.BUTTON || type == ControlElement.Type.TOUCH) {
             loadBindingSpinner(element, container, 0, R.string.binding);
         }
         else if (type == ControlElement.Type.D_PAD || type == ControlElement.Type.STICK || 
@@ -882,21 +888,46 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
 
         Runnable update = () -> {
             String[] bindingEntries = null;
-            switch (sBindingType.getSelectedItemPosition()) {
-                case 0:
-                    bindingEntries = Binding.keyboardBindingLabels();
-                    break;
-                case 1:
-                    bindingEntries = Binding.mouseBindingLabels();
-                    break;
-                case 2:
-                    bindingEntries = Binding.gamepadBindingLabels();
-                    break;
+            ControlElement.Type type = element.getType();
+            
+            // Для TOUCH элементов показываем только Mouse Click привязки
+            if (type == ControlElement.Type.TOUCH) {
+                bindingEntries = Binding.mouseClickBindingLabels();
+                sBindingType.setVisibility(View.GONE); // Скрываем выбор типа для Touch
+            } else {
+                switch (sBindingType.getSelectedItemPosition()) {
+                    case 0:
+                        bindingEntries = Binding.keyboardBindingLabels();
+                        break;
+                    case 1:
+                        bindingEntries = Binding.mouseBindingLabels();
+                        break;
+                    case 2:
+                        bindingEntries = Binding.gamepadBindingLabels();
+                        break;
+                }
+                sBindingType.setVisibility(View.VISIBLE); // Показываем для других типов
             }
 
             sBinding.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, bindingEntries));
             AppUtils.setSpinnerSelectionFromValue(sBinding, element.getBindingAt(index).toString());
         };
+
+        // Для TOUCH элементов автоматически выбираем тип Mouse
+        if (element.getType() == ControlElement.Type.TOUCH) {
+            sBindingType.setSelection(1, false); // Mouse
+        } else {
+            Binding selectedBinding = element.getBindingAt(index);
+            if (selectedBinding.isKeyboard()) {
+                sBindingType.setSelection(0, false);
+            }
+            else if (selectedBinding.isMouse()) {
+                sBindingType.setSelection(1, false);
+            }
+            else if (selectedBinding.isGamepad()) {
+                sBindingType.setSelection(2, false);
+            }
+        }
 
         sBindingType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -908,31 +939,27 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
             public void onNothingSelected(AdapterView<?> parent) {}
         });
 
-        Binding selectedBinding = element.getBindingAt(index);
-        if (selectedBinding.isKeyboard()) {
-            sBindingType.setSelection(0, false);
-        }
-        else if (selectedBinding.isMouse()) {
-            sBindingType.setSelection(1, false);
-        }
-        else if (selectedBinding.isGamepad()) {
-            sBindingType.setSelection(2, false);
-        }
-
         sBinding.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 Binding binding = Binding.NONE;
-                switch (sBindingType.getSelectedItemPosition()) {
-                    case 0:
-                        binding = Binding.keyboardBindingValues()[position];
-                        break;
-                    case 1:
-                        binding = Binding.mouseBindingValues()[position];
-                        break;
-                    case 2:
-                        binding = Binding.gamepadBindingValues()[position];
-                        break;
+                ControlElement.Type type = element.getType();
+                
+                // Для TOUCH элементов берем из Mouse Click привязок
+                if (type == ControlElement.Type.TOUCH) {
+                    binding = Binding.mouseClickBindingValues()[position];
+                } else {
+                    switch (sBindingType.getSelectedItemPosition()) {
+                        case 0:
+                            binding = Binding.keyboardBindingValues()[position];
+                            break;
+                        case 1:
+                            binding = Binding.mouseBindingValues()[position];
+                            break;
+                        case 2:
+                            binding = Binding.gamepadBindingValues()[position];
+                            break;
+                    }
                 }
 
                 if (binding != element.getBindingAt(index)) {
