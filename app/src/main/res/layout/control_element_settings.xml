@@ -1,1153 +1,1133 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <ScrollView
-     xmlns:android="http://schemas.android.com/apk/res/android"
-     xmlns:app="http://schemas.android.com/apk/res-auto"
-     android:layout_height="match_parent"
-     android:layout_width="match_parent"
-     android:scrollbars="vertical"
-     android:fillViewport="true">
-
-    <LinearLayout
-         android:layout_height="wrap_content"
-         android:layout_width="match_parent"
-         android:padding="12dp"
-         android:orientation="vertical">
-
-        <TextView
-             android:layout_height="wrap_content"
-             android:layout_width="wrap_content"
-             android:layout_marginBottom="4dp"
-             android:textSize="14sp"
-             android:text="@string/type"
-             android:textStyle="bold" />
-
-        <Spinner
-             android:layout_height="wrap_content"
-             android:layout_width="match_parent"
-             android:layout_marginBottom="12dp"
-             style="@style/ComboBox"
-             android:spinnerMode="dialog"
-             android:id="@+id/SType">
-
-        </Spinner>
-
-        <LinearLayout
-             android:layout_height="wrap_content"
-             android:layout_width="match_parent"
-             android:layout_marginBottom="12dp"
-             android:orientation="vertical"
-             android:id="@+id/LLShape">
-
-            <TextView
-                 android:layout_height="wrap_content"
-                 android:layout_width="wrap_content"
-                 android:layout_marginBottom="4dp"
-                 android:textSize="14sp"
-                 android:text="@string/shape"
-                 android:textStyle="bold" />
-
-            <Spinner
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 style="@style/ComboBox"
-                 android:spinnerMode="dialog"
-                 android:id="@+id/SShape">
-
-            </Spinner>
-
-        </LinearLayout>
-
-        <LinearLayout
-             android:layout_height="wrap_content"
-             android:layout_width="match_parent"
-             android:layout_marginBottom="16dp"
-             android:visibility="gone"
-             android:background="#f8f9fa"
-             android:padding="12dp"
-             android:orientation="vertical"
-             android:id="@+id/LLMultiBinding">
-
-            <TextView
-                 android:layout_height="wrap_content"
-                 android:layout_width="wrap_content"
-                 android:layout_marginBottom="8dp"
-                 android:textSize="16sp"
-                 android:text="Multi-Action Binding"
-                 android:textStyle="bold" />
-
-            <LinearLayout
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:layout_marginBottom="8dp"
-                 android:gravity="center_vertical"
-                 android:orientation="horizontal">
-
-                <CheckBox
-                     android:layout_height="wrap_content"
-                     android:layout_width="wrap_content"
-                     android:layout_marginEnd="8dp"
-                     android:checked="false"
-                     android:id="@+id/CBUseMultiBinding" />
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="0dp"
-                     android:textSize="14sp"
-                     android:layout_weight="1"
-                     android:text="Enable Multi-Actions"
-                     android:textStyle="bold" />
-
-            </LinearLayout>
-
-            <TextView
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:layout_marginBottom="12dp"
-                 android:textSize="12sp"
-                 android:textColor="#666666"
-                 android:layout_marginStart="32dp"
-                 android:text="Assign multiple actions to single button (A+B, Ctrl+C, etc.)" />
-
-            <Button
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:layout_marginBottom="8dp"
-                 android:backgroundTint="#2196F3"
-                 android:textColor="@android:color/white"
-                 android:enabled="false"
-                 android:id="@+id/BTConfigureMultiBinding"
-                 android:text="Configure Multi-Actions" />
-
-            <TextView
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:layout_marginBottom="8dp"
-                 android:background="#ffffff"
-                 android:gravity="center"
-                 android:padding="12dp"
-                 android:id="@+id/TVMultiBindingPreview"
-                 android:text="No multi-actions configured"
-                 android:textStyle="italic" />
-
-        </LinearLayout>
-
-        <LinearLayout
-             android:layout_height="wrap_content"
-             android:layout_width="match_parent"
-             android:layout_marginBottom="16dp"
-             android:visibility="gone"
-             android:background="#f8f9fa"
-             android:padding="12dp"
-             android:orientation="vertical"
-             android:id="@+id/LLProfileSwitching">
-
-            <TextView
-                 android:layout_height="wrap_content"
-                 android:layout_width="wrap_content"
-                 android:layout_marginBottom="8dp"
-                 android:textSize="16sp"
-                 android:text="Profile Switching"
-                 android:textStyle="bold" />
-
-            <LinearLayout
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:layout_marginBottom="8dp"
-                 android:gravity="center_vertical"
-                 android:orientation="horizontal">
-
-                <CheckBox
-                     android:layout_height="wrap_content"
-                     android:layout_width="wrap_content"
-                     android:layout_marginEnd="8dp"
-                     android:checked="false"
-                     android:id="@+id/CBEnableProfileSwitching" />
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="0dp"
-                     android:textSize="14sp"
-                     android:layout_weight="1"
-                     android:text="Enable Profile Switching"
-                     android:textStyle="bold" />
-
-            </LinearLayout>
-
-            <TextView
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:layout_marginBottom="12dp"
-                 android:textSize="12sp"
-                 android:textColor="#666666"
-                 android:layout_marginStart="32dp"
-                 android:text="Allow this button to switch between control profiles" />
-
-            <LinearLayout
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:layout_marginBottom="12dp"
-                 android:orientation="vertical">
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="wrap_content"
-                     android:layout_marginBottom="4dp"
-                     android:textSize="14sp"
-                     android:text="Target Profile"
-                     android:textStyle="bold" />
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:layout_marginBottom="8dp"
-                     android:textSize="12sp"
-                     android:textColor="#666666"
-                     android:text="Select which profile to switch to when this button is pressed" />
-
-                <Spinner
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     style="@style/ComboBox"
-                     android:spinnerMode="dialog"
-                     android:id="@+id/STargetProfile">
-
-                </Spinner>
-
-            </LinearLayout>
-
-            <LinearLayout
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:layout_marginBottom="8dp"
-                 android:orientation="vertical">
-
-                <LinearLayout
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:orientation="horizontal">
-
-                    <TextView
-                         android:layout_height="wrap_content"
-                         android:layout_width="0dp"
-                         android:textSize="14sp"
-                         android:layout_weight="1"
-                         android:text="Switch Delay"
-                         android:textStyle="bold" />
-
-                    <TextView
-                         android:layout_height="wrap_content"
-                         android:layout_width="wrap_content"
-                         android:id="@+id/TVSwitchDelay"
-                         android:text="Instant"
-                         android:textStyle="bold" />
-
-                </LinearLayout>
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:layout_marginBottom="8dp"
-                     android:textSize="12sp"
-                     android:textColor="#666666"
-                     android:text="Delay before switching profiles (0-3 seconds)" />
-
-                <SeekBar
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:max="30"
-                     android:min="0"
-                     android:progress="0"
-                     android:id="@+id/SBSwitchDelay" />
-
-            </LinearLayout>
-
-        </LinearLayout>
-
-        <LinearLayout
-             android:layout_height="wrap_content"
-             android:layout_width="match_parent"
-             android:layout_marginBottom="16dp"
-             android:visibility="gone"
-             android:background="#f8f9fa"
-             android:padding="12dp"
-             android:orientation="vertical"
-             android:id="@+id/LLDynamicStickOptions">
-
-            <TextView
-                 android:layout_height="wrap_content"
-                 android:layout_width="wrap_content"
-                 android:layout_marginBottom="8dp"
-                 android:textSize="16sp"
-                 android:text="Activation Radius"
-                 android:textStyle="bold" />
-
-            <LinearLayout
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:orientation="horizontal">
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="0dp"
-                     android:textSize="12sp"
-                     android:textColor="#666666"
-                     android:layout_weight="1"
-                     android:text="Adjust the activation zone size for dynamic stick" />
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="wrap_content"
-                     android:id="@+id/TVActivationRadius"
-                     android:text="100px"
-                     android:textStyle="bold" />
-
-            </LinearLayout>
-
-            <SeekBar
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:max="100"
-                 android:min="0"
-                 android:layout_marginTop="8dp"
-                 android:progress="50"
-                 android:id="@+id/SBActivationRadius" />
-
-        </LinearLayout>
-
-        <LinearLayout
-             android:layout_height="wrap_content"
-             android:layout_width="match_parent"
-             android:layout_marginBottom="16dp"
-             android:visibility="gone"
-             android:background="#f8f9fa"
-             android:padding="12dp"
-             android:orientation="vertical"
-             android:id="@+id/LLDynamicStickVisual">
-
-            <TextView
-                 android:layout_height="wrap_content"
-                 android:layout_width="wrap_content"
-                 android:layout_marginBottom="12dp"
-                 android:textSize="16sp"
-                 android:text="Activation Zone Visual Settings"
-                 android:textStyle="bold" />
-
-            <LinearLayout
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:layout_marginBottom="8dp"
-                 android:gravity="center_vertical"
-                 android:orientation="horizontal">
-
-                <CheckBox
-                     android:layout_height="wrap_content"
-                     android:layout_width="wrap_content"
-                     android:layout_marginEnd="8dp"
-                     android:checked="true"
-                     android:id="@+id/CBShowActivationZone" />
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="0dp"
-                     android:textSize="14sp"
-                     android:layout_weight="1"
-                     android:text="Show Activation Zone in Editor"
-                     android:textStyle="bold" />
-
-            </LinearLayout>
-
-            <TextView
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:layout_marginBottom="12dp"
-                 android:textSize="12sp"
-                 android:textColor="#666666"
-                 android:layout_marginStart="32dp"
-                 android:text="Display the activation zone boundaries in editor mode" />
-
-            <LinearLayout
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:layout_marginBottom="12dp"
-                 android:orientation="vertical">
-
-                <LinearLayout
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:orientation="horizontal">
-
-                    <TextView
-                         android:layout_height="wrap_content"
-                         android:layout_width="0dp"
-                         android:textSize="14sp"
-                         android:layout_weight="1"
-                         android:text="Zone Width"
-                         android:textStyle="bold" />
-
-                    <TextView
-                         android:layout_height="wrap_content"
-                         android:layout_width="wrap_content"
-                         android:id="@+id/TVZoneWidth"
-                         android:text="200px"
-                         android:textStyle="bold" />
-
-                </LinearLayout>
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:layout_marginBottom="8dp"
-                     android:textSize="12sp"
-                     android:textColor="#666666"
-                     android:text="Adjust the width of the activation zone (50-600px)" />
-
-                <SeekBar
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:max="100"
-                     android:min="0"
-                     android:progress="27"
-                     android:id="@+id/SBZoneWidth" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:layout_marginBottom="8dp"
-                 android:orientation="vertical">
-
-                <LinearLayout
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:orientation="horizontal">
-
-                    <TextView
-                         android:layout_height="wrap_content"
-                         android:layout_width="0dp"
-                         android:textSize="14sp"
-                         android:layout_weight="1"
-                         android:text="Zone Height"
-                         android:textStyle="bold" />
-
-                    <TextView
-                         android:layout_height="wrap_content"
-                         android:layout_width="wrap_content"
-                         android:id="@+id/TVZoneHeight"
-                         android:text="200px"
-                         android:textStyle="bold" />
-
-                </LinearLayout>
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:layout_marginBottom="8dp"
-                     android:textSize="12sp"
-                     android:textColor="#666666"
-                     android:text="Adjust the height of the activation zone (50-600px)" />
-
-                <SeekBar
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:max="100"
-                     android:min="0"
-                     android:progress="27"
-                     android:id="@+id/SBZoneHeight" />
-
-            </LinearLayout>
-
-        </LinearLayout>
-
-        <LinearLayout
-             android:layout_height="wrap_content"
-             android:layout_width="match_parent"
-             android:layout_marginBottom="16dp"
-             android:visibility="gone"
-             android:background="#f8f9fa"
-             android:padding="12dp"
-             android:orientation="vertical"
-             android:id="@+id/LLScrollBarOptions">
-
-            <TextView
-                 android:layout_height="wrap_content"
-                 android:layout_width="wrap_content"
-                 android:layout_marginBottom="12dp"
-                 android:textSize="16sp"
-                 android:text="Scroll Bar Settings"
-                 android:textStyle="bold" />
-
-            <LinearLayout
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:layout_marginBottom="12dp"
-                 android:orientation="vertical">
-
-                <LinearLayout
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:orientation="horizontal">
-
-                    <TextView
-                         android:layout_height="wrap_content"
-                         android:layout_width="0dp"
-                         android:textSize="14sp"
-                         android:layout_weight="1"
-                         android:text="Scroll Bar Width"
-                         android:textStyle="bold" />
-
-                    <TextView
-                         android:layout_height="wrap_content"
-                         android:layout_width="wrap_content"
-                         android:id="@+id/TVScrollBarWidth"
-                         android:text="20px"
-                         android:textStyle="bold" />
-
-                </LinearLayout>
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:layout_marginBottom="8dp"
-                     android:textSize="12sp"
-                     android:textColor="#666666"
-                     android:text="Adjust the width of the scroll bar (10-100px)" />
-
-                <SeekBar
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:max="100"
-                     android:min="0"
-                     android:progress="11"
-                     android:id="@+id/SBScrollBarWidth" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:layout_marginBottom="12dp"
-                 android:orientation="vertical">
-
-                <LinearLayout
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:orientation="horizontal">
-
-                    <TextView
-                         android:layout_height="wrap_content"
-                         android:layout_width="0dp"
-                         android:textSize="14sp"
-                         android:layout_weight="1"
-                         android:text="Scroll Bar Height"
-                         android:textStyle="bold" />
-
-                    <TextView
-                         android:layout_height="wrap_content"
-                         android:layout_width="wrap_content"
-                         android:id="@+id/TVScrollBarHeight"
-                         android:text="200px"
-                         android:textStyle="bold" />
-
-                </LinearLayout>
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:layout_marginBottom="8dp"
-                     android:textSize="12sp"
-                     android:textColor="#666666"
-                     android:text="Adjust the height of the scroll bar (100-600px)" />
-
-                <SeekBar
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:max="100"
-                     android:min="0"
-                     android:progress="20"
-                     android:id="@+id/SBScrollBarHeight" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:layout_marginBottom="8dp"
-                 android:orientation="vertical">
-
-                <LinearLayout
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:orientation="horizontal">
-
-                    <TextView
-                         android:layout_height="wrap_content"
-                         android:layout_width="0dp"
-                         android:textSize="14sp"
-                         android:layout_weight="1"
-                         android:text="Scroll Sensitivity"
-                         android:textStyle="bold" />
-
-                    <TextView
-                         android:layout_height="wrap_content"
-                         android:layout_width="wrap_content"
-                         android:id="@+id/TVScrollSensitivity"
-                         android:text="2.0x"
-                         android:textStyle="bold" />
-
-                </LinearLayout>
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:layout_marginBottom="8dp"
-                     android:textSize="12sp"
-                     android:textColor="#666666"
-                     android:text="Adjust the scroll sensitivity (0.5x - 5.0x)" />
-
-                <SeekBar
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:max="100"
-                     android:min="0"
-                     android:progress="33"
-                     android:id="@+id/SBScrollSensitivity" />
-
-            </LinearLayout>
-
-        </LinearLayout>
-
-        <LinearLayout
-             android:layout_height="wrap_content"
-             android:layout_width="match_parent"
-             android:layout_marginBottom="16dp"
-             android:background="#f8f9fa"
-             android:padding="12dp"
-             android:orientation="vertical"
-             android:id="@+id/LLShowOutline">
-
-            <LinearLayout
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:gravity="center_vertical"
-                 android:orientation="horizontal">
-
-                <CheckBox
-                     android:layout_height="wrap_content"
-                     android:layout_width="wrap_content"
-                     android:layout_marginEnd="8dp"
-                     android:checked="true"
-                     android:id="@+id/CBShowOutline" />
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="0dp"
-                     android:textSize="14sp"
-                     android:layout_weight="1"
-                     android:text="Show Button Outline"
-                     android:textStyle="bold" />
-
-            </LinearLayout>
-
-            <TextView
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:layout_marginBottom="8dp"
-                 android:textSize="12sp"
-                 android:textColor="#666666"
-                 android:layout_marginStart="32dp"
-                 android:text="Display the border outline around the control element" />
-
-        </LinearLayout>
-
-        <LinearLayout
-             android:layout_height="wrap_content"
-             android:layout_width="match_parent"
-             android:layout_marginBottom="16dp"
-             android:background="#f8f9fa"
-             android:padding="12dp"
-             android:orientation="vertical">
-
-            <LinearLayout
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:orientation="horizontal">
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="0dp"
-                     android:textSize="14sp"
-                     android:layout_weight="1"
-                     android:text="@string/scale"
-                     android:textStyle="bold" />
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="wrap_content"
-                     android:id="@+id/TVScale"
-                     android:text="100%"
-                     android:textStyle="bold" />
-
-            </LinearLayout>
-
-            <SeekBar
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:max="150"
-                 android:min="50"
-                 android:layout_marginTop="8dp"
-                 android:progress="100"
-                 android:id="@+id/SBScale" />
-
-        </LinearLayout>
-
-        <LinearLayout
-             android:layout_height="wrap_content"
-             android:layout_width="match_parent"
-             android:layout_marginBottom="16dp"
-             android:background="#f8f9fa"
-             android:padding="12dp"
-             android:orientation="vertical">
-
-            <LinearLayout
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:orientation="horizontal">
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="0dp"
-                     android:textSize="14sp"
-                     android:layout_weight="1"
-                     android:text="Icon Size"
-                     android:textStyle="bold" />
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="wrap_content"
-                     android:id="@+id/TVIconSize"
-                     android:text="100%"
-                     android:textStyle="bold" />
-
-            </LinearLayout>
-
-            <TextView
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:layout_marginBottom="8dp"
-                 android:textSize="12sp"
-                 android:textColor="#666666"
-                 android:text="Adjust the size of icons on buttons" />
-
-            <SeekBar
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:max="300"
-                 android:min="10"
-                 android:progress="100"
-                 android:id="@+id/SBIconSize" />
-
-        </LinearLayout>
-
-        <LinearLayout
-             android:layout_height="wrap_content"
-             android:layout_width="match_parent"
-             android:layout_marginBottom="16dp"
-             android:background="#f8f9fa"
-             android:padding="12dp"
-             android:orientation="vertical">
-
-            <LinearLayout
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:orientation="horizontal">
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="0dp"
-                     android:textSize="14sp"
-                     android:layout_weight="1"
-                     android:text="Button Opacity"
-                     android:textStyle="bold" />
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="wrap_content"
-                     android:id="@+id/TVButtonOpacity"
-                     android:text="70%"
-                     android:textStyle="bold" />
-
-            </LinearLayout>
-
-            <TextView
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:layout_marginBottom="8dp"
-                 android:textSize="12sp"
-                 android:textColor="#666666"
-                 android:text="Adjust the transparency of button background" />
-
-            <SeekBar
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:max="100"
-                 android:min="10"
-                 android:progress="70"
-                 android:id="@+id/SBButtonOpacity" />
-
-        </LinearLayout>
-
-        <LinearLayout
-             android:layout_height="wrap_content"
-             android:layout_width="match_parent"
-             android:layout_marginBottom="16dp"
-             android:background="#f8f9fa"
-             android:padding="12dp"
-             android:orientation="vertical">
-
-            <LinearLayout
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:orientation="horizontal">
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="0dp"
-                     android:textSize="14sp"
-                     android:layout_weight="1"
-                     android:text="Icon Opacity"
-                     android:textStyle="bold" />
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="wrap_content"
-                     android:id="@+id/TVIconOpacity"
-                     android:text="100%"
-                     android:textStyle="bold" />
-
-            </LinearLayout>
-
-            <TextView
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:layout_marginBottom="8dp"
-                 android:textSize="12sp"
-                 android:textColor="#666666"
-                 android:text="Adjust the transparency of icons" />
-
-            <SeekBar
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:max="100"
-                 android:min="10"
-                 android:progress="100"
-                 android:id="@+id/SBIconOpacity" />
-
-        </LinearLayout>
-
-        <LinearLayout
-             android:layout_height="wrap_content"
-             android:layout_width="match_parent"
-             android:layout_marginBottom="16dp"
-             android:visibility="gone"
-             android:background="#f8f9fa"
-             android:padding="12dp"
-             android:orientation="vertical"
-             android:id="@+id/LLRangeOptions">
-
-            <TextView
-                 android:layout_height="wrap_content"
-                 android:layout_width="wrap_content"
-                 android:layout_marginBottom="8dp"
-                 android:textSize="14sp"
-                 android:text="@string/range"
-                 android:textStyle="bold" />
-
-            <Spinner
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:layout_marginBottom="12dp"
-                 style="@style/ComboBox"
-                 android:spinnerMode="dialog"
-                 android:id="@+id/SRange">
-
-            </Spinner>
-
-            <TextView
-                 android:layout_height="wrap_content"
-                 android:layout_width="wrap_content"
-                 android:layout_marginBottom="8dp"
-                 android:textSize="14sp"
-                 android:text="@string/orientation"
-                 android:textStyle="bold" />
-
-            <RadioGroup
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:layout_marginBottom="12dp"
-                 android:orientation="horizontal"
-                 android:id="@+id/RGOrientation">
-
-                <RadioButton
-                     android:layout_height="wrap_content"
-                     android:layout_width="0dp"
-                     android:layout_weight="1"
-                     android:id="@+id/RBHorizontal"
-                     android:text="@string/horizontal" />
-
-                <RadioButton
-                     android:layout_height="wrap_content"
-                     android:layout_width="0dp"
-                     android:layout_weight="1"
-                     android:id="@+id/RBVertical"
-                     android:text="@string/vertical" />
-
-            </RadioGroup>
-
-            <TextView
-                 android:layout_height="wrap_content"
-                 android:layout_width="wrap_content"
-                 android:layout_marginBottom="8dp"
-                 android:textSize="14sp"
-                 android:text="@string/columns"
-                 android:textStyle="bold" />
-
-            <com.winlator.cmod.widget.NumberPicker
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 app:minValue="3"
-                 app:maxValue="8"
-                 android:id="@+id/NPColumns" />
-
-        </LinearLayout>
-
-        <LinearLayout
-             android:layout_height="wrap_content"
-             android:layout_width="match_parent"
-             android:layout_marginBottom="16dp"
-             android:background="#f8f9fa"
-             android:padding="12dp"
-             android:orientation="vertical"
-             android:id="@+id/LLBindings">
-
-        </LinearLayout>
-
-        <LinearLayout
-             android:layout_height="wrap_content"
-             android:layout_width="match_parent"
-             android:layout_marginBottom="16dp"
-             android:visibility="gone"
-             android:background="#f8f9fa"
-             android:padding="12dp"
-             android:orientation="vertical"
-             android:id="@+id/LLToggleSwitch">
-
-            <CheckBox
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:textSize="14sp"
-                 android:id="@+id/CBToggleSwitch"
-                 android:text="@string/toggle_switch"
-                 android:textStyle="bold" />
-
-        </LinearLayout>
-
-        <LinearLayout
-             android:layout_height="wrap_content"
-             android:layout_width="match_parent"
-             android:layout_marginBottom="16dp"
-             android:background="#f8f9fa"
-             android:padding="12dp"
-             android:orientation="vertical"
-             android:id="@+id/LLCustomTextIcon">
-
-            <TextView
-                 android:layout_height="wrap_content"
-                 android:layout_width="wrap_content"
-                 android:layout_marginBottom="8dp"
-                 android:textSize="14sp"
-                 android:text="@string/custom_text"
-                 android:textStyle="bold" />
-
-            <EditText
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:layout_marginBottom="16dp"
-                 android:hint="@string/none"
-                 style="@style/EditText"
-                 android:maxLength="8"
-                 android:inputType="textCapCharacters"
-                 android:id="@+id/ETCustomText" />
-
-            <LinearLayout
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:layout_marginBottom="16dp"
-                 android:background="#ffffff"
-                 android:padding="12dp"
-                 android:orientation="vertical">
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="wrap_content"
-                     android:layout_marginBottom="12dp"
-                     android:textSize="16sp"
-                     android:text="Custom Icon Management"
-                     android:textStyle="bold" />
-
-                <LinearLayout
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:layout_marginBottom="12dp"
-                     android:gravity="center_vertical"
-                     android:orientation="horizontal">
-
-                    <TextView
-                         android:layout_height="wrap_content"
-                         android:layout_width="wrap_content"
-                         android:layout_marginEnd="12dp"
-                         android:text="Current Icon:"
-                         android:textStyle="bold" />
-
-                    <ImageView
-                         android:layout_height="64dp"
-                         android:layout_width="64dp"
-                         android:visibility="gone"
-                         android:layout_marginEnd="12dp"
-                         android:scaleType="centerInside"
-                         android:background="@drawable/icon_background"
-                         android:id="@+id/IVCustomIconPreview" />
-
-                    <TextView
-                         android:layout_height="wrap_content"
-                         android:layout_width="wrap_content"
-                         android:textColor="#666666"
-                         android:id="@+id/TVNoCustomIcon"
-                         android:text="No custom icon set"
-                         android:textStyle="italic" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:orientation="vertical">
-
-                    <Button
-                         android:layout_height="wrap_content"
-                         android:layout_width="match_parent"
-                         android:layout_marginBottom="8dp"
-                         android:backgroundTint="#2196F3"
-                         android:textColor="@android:color/white"
-                         android:id="@+id/BTCustomIcon"
-                         android:text="Select Custom Icon from Gallery" />
-
-                    <Button
-                         android:layout_height="wrap_content"
-                         android:layout_width="match_parent"
-                         android:layout_marginBottom="8dp"
-                         android:visibility="gone"
-                         android:backgroundTint="#FF5722"
-                         android:textColor="@android:color/white"
-                         android:id="@+id/BTRemoveCustomIcon"
-                         android:text="Remove Custom Icon from Button" />
-
-                    <TextView
-                         android:layout_height="wrap_content"
-                         android:layout_width="match_parent"
-                         android:padding="4dp"
-                         android:textSize="12sp"
-                         android:textColor="#666666"
-                         android:text="Long-press on custom icons below to delete them from library" />
-
-                </LinearLayout>
-
-            </LinearLayout>
-
-            <LinearLayout
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:orientation="vertical">
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="wrap_content"
-                     android:layout_marginBottom="8dp"
-                     android:textSize="16sp"
-                     android:text="Select Icon"
-                     android:textStyle="bold" />
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:layout_marginBottom="8dp"
-                     android:textSize="14sp"
-                     android:text="Default Icons:"
-                     android:textStyle="bold" />
-
-                <HorizontalScrollView
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:layout_marginBottom="16dp"
-                     android:scrollbars="none">
-
-                    <LinearLayout
-                         android:layout_height="wrap_content"
-                         android:layout_width="wrap_content"
-                         android:orientation="horizontal"
-                         android:id="@+id/LLDefaultIcons">
-
-                    </LinearLayout>
-
-                </HorizontalScrollView>
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:layout_marginBottom="4dp"
-                     android:textSize="14sp"
-                     android:text="Custom Icons:"
-                     android:textStyle="bold" />
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:layout_marginBottom="8dp"
-                     android:textSize="12sp"
-                     android:textColor="#666666"
-                     android:text="Long-press to delete from library" />
-
-                <HorizontalScrollView
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:layout_marginBottom="8dp"
-                     android:scrollbars="none">
-
-                    <LinearLayout
-                         android:layout_height="wrap_content"
-                         android:layout_width="wrap_content"
-                         android:orientation="horizontal"
-                         android:id="@+id/LLCustomIcons">
-
-                    </LinearLayout>
-
-                </HorizontalScrollView>
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:visibility="gone"
-                     android:gravity="center"
-                     android:padding="16dp"
-                     android:textColor="#666666"
-                     android:id="@+id/TVNoCustomIcons"
-                     android:text="No custom icons in library"
-                     android:textStyle="italic" />
-
-            </LinearLayout>
-
-        </LinearLayout>
-
-    </LinearLayout>
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:layout_height="match_parent"
+	android:layout_width="match_parent"
+	android:scrollbars="vertical"
+	android:fillViewport="true">
+
+	<LinearLayout
+		android:layout_height="wrap_content"
+		android:layout_width="match_parent"
+		android:padding="12dp"
+		android:orientation="vertical">
+
+		<TextView
+			android:layout_height="wrap_content"
+			android:layout_width="wrap_content"
+			android:layout_marginBottom="4dp"
+			android:textSize="14sp"
+			android:text="@string/type"
+			android:textStyle="bold"/>
+
+		<Spinner
+			android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:layout_marginBottom="12dp"
+			style="@style/ComboBox"
+			android:spinnerMode="dialog"
+			android:id="@+id/SType"/>
+
+		<LinearLayout
+			android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:layout_marginBottom="12dp"
+			android:orientation="vertical"
+			android:id="@+id/LLShape">
+
+			<TextView
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
+				android:layout_marginBottom="4dp"
+				android:textSize="14sp"
+				android:text="@string/shape"
+				android:textStyle="bold"/>
+
+			<Spinner
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				style="@style/ComboBox"
+				android:spinnerMode="dialog"
+				android:id="@+id/SShape"/>
+
+		</LinearLayout>
+
+		<LinearLayout
+			android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:layout_marginBottom="16dp"
+			
+			android:padding="12dp"
+			android:orientation="vertical"
+			android:id="@+id/LLMultiBinding">
+
+			<TextView
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
+				android:layout_marginBottom="8dp"
+				android:textSize="16sp"
+				android:text="Multi-Action Binding"
+				android:textStyle="bold"/>
+
+			<LinearLayout
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginBottom="8dp"
+				android:gravity="center_vertical"
+				android:orientation="horizontal">
+
+				<CheckBox
+					android:layout_height="wrap_content"
+					android:layout_width="wrap_content"
+					android:layout_marginEnd="8dp"
+					android:checked="false"
+					android:id="@+id/CBUseMultiBinding"/>
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="0dp"
+					android:textSize="14sp"
+					android:layout_weight="1"
+					android:text="Enable Multi-Actions"
+					android:textStyle="bold"/>
+
+			</LinearLayout>
+
+			<TextView
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginBottom="12dp"
+				android:textSize="12sp"
+				
+				android:layout_marginStart="32dp"
+				android:text="Assign multiple actions to single button (A+B, Ctrl+C, etc.)"/>
+
+			<Button
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginBottom="8dp"
+				
+				android:enabled="false"
+				android:id="@+id/BTConfigureMultiBinding"
+				android:text="Configure Multi-Actions"/>
+
+			<TextView
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginBottom="8dp"
+				
+				android:gravity="center"
+				android:padding="12dp"
+				android:id="@+id/TVMultiBindingPreview"
+				android:text="No multi-actions configured"
+				android:textStyle="italic"/>
+
+		</LinearLayout>
+
+		<LinearLayout
+			android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:layout_marginBottom="16dp"
+			
+			
+			android:padding="12dp"
+			android:orientation="vertical"
+			android:id="@+id/LLProfileSwitching">
+
+			<TextView
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
+				android:layout_marginBottom="8dp"
+				android:textSize="16sp"
+				android:text="Profile Switching"
+				android:textStyle="bold"/>
+
+			<LinearLayout
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginBottom="8dp"
+				android:gravity="center_vertical"
+				android:orientation="horizontal">
+
+				<CheckBox
+					android:layout_height="wrap_content"
+					android:layout_width="wrap_content"
+					android:layout_marginEnd="8dp"
+					android:checked="false"
+					android:id="@+id/CBEnableProfileSwitching"/>
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="0dp"
+					android:textSize="14sp"
+					android:layout_weight="1"
+					android:text="Enable Profile Switching"
+					android:textStyle="bold"/>
+
+			</LinearLayout>
+
+			<TextView
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginBottom="12dp"
+				android:textSize="12sp"
+				
+				android:layout_marginStart="32dp"
+				android:text="Allow this button to switch between control profiles"/>
+
+			<LinearLayout
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginBottom="12dp"
+				android:orientation="vertical">
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="wrap_content"
+					android:layout_marginBottom="4dp"
+					android:textSize="14sp"
+					android:text="Target Profile"
+					android:textStyle="bold"/>
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:layout_marginBottom="8dp"
+					android:textSize="12sp"
+					
+					android:text="Select which profile to switch to when this button is pressed"/>
+
+				<Spinner
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					style="@style/ComboBox"
+					android:spinnerMode="dialog"
+					android:id="@+id/STargetProfile"/>
+
+			</LinearLayout>
+
+			<LinearLayout
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginBottom="8dp"
+				android:orientation="vertical">
+
+				<LinearLayout
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:orientation="horizontal">
+
+					<TextView
+						android:layout_height="wrap_content"
+						android:layout_width="0dp"
+						android:textSize="14sp"
+						android:layout_weight="1"
+						android:text="Switch Delay"
+						android:textStyle="bold"/>
+
+					<TextView
+						android:layout_height="wrap_content"
+						android:layout_width="wrap_content"
+						android:id="@+id/TVSwitchDelay"
+						android:text="Instant"
+						android:textStyle="bold"/>
+
+				</LinearLayout>
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:layout_marginBottom="8dp"
+					android:textSize="12sp"
+					
+					android:text="Delay before switching profiles (0-3 seconds)"/>
+
+				<SeekBar
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:max="30"
+					android:min="0"
+					android:progress="0"
+					android:id="@+id/SBSwitchDelay"/>
+
+			</LinearLayout>
+
+		</LinearLayout>
+
+		<LinearLayout
+			android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:layout_marginBottom="16dp"
+			
+			
+			android:padding="12dp"
+			android:orientation="vertical"
+			android:id="@+id/LLDynamicStickOptions">
+
+			<TextView
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
+				android:layout_marginBottom="8dp"
+				android:textSize="16sp"
+				android:text="Activation Radius"
+				android:textStyle="bold"/>
+
+			<LinearLayout
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:orientation="horizontal">
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="0dp"
+					android:textSize="12sp"
+					
+					android:layout_weight="1"
+					android:text="Adjust the activation zone size for dynamic stick"/>
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="wrap_content"
+					android:id="@+id/TVActivationRadius"
+					android:text="100px"
+					android:textStyle="bold"/>
+
+			</LinearLayout>
+
+			<SeekBar
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:max="100"
+				android:min="0"
+				android:layout_marginTop="8dp"
+				android:progress="50"
+				android:id="@+id/SBActivationRadius"/>
+
+		</LinearLayout>
+
+		<LinearLayout
+			android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:layout_marginBottom="16dp"
+			
+			
+			android:padding="12dp"
+			android:orientation="vertical"
+			android:id="@+id/LLDynamicStickVisual">
+
+			<TextView
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
+				android:layout_marginBottom="12dp"
+				android:textSize="16sp"
+				android:text="Activation Zone Visual Settings"
+				android:textStyle="bold"/>
+
+			<LinearLayout
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginBottom="8dp"
+				android:gravity="center_vertical"
+				android:orientation="horizontal">
+
+				<CheckBox
+					android:layout_height="wrap_content"
+					android:layout_width="wrap_content"
+					android:layout_marginEnd="8dp"
+					android:checked="true"
+					android:id="@+id/CBShowActivationZone"/>
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="0dp"
+					android:textSize="14sp"
+					android:layout_weight="1"
+					android:text="Show Activation Zone in Editor"
+					android:textStyle="bold"/>
+
+			</LinearLayout>
+
+			<TextView
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginBottom="12dp"
+				android:textSize="12sp"
+				
+				android:layout_marginStart="32dp"
+				android:text="Display the activation zone boundaries in editor mode"/>
+
+			<LinearLayout
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginBottom="12dp"
+				android:orientation="vertical">
+
+				<LinearLayout
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:orientation="horizontal">
+
+					<TextView
+						android:layout_height="wrap_content"
+						android:layout_width="0dp"
+						android:textSize="14sp"
+						android:layout_weight="1"
+						android:text="Zone Width"
+						android:textStyle="bold"/>
+
+					<TextView
+						android:layout_height="wrap_content"
+						android:layout_width="wrap_content"
+						android:id="@+id/TVZoneWidth"
+						android:text="200px"
+						android:textStyle="bold"/>
+
+				</LinearLayout>
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:layout_marginBottom="8dp"
+					android:textSize="12sp"
+					android:textColor="#666666"
+					android:text="Adjust the width of the activation zone (50-600px)"/>
+
+				<SeekBar
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:max="100"
+					android:min="0"
+					android:progress="27"
+					android:id="@+id/SBZoneWidth"/>
+
+			</LinearLayout>
+
+			<LinearLayout
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginBottom="8dp"
+				android:orientation="vertical">
+
+				<LinearLayout
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:orientation="horizontal">
+
+					<TextView
+						android:layout_height="wrap_content"
+						android:layout_width="0dp"
+						android:textSize="14sp"
+						android:layout_weight="1"
+						android:text="Zone Height"
+						android:textStyle="bold"/>
+
+					<TextView
+						android:layout_height="wrap_content"
+						android:layout_width="wrap_content"
+						android:id="@+id/TVZoneHeight"
+						android:text="200px"
+						android:textStyle="bold"/>
+
+				</LinearLayout>
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:layout_marginBottom="8dp"
+					android:textSize="12sp"
+					
+					android:text="Adjust the height of the activation zone (50-600px)"/>
+
+				<SeekBar
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:max="100"
+					android:min="0"
+					android:progress="27"
+					android:id="@+id/SBZoneHeight"/>
+
+			</LinearLayout>
+
+		</LinearLayout>
+
+		<LinearLayout
+			android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:layout_marginBottom="16dp"
+			
+			android:padding="12dp"
+			android:orientation="vertical"
+			android:id="@+id/LLScrollBarOptions">
+
+			<TextView
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
+				android:layout_marginBottom="12dp"
+				android:textSize="16sp"
+				android:text="Scroll Bar Settings"
+				android:textStyle="bold"/>
+
+			<LinearLayout
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginBottom="12dp"
+				android:orientation="vertical">
+
+				<LinearLayout
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:orientation="horizontal">
+
+					<TextView
+						android:layout_height="wrap_content"
+						android:layout_width="0dp"
+						android:textSize="14sp"
+						android:layout_weight="1"
+						android:text="Scroll Bar Width"
+						android:textStyle="bold"/>
+
+					<TextView
+						android:layout_height="wrap_content"
+						android:layout_width="wrap_content"
+						android:id="@+id/TVScrollBarWidth"
+						android:text="20px"
+						android:textStyle="bold"/>
+
+				</LinearLayout>
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:layout_marginBottom="8dp"
+					android:textSize="12sp"
+					
+					android:text="Adjust the width of the scroll bar (10-100px)"/>
+
+				<SeekBar
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:max="100"
+					android:min="0"
+					android:progress="11"
+					android:id="@+id/SBScrollBarWidth"/>
+
+			</LinearLayout>
+
+			<LinearLayout
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginBottom="12dp"
+				android:orientation="vertical">
+
+				<LinearLayout
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:orientation="horizontal">
+
+					<TextView
+						android:layout_height="wrap_content"
+						android:layout_width="0dp"
+						android:textSize="14sp"
+						android:layout_weight="1"
+						android:text="Scroll Bar Height"
+						android:textStyle="bold"/>
+
+					<TextView
+						android:layout_height="wrap_content"
+						android:layout_width="wrap_content"
+						android:id="@+id/TVScrollBarHeight"
+						android:text="200px"
+						android:textStyle="bold"/>
+
+				</LinearLayout>
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:layout_marginBottom="8dp"
+					android:textSize="12sp"
+					
+					android:text="Adjust the height of the scroll bar (100-600px)"/>
+
+				<SeekBar
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:max="100"
+					android:min="0"
+					android:progress="20"
+					android:id="@+id/SBScrollBarHeight"/>
+
+			</LinearLayout>
+
+			<LinearLayout
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginBottom="8dp"
+				android:orientation="vertical">
+
+				<LinearLayout
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:orientation="horizontal">
+
+					<TextView
+						android:layout_height="wrap_content"
+						android:layout_width="0dp"
+						android:textSize="14sp"
+						android:layout_weight="1"
+						android:text="Scroll Sensitivity"
+						android:textStyle="bold"/>
+
+					<TextView
+						android:layout_height="wrap_content"
+						android:layout_width="wrap_content"
+						android:id="@+id/TVScrollSensitivity"
+						android:text="2.0x"
+						android:textStyle="bold"/>
+
+				</LinearLayout>
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:layout_marginBottom="8dp"
+					android:textSize="12sp"
+					
+					android:text="Adjust the scroll sensitivity (0.5x - 5.0x)"/>
+
+				<SeekBar
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:max="100"
+					android:min="0"
+					android:progress="33"
+					android:id="@+id/SBScrollSensitivity"/>
+
+			</LinearLayout>
+
+		</LinearLayout>
+
+		<LinearLayout
+			android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:layout_marginBottom="16dp"
+			
+			android:padding="12dp"
+			android:orientation="vertical"
+			android:id="@+id/LLShowOutline">
+
+			<LinearLayout
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:gravity="center_vertical"
+				android:orientation="horizontal">
+
+				<CheckBox
+					android:layout_height="wrap_content"
+					android:layout_width="wrap_content"
+					android:layout_marginEnd="8dp"
+					android:checked="true"
+					android:id="@+id/CBShowOutline"/>
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="0dp"
+					android:textSize="14sp"
+					android:layout_weight="1"
+					android:text="Show Button Outline"
+					android:textStyle="bold"/>
+
+			</LinearLayout>
+
+			<TextView
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginBottom="8dp"
+				android:textSize="12sp"
+				
+				android:layout_marginStart="32dp"
+				android:text="Display the border outline around the control element"/>
+
+		</LinearLayout>
+
+		<LinearLayout
+			android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:layout_marginBottom="16dp"
+			
+			android:padding="12dp"
+			android:orientation="vertical">
+
+			<LinearLayout
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:orientation="horizontal">
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="0dp"
+					android:textSize="14sp"
+					android:layout_weight="1"
+					android:text="@string/scale"
+					android:textStyle="bold"/>
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="wrap_content"
+					android:id="@+id/TVScale"
+					android:text="100%"
+					android:textStyle="bold"/>
+
+			</LinearLayout>
+
+			<SeekBar
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:max="150"
+				android:min="50"
+				android:layout_marginTop="8dp"
+				android:progress="100"
+				android:id="@+id/SBScale"/>
+
+		</LinearLayout>
+
+		<LinearLayout
+			android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:layout_marginBottom="16dp"
+			
+			android:padding="12dp"
+			android:orientation="vertical">
+
+			<LinearLayout
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:orientation="horizontal">
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="0dp"
+					android:textSize="14sp"
+					android:layout_weight="1"
+					android:text="Icon Size"
+					android:textStyle="bold"/>
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="wrap_content"
+					android:id="@+id/TVIconSize"
+					android:text="100%"
+					android:textStyle="bold"/>
+
+			</LinearLayout>
+
+			<TextView
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginBottom="8dp"
+				android:textSize="12sp"
+				
+				android:text="Adjust the size of icons on buttons"/>
+
+			<SeekBar
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:max="300"
+				android:min="10"
+				android:progress="100"
+				android:id="@+id/SBIconSize"/>
+
+		</LinearLayout>
+
+		<LinearLayout
+			android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:layout_marginBottom="16dp"
+			
+			android:padding="12dp"
+			android:orientation="vertical">
+
+			<LinearLayout
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:orientation="horizontal">
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="0dp"
+					android:textSize="14sp"
+					android:layout_weight="1"
+					android:text="Button Opacity"
+					android:textStyle="bold"/>
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="wrap_content"
+					android:id="@+id/TVButtonOpacity"
+					android:text="70%"
+					android:textStyle="bold"/>
+
+			</LinearLayout>
+
+			<TextView
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginBottom="8dp"
+				android:textSize="12sp"
+				
+				android:text="Adjust the transparency of button background"/>
+
+			<SeekBar
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:max="100"
+				android:min="10"
+				android:progress="70"
+				android:id="@+id/SBButtonOpacity"/>
+
+		</LinearLayout>
+
+		<LinearLayout
+			android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:layout_marginBottom="16dp"
+			
+			android:padding="12dp"
+			android:orientation="vertical">
+
+			<LinearLayout
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:orientation="horizontal">
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="0dp"
+					android:textSize="14sp"
+					android:layout_weight="1"
+					android:text="Icon Opacity"
+					android:textStyle="bold"/>
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="wrap_content"
+					android:id="@+id/TVIconOpacity"
+					android:text="100%"
+					android:textStyle="bold"/>
+
+			</LinearLayout>
+
+			<TextView
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginBottom="8dp"
+				android:textSize="12sp"
+				
+				android:text="Adjust the transparency of icons"/>
+
+			<SeekBar
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:max="100"
+				android:min="10"
+				android:progress="100"
+				android:id="@+id/SBIconOpacity"/>
+
+		</LinearLayout>
+
+		<LinearLayout
+			android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:layout_marginBottom="16dp"
+			
+			android:padding="12dp"
+			android:orientation="vertical"
+			android:id="@+id/LLRangeOptions">
+
+			<TextView
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
+				android:layout_marginBottom="8dp"
+				android:textSize="14sp"
+				android:text="@string/range"
+				android:textStyle="bold"/>
+
+			<Spinner
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginBottom="12dp"
+				style="@style/ComboBox"
+				android:spinnerMode="dialog"
+				android:id="@+id/SRange"/>
+
+			<TextView
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
+				android:layout_marginBottom="8dp"
+				android:textSize="14sp"
+				android:text="@string/orientation"
+				android:textStyle="bold"/>
+
+			<RadioGroup
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginBottom="12dp"
+				android:orientation="horizontal"
+				android:id="@+id/RGOrientation">
+
+				<RadioButton
+					android:layout_height="wrap_content"
+					android:layout_width="0dp"
+					android:layout_weight="1"
+					android:id="@+id/RBHorizontal"
+					android:text="@string/horizontal"/>
+
+				<RadioButton
+					android:layout_height="wrap_content"
+					android:layout_width="0dp"
+					android:layout_weight="1"
+					android:id="@+id/RBVertical"
+					android:text="@string/vertical"/>
+
+			</RadioGroup>
+
+			<TextView
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
+				android:layout_marginBottom="8dp"
+				android:textSize="14sp"
+				android:text="@string/columns"
+				android:textStyle="bold"/>
+
+			<com.winlator.cmod.widget.NumberPicker
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				app:minValue="3"
+				app:maxValue="8"
+				android:id="@+id/NPColumns"/>
+
+		</LinearLayout>
+
+		<LinearLayout
+			android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:layout_marginBottom="16dp"
+			
+			android:padding="12dp"
+			android:orientation="vertical"
+			android:id="@+id/LLBindings"/>
+
+		<LinearLayout
+			android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:layout_marginBottom="16dp"
+			
+			android:padding="12dp"
+			android:orientation="vertical"
+			android:id="@+id/LLToggleSwitch">
+
+			<CheckBox
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:textSize="14sp"
+				android:id="@+id/CBToggleSwitch"
+				android:text="@string/toggle_switch"
+				android:textStyle="bold"/>
+
+		</LinearLayout>
+
+		<LinearLayout
+			android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:layout_marginBottom="16dp"
+			
+			android:padding="12dp"
+			android:orientation="vertical"
+			android:id="@+id/LLCustomTextIcon">
+
+			<TextView
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
+				android:layout_marginBottom="8dp"
+				android:textSize="14sp"
+				android:text="@string/custom_text"
+				android:textStyle="bold"/>
+
+			<EditText
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginBottom="16dp"
+				android:hint="@string/none"
+				style="@style/EditText"
+				android:maxLength="8"
+				android:inputType="textCapCharacters"
+				android:id="@+id/ETCustomText"/>
+
+			<LinearLayout
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginBottom="16dp"
+				
+				android:padding="12dp"
+				android:orientation="vertical">
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="wrap_content"
+					android:layout_marginBottom="12dp"
+					android:textSize="16sp"
+					android:text="Custom Icon Management"
+					android:textStyle="bold"/>
+
+				<LinearLayout
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:layout_marginBottom="12dp"
+					android:gravity="center_vertical"
+					android:orientation="horizontal">
+
+					<TextView
+						android:layout_height="wrap_content"
+						android:layout_width="wrap_content"
+						android:layout_marginEnd="12dp"
+						android:text="Current Icon:"
+						android:textStyle="bold"/>
+
+					<ImageView
+						android:layout_height="64dp"
+						android:layout_width="64dp"
+						
+						android:layout_marginEnd="12dp"
+						android:scaleType="centerInside"
+						android:background="@drawable/icon_background"
+						android:id="@+id/IVCustomIconPreview"/>
+
+					<TextView
+						android:layout_height="wrap_content"
+						android:layout_width="wrap_content"
+						
+						android:id="@+id/TVNoCustomIcon"
+						android:text="No custom icon set"
+						android:textStyle="italic"/>
+
+				</LinearLayout>
+
+				<LinearLayout
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:orientation="vertical">
+
+					<Button
+						android:layout_height="wrap_content"
+						android:layout_width="match_parent"
+						android:layout_marginBottom="8dp"
+						
+						android:textColor="@android:color/white"
+						android:id="@+id/BTCustomIcon"
+						android:text="Select Custom Icon from Gallery"/>
+
+					<Button
+						android:layout_height="wrap_content"
+						android:layout_width="match_parent"
+						android:layout_marginBottom="8dp"
+						
+						android:textColor="@android:color/white"
+						android:id="@+id/BTRemoveCustomIcon"
+						android:text="Remove Custom Icon from Button"/>
+
+					<TextView
+						android:layout_height="wrap_content"
+						android:layout_width="match_parent"
+						android:padding="4dp"
+						android:textSize="12sp"
+						
+						android:text="Long-press on custom icons below to delete them from library"/>
+
+				</LinearLayout>
+
+			</LinearLayout>
+
+			<LinearLayout
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:orientation="vertical">
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="wrap_content"
+					android:layout_marginBottom="8dp"
+					android:textSize="16sp"
+					android:text="Select Icon"
+					android:textStyle="bold"/>
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:layout_marginBottom="8dp"
+					android:textSize="14sp"
+					android:text="Default Icons:"
+					android:textStyle="bold"/>
+
+				<HorizontalScrollView
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:layout_marginBottom="16dp"
+					android:scrollbars="none">
+
+					<LinearLayout
+						android:layout_height="wrap_content"
+						android:layout_width="wrap_content"
+						android:orientation="horizontal"
+						android:id="@+id/LLDefaultIcons"/>
+
+				</HorizontalScrollView>
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:layout_marginBottom="4dp"
+					android:textSize="14sp"
+					android:text="Custom Icons:"
+					android:textStyle="bold"/>
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:layout_marginBottom="8dp"
+					android:textSize="12sp"
+					
+					android:text="Long-press to delete from library"/>
+
+				<HorizontalScrollView
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:layout_marginBottom="8dp"
+					android:scrollbars="none">
+
+					<LinearLayout
+						android:layout_height="wrap_content"
+						android:layout_width="wrap_content"
+						android:orientation="horizontal"
+						android:id="@+id/LLCustomIcons"/>
+
+				</HorizontalScrollView>
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:visibility="gone"
+					android:gravity="center"
+					android:padding="16dp"
+					
+					android:id="@+id/TVNoCustomIcons"
+					android:text="No custom icons in library"
+					android:textStyle="italic"/>
+
+			</LinearLayout>
+
+		</LinearLayout>
+
+	</LinearLayout>
 
 </ScrollView>
