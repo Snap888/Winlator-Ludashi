@@ -98,6 +98,8 @@ public class InputControlsView extends View {
     
     private OnElementEditListener elementEditListener;
 
+    private boolean overlayMode = false;
+
     public boolean isFocusedOnStick() {
         return focusOnStick;
     }
@@ -295,60 +297,6 @@ public class InputControlsView extends View {
         return customIcons.get(elementId);
     }
 
-    /**
-     * Save custom icon to internal storage with improved quality
-     */
-    private void saveCustomIconToStorage(String elementId, Bitmap icon) {
-        File iconsDir = new File(getContext().getFilesDir(), "custom_icons");
-        if (!iconsDir.exists()) {
-            iconsDir.mkdirs();
-        }
-        
-        File iconFile = new File(iconsDir, elementId + ".png");
-        try (java.io.FileOutputStream fos = new java.io.FileOutputStream(iconFile)) {
-            // Use PNG format with high quality
-            icon.compress(Bitmap.CompressFormat.PNG, 100, fos);
-            Log.d("InputControlsView", "Custom icon saved: " + iconFile.getAbsolutePath());
-        } catch (IOException e) {
-            Log.e("InputControlsView", "Error saving custom icon: " + elementId, e);
-        }
-    }
-
-    /**
-     * Remove custom icon from internal storage
-     */
-    private void removeCustomIconFromStorage(String elementId) {
-        File iconFile = new File(getContext().getFilesDir(), "custom_icons/" + elementId + ".png");
-        if (iconFile.exists()) {
-            boolean deleted = iconFile.delete();
-            if (deleted) {
-                Log.d("InputControlsView", "Custom icon file deleted: " + elementId);
-            } else {
-                Log.e("InputControlsView", "Failed to delete custom icon file: " + elementId);
-            }
-        }
-    }
-
-    /**
-     * Get all custom icon IDs for management purposes
-     */
-    public String[] getCustomIconIds() {
-        return customIcons.keySet().toArray(new String[0]);
-    }
-
-    /**
-     * Get icon for control element - tries custom icon first, then falls back to default
-     */
-    public Bitmap getIconForElement(ControlElement element, byte defaultIconId) {
-        if (element != null && element.hasCustomIcon()) {
-            Bitmap customIcon = getCustomIcon(element.getCustomIconId());
-            if (customIcon != null) {
-                return customIcon;
-            }
-        }
-        return getIcon(defaultIconId);
-    }
-
     public void setEditMode(boolean editMode) {
         this.editMode = editMode;
         if (!editMode) {
@@ -358,6 +306,11 @@ public class InputControlsView extends View {
 
     public void setOverlayOpacity(float overlayOpacity) {
         this.overlayOpacity = overlayOpacity;
+    }
+
+    public void setOverlayMode(boolean overlayMode) {
+        this.overlayMode = overlayMode;
+        invalidate();
     }
 
     public int getSnappingSize() {
@@ -442,6 +395,10 @@ public class InputControlsView extends View {
     }
 
     private void drawGrid(Canvas canvas) {
+        if (overlayMode) {
+            // В Move Mode — НЕ рисуем чёрный фон и сетку
+            return;
+        }
         paint.setStyle(Paint.Style.FILL);
         paint.setStrokeWidth(snappingSize * 0.0625f);
         paint.setColor(0xff000000);
@@ -1104,5 +1061,39 @@ public class InputControlsView extends View {
         // This method would need to be implemented in ControlElement class
         // For now, we'll use reflection or add the method to ControlElement
         return element.getCurrentPointerId();
+    }
+
+    /**
+     * Save custom icon to internal storage with improved quality
+     */
+    private void saveCustomIconToStorage(String elementId, Bitmap icon) {
+        File iconsDir = new File(getContext().getFilesDir(), "custom_icons");
+        if (!iconsDir.exists()) {
+            iconsDir.mkdirs();
+        }
+        
+        File iconFile = new File(iconsDir, elementId + ".png");
+        try (java.io.FileOutputStream fos = new java.io.FileOutputStream(iconFile)) {
+            // Use PNG format with high quality
+            icon.compress(Bitmap.CompressFormat.PNG, 100, fos);
+            Log.d("InputControlsView", "Custom icon saved: " + iconFile.getAbsolutePath());
+        } catch (IOException e) {
+            Log.e("InputControlsView", "Error saving custom icon: " + elementId, e);
+        }
+    }
+
+    /**
+     * Remove custom icon from internal storage
+     */
+    private void removeCustomIconFromStorage(String elementId) {
+        File iconFile = new File(getContext().getFilesDir(), "custom_icons/" + elementId + ".png");
+        if (iconFile.exists()) {
+            boolean deleted = iconFile.delete();
+            if (deleted) {
+                Log.d("InputControlsView", "Custom icon file deleted: " + elementId);
+            } else {
+                Log.e("InputControlsView", "Failed to delete custom icon file: " + elementId);
+            }
+        }
     }
 }
