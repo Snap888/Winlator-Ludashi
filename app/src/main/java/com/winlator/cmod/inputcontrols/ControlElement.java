@@ -71,6 +71,10 @@ public class ControlElement {
     private static final float SCROLL_ACCELERATION_MULTIPLIER = 3.0f; // Множитель ускоренной прокрутки
     private static final float INFINITE_SCROLL_THRESHOLD = 0.05f; // Порог для бесконечной прокрутки
     
+    // Touch element specific constants
+    public static final float DEFAULT_TOUCH_ICON_SIZE_MULTIPLIER = 0.8f;
+    public static final float DEFAULT_TOUCH_BUTTON_OPACITY = 0.5f;
+    
     // Add field for custom icon support
     private String customIconId;
     private boolean hasCustomIcon = false;
@@ -116,8 +120,13 @@ public class ControlElement {
     private float scrollTouchStartY = 0.0f;
     private float accumulatedScrollDelta = 0.0f; // Накопленная дельта для плавной прокрутки
     
+    // Touch element specific fields
+    private long lastClickTime = 0;
+    private static final long DOUBLE_CLICK_INTERVAL = 300; // ms
+    private boolean touchActionPerformed = false;
+    
     public enum Type {
-        BUTTON, D_PAD, RANGE_BUTTON, STICK, TRACKPAD, DYNAMIC_STICK, VERTICAL_SCROLL_BAR;
+        BUTTON, D_PAD, RANGE_BUTTON, STICK, TRACKPAD, DYNAMIC_STICK, VERTICAL_SCROLL_BAR, TOUCH;
 
         public static String[] names() {
             Type[] types = values();
@@ -303,6 +312,17 @@ public class ControlElement {
             if (type == Type.DYNAMIC_STICK) {
                 updateActivationZone();
             }
+            
+            // Special initialization for TOUCH elements
+            if (type == Type.TOUCH) {
+                // Set default values for Touch elements
+                if (!elementJSONObject.has("iconSizeMultiplier")) {
+                    iconSizeMultiplier = DEFAULT_TOUCH_ICON_SIZE_MULTIPLIER;
+                }
+                if (!elementJSONObject.has("buttonOpacity")) {
+                    buttonOpacity = DEFAULT_TOUCH_BUTTON_OPACITY;
+                }
+            }
         }
         catch (JSONException e) {
             reset();
@@ -330,6 +350,16 @@ public class ControlElement {
             bindings[1] = Binding.MOUSE_SCROLL_DOWN_CONTINUOUS;
             // Initialize scroll position to center
             currentScrollOffset = 0.5f;
+        }
+        else if (type == Type.TOUCH) {
+            // По умолчанию для Touch элемента - ЛКМ
+            bindings[0] = Binding.MOUSE_LEFT_CLICK;
+            bindings[1] = Binding.NONE;
+            bindings[2] = Binding.NONE;
+            bindings[3] = Binding.NONE;
+            // Специальные значения по умолчанию для Touch
+            iconSizeMultiplier = DEFAULT_TOUCH_ICON_SIZE_MULTIPLIER;
+            buttonOpacity = DEFAULT_TOUCH_BUTTON_OPACITY;
         }
         else if (type == Type.RANGE_BUTTON) {
             scroller = new RangeScroller(inputControlsView, this);
@@ -385,6 +415,10 @@ public class ControlElement {
         currentScrollOffset = 0.5f;
         scrollTouchStartY = 0.0f;
         accumulatedScrollDelta = 0.0f;
+        
+        // Reset Touch element specific
+        lastClickTime = 0;
+        touchActionPerformed = false;
         
         updateActivationZone();
     }
@@ -790,6 +824,7 @@ public class ControlElement {
 
         switch (type) {
             case BUTTON:
+            case TOUCH: // Touch element uses same sizing as BUTTON
                 switch (shape) {
                     case RECT:
                     case ROUND_RECT:
@@ -909,7 +944,8 @@ public class ControlElement {
         Rect boundingBox = getBoundingBox();
 
         switch (type) {
-            case BUTTON: {
+            case BUTTON: 
+            case TOUCH: { // Touch element shares drawing with BUTTON
                 float cx = boundingBox.centerX();
                 float cy = boundingBox.centerY();
 
@@ -977,6 +1013,11 @@ public class ControlElement {
                     paint.setStyle(Paint.Style.FILL);
                     paint.setColor(primaryColor);
                     canvas.drawText(text, x, (y - ((paint.descent() + paint.ascent()) * 0.5f)), paint);
+                }
+                
+                // For TOUCH element, draw additional indicator
+                if (type == Type.TOUCH) {
+                    drawTouchIndicator(canvas, boundingBox);
                 }
                 break;
             }
@@ -1313,6 +1354,53 @@ public class ControlElement {
         }
     }
 
+    private void drawTouchIndicator(Canvas canvas, Rect boundingBox) {
+        Paint paint = inputControlsView.getPaint();
+        int oldColor = paint.getColor();
+        
+        // Draw action text below the button
+        paint.setStyle(Paint.Style.FILL);
+        paint.setTextSize(14 * scale);
+        paint.setTextAlign(Paint.Align.CENTER);
+        
+        String actionText = getTouchActionText();
+        paint.setColor(Color.WHITE);
+        canvas.drawText(actionText, boundingBox.centerX(), boundingBox.bottom + 20 * scale, paint);
+        
+        // Draw mouse pointer indicator in the center
+        float centerX = boundingBox.centerX();
+        float centerY = boundingBox.centerY();
+        float indicatorSize = Math.min(boundingBox.width(), boundingBox.height()) * 0.15f;
+        
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor(Color.WHITE);
+        
+        // Draw small crosshair indicator
+        paint.setStrokeWidth(2 * scale);
+        canvas.drawLine(centerX - indicatorSize, centerY, centerX + indicatorSize, centerY, paint);
+        canvas.drawLine(centerX, centerY - indicatorSize, centerX, centerY + indicatorSize, paint);
+        
+        paint.setColor(oldColor);
+    }
+    
+    private String getTouchActionText() {
+        Binding binding = getBindingAt(0);
+        if (binding == null) return "Touch";
+        
+        switch (binding) {
+            case MOUSE_LEFT_CLICK:
+                return "LMB";
+            case MOUSE_RIGHT_CLICK:
+                return "RMB";
+            case MOUSE_MIDDLE_CLICK:
+                return "MMB";
+            case MOUSE_DOUBLE_CLICK:
+                return "2x LMB";
+            default:
+                return "Touch";
+        }
+    }
+
     private void drawIcon(Canvas canvas, float cx, float cy, float width, float height, int iconId) {
         Paint paint = inputControlsView.getPaint();
         Bitmap icon = inputControlsView.getIcon((byte)iconId);
@@ -1536,6 +1624,16 @@ public class ControlElement {
             return true;
         }
 
+        if (type == Type.TOUCH) {
+            // Handle Touch element click
+            touchActionPerformed = false; // Reset flag
+            performTouchAction();
+            touchActionPerformed = true; // Mark as performed
+            currentPointerId = pointerId; // Keep pointer id to track engagement
+            inputControlsView.invalidate();
+            return true;
+        }
+
         if (type == Type.STICK) {
             touchDownOrigin.set(x, y);
             handleTouchMove(pointerId, x, y);
@@ -1558,6 +1656,113 @@ public class ControlElement {
         }
         return handleTouchMove(pointerId, x, y);
     }
+
+    private void performTouchAction() {
+    XServer xServer = inputControlsView.getXServer();
+    if (xServer == null) return;
+
+    Rect boundingBox = getBoundingBox();
+    float centerX = boundingBox.centerX();
+    float centerY = boundingBox.centerY();
+    
+    // Получаем размеры виртуального экрана Wine
+    int serverWidth = xServer.screenInfo.width;  // 1280
+    int serverHeight = xServer.screenInfo.height; // 720
+    
+    // Получаем размеры InputControlsView
+    int viewWidth = inputControlsView.getWidth();  // 2448
+    int viewHeight = inputControlsView.getHeight(); // 1080
+    
+    // Проверяем, чтобы избежать деления на ноль
+    if (viewWidth <= 0 || viewHeight <= 0 || serverWidth <= 0 || serverHeight <= 0) return;
+    
+    // Используем ViewTransformation для корректного масштабирования
+    try {
+        // Получаем ViewTransformation через XServerDisplayActivity
+        com.winlator.cmod.XServerDisplayActivity activity = (com.winlator.cmod.XServerDisplayActivity) inputControlsView.getContext();
+        com.winlator.cmod.widget.XServerView xServerView = activity.getXServerView();
+        com.winlator.cmod.renderer.GLRenderer renderer = xServerView.getRenderer();
+        com.winlator.cmod.renderer.ViewTransformation transformation = renderer.viewTransformation;
+        
+        // Проверяем, включен ли режим полного экрана
+        boolean isFullscreen = renderer.isFullscreen();
+        
+        int serverX, serverY;
+        
+        if (isFullscreen) {
+            // В режиме полного экрана координаты InputControlsView напрямую соответствуют виртуальному экрану
+            // Используем простое масштабирование без учета смещений
+            serverX = (int) Math.round((centerX / viewWidth) * serverWidth);
+            serverY = (int) Math.round((centerY / viewHeight) * serverHeight);
+        } else {
+            // В обычном режиме используем смещения и масштабирование из ViewTransformation
+            float relativeX = (centerX - transformation.viewOffsetX) / transformation.viewWidth;
+            float relativeY = (centerY - transformation.viewOffsetY) / transformation.viewHeight;
+            
+            // Преобразуем в абсолютные координаты виртуального экрана
+            serverX = (int) Math.round(relativeX * serverWidth);
+            serverY = (int) Math.round(relativeY * serverHeight);
+        }
+        
+        // Ограничиваем координаты в пределах экрана XServer
+        serverX = Math.max(0, Math.min(serverX, serverWidth - 1));
+        serverY = Math.max(0, Math.min(serverY, serverHeight - 1));
+        
+        // Перемещаем курсор точно в центр Touch элемента
+        xServer.injectPointerMove(serverX, serverY);
+    } catch (Exception e) {
+        // В случае ошибки (например, если не удается получить ViewTransformation)
+        // используем простое масштабирование как запасной вариант
+        int serverX = (int) Math.round((centerX / viewWidth) * serverWidth);
+        int serverY = (int) Math.round((centerY / viewHeight) * serverHeight);
+        
+        serverX = Math.max(0, Math.min(serverX, serverWidth - 1));
+        serverY = Math.max(0, Math.min(serverY, serverHeight - 1));
+        
+        xServer.injectPointerMove(serverX, serverY);
+    }
+    
+    // Выполняем действие клика в зависимости от привязки
+    Binding binding = getBindingAt(0);
+    
+    if (binding == Binding.MOUSE_LEFT_CLICK) {
+        // Один клик левой кнопкой мыши
+        xServer.injectPointerButtonPress(com.winlator.cmod.xserver.Pointer.Button.BUTTON_LEFT);
+        xServer.injectPointerButtonRelease(com.winlator.cmod.xserver.Pointer.Button.BUTTON_LEFT);
+    } else if (binding == Binding.MOUSE_RIGHT_CLICK) {
+        // Один клик правой кнопкой мыши
+        xServer.injectPointerButtonPress(com.winlator.cmod.xserver.Pointer.Button.BUTTON_RIGHT);
+        xServer.injectPointerButtonRelease(com.winlator.cmod.xserver.Pointer.Button.BUTTON_RIGHT);
+    } else if (binding == Binding.MOUSE_MIDDLE_CLICK) {
+        // Один клик средней кнопкой мыши
+        xServer.injectPointerButtonPress(com.winlator.cmod.xserver.Pointer.Button.BUTTON_MIDDLE);
+        xServer.injectPointerButtonRelease(com.winlator.cmod.xserver.Pointer.Button.BUTTON_MIDDLE);
+    } else if (binding == Binding.MOUSE_DOUBLE_CLICK) {
+        // Двойной клик (два быстрых левых клика)
+        long currentTime = System.currentTimeMillis();
+        
+        // Проверяем, является ли это двойным кликом
+        if (currentTime - lastClickTime < DOUBLE_CLICK_INTERVAL) {
+            // Второй клик двойного клика
+            xServer.injectPointerButtonPress(com.winlator.cmod.xserver.Pointer.Button.BUTTON_LEFT);
+            xServer.injectPointerButtonRelease(com.winlator.cmod.xserver.Pointer.Button.BUTTON_LEFT);
+            try { 
+                Thread.sleep(50); 
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            xServer.injectPointerButtonPress(com.winlator.cmod.xserver.Pointer.Button.BUTTON_LEFT);
+            xServer.injectPointerButtonRelease(com.winlator.cmod.xserver.Pointer.Button.BUTTON_LEFT);
+            lastClickTime = 0; // Сбрасываем после двойного клика
+        } else {
+            // Первый клик потенциального двойного клика
+            xServer.injectPointerButtonPress(com.winlator.cmod.xserver.Pointer.Button.BUTTON_LEFT);
+            xServer.injectPointerButtonRelease(com.winlator.cmod.xserver.Pointer.Button.BUTTON_LEFT);
+            lastClickTime = currentTime;
+        }
+    }
+}
+
 
     public boolean handleTouchMove(int pointerId, float x, float y) {
         if (pointerId == currentPointerId && (type == Type.D_PAD || type == Type.STICK || type == Type.TRACKPAD || type == Type.DYNAMIC_STICK || type == Type.VERTICAL_SCROLL_BAR)) {
@@ -1723,7 +1928,6 @@ public class ControlElement {
                         }
                         else {
                             inputControlsView.handleInputEvent(binding, states[i], value);
-                            this.states[i] = states[i];
                         }
                     }
                 }
@@ -1753,6 +1957,11 @@ public class ControlElement {
         }
         else if (pointerId == currentPointerId && type == Type.RANGE_BUTTON) {
             scroller.handleTouchMove(x, y);
+            return true;
+        }
+        else if (pointerId == currentPointerId && type == Type.TOUCH) {
+            // For TOUCH element, we don't handle move events
+            // Action is performed once on touch down
             return true;
         }
         else return false;
@@ -1836,6 +2045,14 @@ public class ControlElement {
             if (currentPosition != null) currentPosition = null;
         }
 
+        else if (type == Type.TOUCH) {
+            // For TOUCH element, action is already performed on touch down
+            // Just reset the pointer id and update visual state
+            currentPointerId = -1;
+            inputControlsView.invalidate();
+            return true;
+        }
+
         currentPointerId = -1;
         inputControlsView.invalidate();
         return true;
@@ -1864,6 +2081,10 @@ public class ControlElement {
     private boolean isEngaged() {
         if (type == Type.BUTTON || type == Type.RANGE_BUTTON) {
             return currentPointerId != -1 || selected;
+        }
+        else if (type == Type.TOUCH) {
+            // Touch element shows engaged state when pressed or action was performed
+            return currentPointerId != -1 || touchActionPerformed;
         }
         return currentPointerId != -1 || anyStateActive();
     }
