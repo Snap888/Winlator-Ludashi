@@ -51,6 +51,7 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
     private static final int PICK_IMAGE_REQUEST = 1001;
     private String selectedCustomIconId = null;
     private InputControlsManager inputControlsManager;
+    private boolean overlayMode = false;
 
     @Override
     public void onCreate(Bundle bundle) {
@@ -58,9 +59,14 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
         AppUtils.hideSystemUI(this);
         setContentView(R.layout.controls_editor_activity);
 
+        overlayMode = getIntent().getBooleanExtra("overlay_mode", false);
+        final boolean isOverlayMode = overlayMode;
+
         inputControlsView = new InputControlsView(this);
         inputControlsView.setEditMode(true);
-        inputControlsView.setOverlayOpacity(0.6f);
+        // Прозрачность 70% в режиме Move Mode
+        inputControlsView.setOverlayOpacity(isOverlayMode ? 0.7f : 0.6f);
+        inputControlsView.setOverlayMode(isOverlayMode);
 
         profile = InputControlsManager.loadProfile(this, ControlsProfile.getProfileFile(this, getIntent().getIntExtra("profile_id", 0)));
         ((TextView)findViewById(R.id.TVProfileName)).setText(profile.getName());
@@ -1125,7 +1131,26 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
 
     @Override
     public void onBackPressed() {
+        if (overlayMode && profile != null) {
+            // Сохраняем профиль и возвращаем его ID
+            profile.save();
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra("applied_profile_id", profile.id);
+            setResult(RESULT_OK, resultIntent);
+        }
         super.onBackPressed();
-        overridePendingTransition(R.anim.slide_in_down, R.anim.slide_out_up);
+        overridePendingTransition(0, 0);
+    }
+
+    @Override
+    public void finish() {
+        if (overlayMode && profile != null) {
+            profile.save();
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra("applied_profile_id", profile.id);
+            setResult(RESULT_OK, resultIntent);
+        }
+        super.finish();
+        overridePendingTransition(0, 0);
     }
 }
