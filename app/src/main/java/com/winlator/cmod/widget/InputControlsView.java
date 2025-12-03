@@ -451,6 +451,28 @@ public class InputControlsView extends View {
         }
         else return false;
     }
+    
+    /**
+     * Создать элемент TOUCH
+     */
+    public synchronized boolean addTouchElement() {
+        if (editMode && profile != null) {
+            ControlElement element = new ControlElement(this);
+            element.setType(ControlElement.Type.TOUCH);
+            element.setX(cursor.x);
+            element.setY(cursor.y);
+            
+            // Установить специальные значения по умолчанию для Touch элемента
+            element.setButtonOpacity(ControlElement.DEFAULT_TOUCH_BUTTON_OPACITY);
+            element.setIconSizeMultiplier(ControlElement.DEFAULT_TOUCH_ICON_SIZE_MULTIPLIER);
+            
+            profile.addElement(element);
+            profile.save();
+            selectElement(element);
+            return true;
+        }
+        else return false;
+    }
 
     public synchronized boolean removeElement() {
         if (editMode && selectedElement != null && profile != null) {
@@ -1015,7 +1037,7 @@ public class InputControlsView extends View {
                         // Нажимаем клавишу
                         post(() -> handleInputEvent(binding, true));
                         
-                        // Небольшая задержка между нажатиями
+                        // Небольстая задержка между нажатиями
                         try {
                             Thread.sleep(50);
                         } catch (InterruptedException e) {
