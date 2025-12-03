@@ -36,7 +36,7 @@
     <uses-permission
         android:name="android.permission.WRITE_SECURE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    
 
     <application
         android:label="Winlator CMOD"
@@ -96,10 +96,9 @@
         </activity>
 
         <activity
-            android:name="com.winlator.cmod.ControlsEditorActivity"
-            android:theme="@style/AppThemeFullscreen"
-            android:screenOrientation="sensorLandscape"
-            android:exported="false" />
+    android:name=".ControlsEditorActivity"
+    android:theme="@style/Theme.Transparent"
+    android:screenOrientation="sensorLandscape" />
 
         <activity
             android:name="com.winlator.cmod.ExternalControllerBindingsActivity"
