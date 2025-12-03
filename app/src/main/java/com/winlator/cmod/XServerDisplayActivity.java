@@ -704,10 +704,29 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        
+        // Обработка результата из обычного редактора управления
         if (requestCode == MainActivity.EDIT_INPUT_CONTROLS_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
             if (editInputControlsCallback != null) {
                 editInputControlsCallback.run();
                 editInputControlsCallback = null;
+            }
+        }
+        // Обработка результата из Move Mode (ControlsEditorActivity)
+        else if (requestCode == 100 && resultCode == RESULT_OK) {
+            if (data != null) {
+                int profileId = data.getIntExtra("applied_profile_id", -1);
+                if (profileId > 0) {
+                    ControlsProfile profile = inputControlsManager.getProfile(profileId);
+                    if (profile != null) {
+                        // Принудительно перезагружаем элементы профиля
+                        profile.loadElements(inputControlsView);
+                        inputControlsView.setProfile(profile);
+                        inputControlsView.setVisibility(View.VISIBLE);
+                        inputControlsView.invalidate(); // Обновляем отображение
+                        AppUtils.showToast(this, "Profile activated: " + profile.getName());
+                    }
+                }
             }
         }
     }
@@ -952,6 +971,19 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             case R.id.main_menu_exit:
                 drawerLayout.closeDrawers();
                 exit();
+                break;
+            case R.id.main_menu_move_mode:
+                ControlsProfile currentProfile = inputControlsView.getProfile();
+                if (currentProfile != null && currentProfile.id > 0) {
+                    Intent intent = new Intent(this, ControlsEditorActivity.class);
+                    intent.putExtra("profile_id", currentProfile.id);
+                    intent.putExtra("overlay_mode", true);
+                    startActivityForResult(intent, 100);
+                    overridePendingTransition(0, 0);
+                } else {
+                    AppUtils.showToast(this, "Please select a profile first");
+                }
+                drawerLayout.closeDrawers();
                 break;
         }
         return true;
