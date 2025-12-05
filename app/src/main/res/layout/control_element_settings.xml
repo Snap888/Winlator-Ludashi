@@ -451,6 +451,119 @@
 
 		</LinearLayout>
 
+		<!-- NEW: Touch Area Settings -->
+		<LinearLayout
+			android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:layout_marginBottom="16dp"
+			
+			
+			android:padding="12dp"
+			android:orientation="vertical"
+			android:id="@+id/LLTouchAreaOptions">
+
+			<TextView
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
+				android:layout_marginBottom="12dp"
+				android:textSize="16sp"
+				android:text="Touch Area Settings"
+				android:textStyle="bold"/>
+
+			<LinearLayout
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginBottom="12dp"
+				android:orientation="vertical">
+
+				<LinearLayout
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:orientation="horizontal">
+
+					<TextView
+						android:layout_height="wrap_content"
+						android:layout_width="0dp"
+						android:textSize="14sp"
+						android:layout_weight="1"
+						android:text="Area Width"
+						android:textStyle="bold"/>
+
+					<TextView
+						android:layout_height="wrap_content"
+						android:layout_width="wrap_content"
+						android:id="@+id/TVTouchAreaWidth"
+						android:text="200px"
+						android:textStyle="bold"/>
+
+				</LinearLayout>
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:layout_marginBottom="8dp"
+					android:textSize="12sp"
+					android:textColor="#666666"
+					android:text="Adjust the width of the touch area (50-2000px)"/>
+
+				<SeekBar
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:max="100"
+					android:min="0"
+					android:progress="27"
+					android:id="@+id/SBTouchAreaWidth"/>
+
+			</LinearLayout>
+
+			<LinearLayout
+				android:layout_height="wrap_content"
+				android:layout_width="match_parent"
+				android:layout_marginBottom="8dp"
+				android:orientation="vertical">
+
+				<LinearLayout
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:orientation="horizontal">
+
+					<TextView
+						android:layout_height="wrap_content"
+						android:layout_width="0dp"
+						android:textSize="14sp"
+						android:layout_weight="1"
+						android:text="Area Height"
+						android:textStyle="bold"/>
+
+					<TextView
+						android:layout_height="wrap_content"
+						android:layout_width="wrap_content"
+						android:id="@+id/TVTouchAreaHeight"
+						android:text="200px"
+						android:textStyle="bold"/>
+
+				</LinearLayout>
+
+				<TextView
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:layout_marginBottom="8dp"
+					android:textSize="12sp"
+					
+					android:text="Adjust the height of the touch area (50-2000px)"/>
+
+				<SeekBar
+					android:layout_height="wrap_content"
+					android:layout_width="match_parent"
+					android:max="100"
+					android:min="0"
+					android:progress="27"
+					android:id="@+id/SBTouchAreaHeight"/>
+
+			</LinearLayout>
+
+		</LinearLayout>
+
 		<LinearLayout
 			android:layout_height="wrap_content"
 			android:layout_width="match_parent"
@@ -1064,7 +1177,7 @@
 				<TextView
 					android:layout_height="wrap_content"
 					android:layout_width="match_parent"
-					android:layout_marginBottom="8dp"
+					android:layout_marginBottom="4dp"
 					android:textSize="14sp"
 					android:text="Default Icons:"
 					android:textStyle="bold"/>
