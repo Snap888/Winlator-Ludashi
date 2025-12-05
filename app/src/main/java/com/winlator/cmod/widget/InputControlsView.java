@@ -353,44 +353,51 @@ public class InputControlsView extends View {
         if (profile != null && showTouchscreenControls && !isFocusedOnStick()) {
             if (!profile.isElementsLoaded()) profile.loadElements(this);
             
-            // Сначала отрисовываем все TOUCH_AREA элементы
-            for (ControlElement element : profile.getElements()) {
-                // Set edit mode for all elements to enable activation zone drawing
-                element.setEditMode(editMode);
-                
-                // Отрисовываем только TOUCH_AREA элементы
-                if (element.getType() == ControlElement.Type.TOUCH_AREA) {
-                    // Ограничиваем размеры при отрисовке, но не изменяем значения элемента
-                    float maxTouchAreaWidth = width * 1.2f;
-                    float maxTouchAreaHeight = height * 1.2f;
+            // Сначала отрисовываем все TOUCH_AREA элементы (только в режиме редактирования)
+            if (editMode) {
+                for (ControlElement element : profile.getElements()) {
+                    // Set edit mode for all elements to enable activation zone drawing
+                    element.setEditMode(editMode);
                     
-                    float drawWidth = Math.min(element.getActivationZoneWidth(), maxTouchAreaWidth);
-                    float drawHeight = Math.min(element.getActivationZoneHeight(), maxTouchAreaHeight);
-                    
-                    // Временно изменяем размеры для отрисовки, если нужно
-                    // Но не сохраняем изменения в элементе
-                    float originalWidth = element.getActivationZoneWidth();
-                    float originalHeight = element.getActivationZoneHeight();
-                    
-                    // Если размеры для отрисовки отличаются от оригинальных, временно меняем
-                    if (drawWidth != originalWidth || drawHeight != originalHeight) {
-                        element.setActivationZoneWidth(drawWidth);
-                        element.setActivationZoneHeight(drawHeight);
-                        element.draw(canvas);
-                        // Восстанавливаем оригинальные размеры
-                        element.setActivationZoneWidth(originalWidth);
-                        element.setActivationZoneHeight(originalHeight);
-                    } else {
-                        element.draw(canvas);
+                    // Отрисовываем только TOUCH_AREA элементы в режиме редактирования
+                    if (element.getType() == ControlElement.Type.TOUCH_AREA) {
+                        // Ограничиваем размеры при отрисовке, но не изменяем значения элемента
+                        float maxTouchAreaWidth = width * 1.2f;
+                        float maxTouchAreaHeight = height * 1.2f;
+                        
+                        float drawWidth = Math.min(element.getActivationZoneWidth(), maxTouchAreaWidth);
+                        float drawHeight = Math.min(element.getActivationZoneHeight(), maxTouchAreaHeight);
+                        
+                        // Временно изменяем размеры для отрисовки, если нужно
+                        // Но не сохраняем изменения в элементе
+                        float originalWidth = element.getActivationZoneWidth();
+                        float originalHeight = element.getActivationZoneHeight();
+                        
+                        // Если размеры для отрисовки отличаются от оригинальных, временно меняем
+                        if (drawWidth != originalWidth || drawHeight != originalHeight) {
+                            element.setActivationZoneWidth(drawWidth);
+                            element.setActivationZoneHeight(drawHeight);
+                            element.draw(canvas);
+                            // Восстанавливаем оригинальные размеры
+                            element.setActivationZoneWidth(originalWidth);
+                            element.setActivationZoneHeight(originalHeight);
+                        } else {
+                            element.draw(canvas);
+                        }
                     }
                 }
             }
             
-            // Затем отрисовываем все остальные элементы поверх TOUCH_AREA
+            // Затем отрисовываем все остальные элементы поверх остальных (кроме TOUCH_AREA в режиме управления)
             for (ControlElement element : profile.getElements()) {
-                // Отрисовываем все элементы, кроме TOUCH_AREA (они уже отрисованы выше)
+                // Отрисовываем все элементы, кроме TOUCH_AREA (они уже отрисованы выше в режиме редактирования)
                 if (element.getType() != ControlElement.Type.TOUCH_AREA) {
+                    element.setEditMode(editMode);
                     element.draw(canvas);
+                } else if (editMode) {
+                    // Если это TOUCH_AREA и мы в режиме редактирования, 
+                    // элемент уже отрисован выше, поэтому пропускаем
+                    continue;
                 }
             }
         }
@@ -817,7 +824,7 @@ public class InputControlsView extends View {
                 }
             }
         }
-
+        
         if (!editMode && profile != null) {
             int actionIndex = event.getActionIndex();
             int pointerId = event.getPointerId(actionIndex);
