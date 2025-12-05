@@ -45,7 +45,7 @@ public class ControlElement {
     public static final float DEFAULT_ACTIVATION_ZONE_WIDTH = 200.0f;
     public static final float DEFAULT_ACTIVATION_ZONE_HEIGHT = 200.0f;
     public static final float MIN_ACTIVATION_ZONE_SIZE = 50.0f;
-    public static final float MAX_ACTIVATION_ZONE_SIZE = 600.0f; // Увеличено с 500 до 600
+    public static final float MAX_ACTIVATION_ZONE_SIZE = 4000.0f; // Увеличено с 2000 до 4000 для TOUCH_AREA
     
     // Profile switching constants
     public static final float MIN_SWITCH_DELAY = 0.0f;
@@ -126,7 +126,7 @@ public class ControlElement {
     private boolean touchActionPerformed = false;
     
     public enum Type {
-        BUTTON, D_PAD, RANGE_BUTTON, STICK, TRACKPAD, DYNAMIC_STICK, VERTICAL_SCROLL_BAR, TOUCH;
+        BUTTON, D_PAD, RANGE_BUTTON, STICK, TRACKPAD, DYNAMIC_STICK, VERTICAL_SCROLL_BAR, TOUCH, TOUCH_AREA;
 
         public static String[] names() {
             Type[] types = values();
@@ -207,13 +207,18 @@ public class ControlElement {
     private void loadFromJSON(JSONObject elementJSONObject) {
         try {
             type = Type.valueOf(elementJSONObject.getString("type"));
-            shape = Shape.valueOf(elementJSONObject.getString("shape"));
+            // For TOUCH_AREA, always use RECT shape since it's a rectangular area
+            if (type == Type.TOUCH_AREA) {
+                shape = Shape.RECT;
+            } else {
+                shape = Shape.valueOf(elementJSONObject.getString("shape"));
+            }
             
             JSONArray bindingsJSONArray = elementJSONObject.getJSONArray("bindings");
-            bindings = new Binding[bindingsJSONArray.length()];
-            for (int i = 0; i < bindingsJSONArray.length(); i++) {
-                bindings[i] = Binding.valueOf(bindingsJSONArray.getString(i));
-            }
+bindings = new Binding[bindingsJSONArray.length()]; // <-- Исправлено
+for (int i = 0; i < bindingsJSONArray.length(); i++) { // <-- Исправлено
+    bindings[i] = Binding.valueOf(bindingsJSONArray.getString(i));
+}
             
             scale = (float)elementJSONObject.getDouble("scale");
             x = (short)(elementJSONObject.getDouble("x") * inputControlsView.getMaxWidth());
@@ -248,6 +253,21 @@ public class ControlElement {
                 }
                 if (elementJSONObject.has("activationZoneHeight")) {
                     activationZoneHeight = (float)elementJSONObject.getDouble("activationZoneHeight");
+                }
+            }
+            
+            // Load TOUCH_AREA specific settings
+            if (type == Type.TOUCH_AREA) {
+                // Load activation zone settings for TOUCH_AREA
+                if (elementJSONObject.has("activationZoneWidth")) {
+                    activationZoneWidth = (float)elementJSONObject.getDouble("activationZoneWidth");
+                }
+                if (elementJSONObject.has("activationZoneHeight")) {
+                    activationZoneHeight = (float)elementJSONObject.getDouble("activationZoneHeight");
+                }
+                // Load showActivationZone setting for TOUCH_AREA
+                if (elementJSONObject.has("showActivationZone")) {
+                    showActivationZone = elementJSONObject.getBoolean("showActivationZone");
                 }
             }
             
@@ -308,14 +328,25 @@ public class ControlElement {
             states = new boolean[bindings.length];
             boundingBoxNeedsUpdate = true;
             
-            // Initialize activation zone for DYNAMIC_STICK
-            if (type == Type.DYNAMIC_STICK) {
+            // Initialize activation zone for DYNAMIC_STICK and TOUCH_AREA
+            if (type == Type.DYNAMIC_STICK || type == Type.TOUCH_AREA) {
                 updateActivationZone();
             }
             
             // Special initialization for TOUCH elements
             if (type == Type.TOUCH) {
                 // Set default values for Touch elements
+                if (!elementJSONObject.has("iconSizeMultiplier")) {
+                    iconSizeMultiplier = DEFAULT_TOUCH_ICON_SIZE_MULTIPLIER;
+                }
+                if (!elementJSONObject.has("buttonOpacity")) {
+                    buttonOpacity = DEFAULT_TOUCH_BUTTON_OPACITY;
+                }
+            }
+            
+            // Special initialization for TOUCH_AREA elements
+            if (type == Type.TOUCH_AREA) {
+                // Set default values for Touch Area elements
                 if (!elementJSONObject.has("iconSizeMultiplier")) {
                     iconSizeMultiplier = DEFAULT_TOUCH_ICON_SIZE_MULTIPLIER;
                 }
@@ -351,13 +382,13 @@ public class ControlElement {
             // Initialize scroll position to center
             currentScrollOffset = 0.5f;
         }
-        else if (type == Type.TOUCH) {
-            // По умолчанию для Touch элемента - ЛКМ
+        else if (type == Type.TOUCH || type == Type.TOUCH_AREA) {
+            // По умолчанию для Touch и Touch Area элементов - ЛКМ
             bindings[0] = Binding.MOUSE_LEFT_CLICK;
             bindings[1] = Binding.NONE;
             bindings[2] = Binding.NONE;
             bindings[3] = Binding.NONE;
-            // Специальные значения по умолчанию для Touch
+            // Специальные значения по умолчанию для Touch и TOUCH_AREA
             iconSizeMultiplier = DEFAULT_TOUCH_ICON_SIZE_MULTIPLIER;
             buttonOpacity = DEFAULT_TOUCH_BUTTON_OPACITY;
         }
@@ -419,6 +450,11 @@ public class ControlElement {
         // Reset Touch element specific
         lastClickTime = 0;
         touchActionPerformed = false;
+        
+        // For TOUCH_AREA, always use RECT shape
+        if (type == Type.TOUCH_AREA) {
+            shape = Shape.RECT;
+        }
         
         updateActivationZone();
     }
@@ -525,7 +561,12 @@ public class ControlElement {
     }
 
     public void setActivationZoneWidth(float activationZoneWidth) {
-        this.activationZoneWidth = Math.max(MIN_ACTIVATION_ZONE_SIZE, Math.min(MAX_ACTIVATION_ZONE_SIZE, activationZoneWidth));
+        // For TOUCH_AREA, allow larger areas up to 4000
+        if (type == Type.TOUCH_AREA) {
+            this.activationZoneWidth = Math.max(50.0f, Math.min(4000.0f, activationZoneWidth));
+        } else {
+            this.activationZoneWidth = Math.max(MIN_ACTIVATION_ZONE_SIZE, Math.min(MAX_ACTIVATION_ZONE_SIZE, activationZoneWidth));
+        }
         updateActivationZone();
     }
 
@@ -534,7 +575,12 @@ public class ControlElement {
     }
 
     public void setActivationZoneHeight(float activationZoneHeight) {
-        this.activationZoneHeight = Math.max(MIN_ACTIVATION_ZONE_SIZE, Math.min(MAX_ACTIVATION_ZONE_SIZE, activationZoneHeight));
+        // For TOUCH_AREA, allow larger areas up to 4000
+        if (type == Type.TOUCH_AREA) {
+            this.activationZoneHeight = Math.max(50.0f, Math.min(4000.0f, activationZoneHeight));
+        } else {
+            this.activationZoneHeight = Math.max(MIN_ACTIVATION_ZONE_SIZE, Math.min(MAX_ACTIVATION_ZONE_SIZE, activationZoneHeight));
+        }
         updateActivationZone();
     }
 
@@ -603,7 +649,7 @@ public class ControlElement {
     }
 
     private void updateActivationZone() {
-        if (type != Type.DYNAMIC_STICK) return;
+        if (type != Type.DYNAMIC_STICK && type != Type.TOUCH_AREA) return;
         
         Rect bb = getBoundingBox();
         float centerX = bb.centerX();
@@ -632,7 +678,7 @@ public class ControlElement {
         setBinding(Binding.NONE);
         states = new boolean[bindingCount];
         boundingBoxNeedsUpdate = true;
-        if (type == Type.DYNAMIC_STICK) {
+        if (type == Type.DYNAMIC_STICK || type == Type.TOUCH_AREA) {
             updateActivationZone();
         }
     }
@@ -642,9 +688,12 @@ public class ControlElement {
     }
 
     public void setShape(Shape shape) {
-        this.shape = shape;
+        // For TOUCH_AREA, always keep RECT shape
+        if (type != Type.TOUCH_AREA) {
+            this.shape = shape;
+        }
         boundingBoxNeedsUpdate = true;
-        if (type == Type.DYNAMIC_STICK) {
+        if (type == Type.DYNAMIC_STICK || type == Type.TOUCH_AREA) {
             updateActivationZone();
         }
     }
@@ -708,7 +757,7 @@ public class ControlElement {
     public void setScale(float scale) {
         this.scale = scale;
         boundingBoxNeedsUpdate = true;
-        if (type == Type.DYNAMIC_STICK) {
+        if (type == Type.DYNAMIC_STICK || type == Type.TOUCH_AREA) {
             updateActivationZone();
         }
     }
@@ -720,7 +769,7 @@ public class ControlElement {
     public void setX(int x) {
         this.x = (short)x;
         boundingBoxNeedsUpdate = true;
-        if (type == Type.DYNAMIC_STICK) {
+        if (type == Type.DYNAMIC_STICK || type == Type.TOUCH_AREA) {
             updateActivationZone();
         }
     }
@@ -732,7 +781,7 @@ public class ControlElement {
     public void setY(int y) {
         this.y = (short)y;
         boundingBoxNeedsUpdate = true;
-        if (type == Type.DYNAMIC_STICK) {
+        if (type == Type.DYNAMIC_STICK || type == Type.TOUCH_AREA) {
             updateActivationZone();
         }
     }
@@ -758,7 +807,10 @@ public class ControlElement {
     }
 
     public void setIconId(int iconId) {
-        this.iconId = (byte)iconId;
+        // For TOUCH_AREA, don't change iconId since it doesn't have an icon
+        if (type != Type.TOUCH_AREA) {
+            this.iconId = (byte)iconId;
+        }
     }
     
     public String getCustomIconId() {
@@ -766,8 +818,11 @@ public class ControlElement {
     }
     
     public void setCustomIconId(String customIconId) {
-        this.customIconId = customIconId;
-        this.hasCustomIcon = customIconId != null && !customIconId.isEmpty();
+        // For TOUCH_AREA, don't set custom icon since it doesn't have an icon
+        if (type != Type.TOUCH_AREA) {
+            this.customIconId = customIconId;
+            this.hasCustomIcon = customIconId != null && !customIconId.isEmpty();
+        }
     }
     
     public boolean hasCustomIcon() {
@@ -775,9 +830,12 @@ public class ControlElement {
     }
     
     public void setHasCustomIcon(boolean hasCustomIcon) {
-        this.hasCustomIcon = hasCustomIcon;
-        if (!hasCustomIcon) {
-            this.customIconId = null;
+        // For TOUCH_AREA, don't set custom icon since it doesn't have an icon
+        if (type != Type.TOUCH_AREA) {
+            this.hasCustomIcon = hasCustomIcon;
+            if (!hasCustomIcon) {
+                this.customIconId = null;
+            }
         }
     }
     
@@ -786,7 +844,10 @@ public class ControlElement {
     }
     
     public void setIconSizeMultiplier(float multiplier) {
-        this.iconSizeMultiplier = Math.max(0.1f, Math.min(3.0f, multiplier));
+        // For TOUCH_AREA, don't change icon size multiplier since it doesn't have an icon
+        if (type != Type.TOUCH_AREA) {
+            this.iconSizeMultiplier = Math.max(0.1f, Math.min(3.0f, multiplier));
+        }
     }
     
     public float getButtonOpacity() {
@@ -802,7 +863,10 @@ public class ControlElement {
     }
     
     public void setIconOpacity(float opacity) {
-        this.iconOpacity = Math.max(0.1f, Math.min(1.0f, opacity));
+        // For TOUCH_AREA, don't change icon opacity since it doesn't have an icon
+        if (type != Type.TOUCH_AREA) {
+            this.iconOpacity = Math.max(0.1f, Math.min(1.0f, opacity));
+        }
     }
     
     public String getId() {
@@ -824,7 +888,7 @@ public class ControlElement {
 
         switch (type) {
             case BUTTON:
-            case TOUCH: // Touch element uses same sizing as BUTTON
+            case TOUCH:
                 switch (shape) {
                     case RECT:
                     case ROUND_RECT:
@@ -840,6 +904,11 @@ public class ControlElement {
                         halfHeight = snappingSize * 3;
                         break;
                 }
+                break;
+            case TOUCH_AREA:
+                // For TOUCH_AREA, use large rectangle dimensions based on activation zone
+                halfWidth = (int)(activationZoneWidth / 2);
+                halfHeight = (int)(activationZoneHeight / 2);
                 break;
             case D_PAD: {
                 halfWidth = snappingSize * 7;
@@ -876,8 +945,8 @@ public class ControlElement {
         boundingBox.set(x - halfWidth, y - halfHeight, x + halfWidth, y + halfHeight);
         boundingBoxNeedsUpdate = false;
         
-        // Update activation zone for DYNAMIC_STICK
-        if (type == Type.DYNAMIC_STICK) {
+        // Update activation zone for DYNAMIC_STICK and TOUCH_AREA
+        if (type == Type.DYNAMIC_STICK || type == Type.TOUCH_AREA) {
             updateActivationZone();
         }
         
@@ -945,7 +1014,7 @@ public class ControlElement {
 
         switch (type) {
             case BUTTON: 
-            case TOUCH: { // Touch element shares drawing with BUTTON
+            case TOUCH: {
                 float cx = boundingBox.centerX();
                 float cy = boundingBox.centerY();
 
@@ -1019,6 +1088,60 @@ public class ControlElement {
                 if (type == Type.TOUCH) {
                     drawTouchIndicator(canvas, boundingBox);
                 }
+                break;
+            }
+            case TOUCH_AREA: {
+                // For TOUCH_AREA, don't draw the button itself, only the activation zone
+                int cx = boundingBox.centerX();
+                int cy = boundingBox.centerY();
+                int oldColor = paint.getColor();
+
+                // Draw activation zone (only in edit mode, and optionally outside edit mode)
+                if (editMode || showActivationZone) {
+                    // Save original paint state
+                    Paint.Style originalStyle = paint.getStyle();
+                    float originalStrokeWidth = paint.getStrokeWidth();
+                    
+                    // Draw semi-transparent fill for better visibility
+                    paint.setStyle(Paint.Style.FILL);
+                    paint.setColor(ColorUtils.setAlphaComponent(0xFF2196F3, 20)); // Light blue with transparency
+                    canvas.drawRect(activationZone, paint);
+                    
+                    // Draw dashed border for activation zone
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setColor(ColorUtils.setAlphaComponent(0xFF2196F3, 180)); // Blue with higher opacity
+                    paint.setStrokeWidth(2f);
+                    paint.setPathEffect(new DashPathEffect(new float[]{10, 5}, 0));
+                    canvas.drawRect(activationZone, paint);
+                    
+                    // Remove dash effect for other drawings
+                    paint.setPathEffect(null);
+                    
+                    // Draw activation zone dimensions label (only in edit mode)
+                    if (editMode) {
+                        paint.setStyle(Paint.Style.FILL);
+                        paint.setTextSize(snappingSize * 0.8f);
+                        paint.setTextAlign(Paint.Align.CENTER);
+                        paint.setColor(0xFF2196F3);
+                        String dimensions = (int)activationZoneWidth + "x" + (int)activationZoneHeight;
+                        canvas.drawText(dimensions, activationZone.centerX(), activationZone.centerY(), paint);
+                    }
+                    
+                    // Restore original paint state
+                    paint.setStyle(originalStyle);
+                    paint.setStrokeWidth(originalStrokeWidth);
+                    paint.setColor(oldColor);
+                }
+
+                // Draw selection outline if selected
+                if (selected) {
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setColor(inputControlsView.getSecondaryColor());
+                    paint.setStrokeWidth(strokeWidth);
+                    canvas.drawRect(activationZone, paint);
+                }
+
+                paint.setColor(oldColor);
                 break;
             }
             case D_PAD: {
@@ -1383,6 +1506,41 @@ public class ControlElement {
         paint.setColor(oldColor);
     }
     
+    private void drawTouchAreaIndicator(Canvas canvas, Rect boundingBox) {
+        Paint paint = inputControlsView.getPaint();
+        int oldColor = paint.getColor();
+        
+        // Draw action text below the button
+        paint.setStyle(Paint.Style.FILL);
+        paint.setTextSize(14 * scale);
+        paint.setTextAlign(Paint.Align.CENTER);
+        
+        String actionText = getTouchActionText();
+        paint.setColor(Color.YELLOW);
+        canvas.drawText(actionText, boundingBox.centerX(), boundingBox.bottom + 20 * scale, paint);
+        
+        // Draw area type indicator
+        paint.setTextSize(14 * scale);
+        String areaText = "AREA";
+        paint.setColor(Color.YELLOW);
+        canvas.drawText(areaText, boundingBox.centerX(), boundingBox.bottom + 40 * scale, paint);
+        
+        // Draw mouse pointer indicator in the center
+        float centerX = boundingBox.centerX();
+        float centerY = boundingBox.centerY();
+        float indicatorSize = Math.min(boundingBox.width(), boundingBox.height()) * 0.15f;
+        
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor(Color.YELLOW);
+        
+        // Draw small crosshair indicator
+        paint.setStrokeWidth(2 * scale);
+        canvas.drawLine(centerX - indicatorSize, centerY, centerX + indicatorSize, centerY, paint);
+        canvas.drawLine(centerX, centerY - indicatorSize, centerX, centerY + indicatorSize, paint);
+        
+        paint.setColor(oldColor);
+    }
+    
     private String getTouchActionText() {
         Binding binding = getBindingAt(0);
         if (binding == null) return "Touch";
@@ -1425,7 +1583,7 @@ public class ControlElement {
             
             if (scaledWidth > width * 0.9f) {
                 scaledWidth = width * 0.9f;
-                scaledHeight = scaledWidth / iconAspectRatio;
+                scaledHeight = scaledHeight / iconAspectRatio;
             }
             if (scaledHeight > height * 0.9f) {
                 scaledHeight = height * 0.9f;
@@ -1445,6 +1603,11 @@ public class ControlElement {
     }
     
     private void drawCustomIcon(Canvas canvas, float cx, float cy, float width, float height) {
+        // For TOUCH_AREA, don't draw custom icon since it doesn't have an icon
+        if (type == Type.TOUCH_AREA) {
+            return;
+        }
+        
         Paint paint = inputControlsView.getPaint();
         Bitmap customIcon = inputControlsView.getCustomIcon(getId());
         if (customIcon != null) {
@@ -1468,7 +1631,7 @@ public class ControlElement {
             
             if (scaledWidth > width * 0.9f) {
                 scaledWidth = width * 0.9f;
-                scaledHeight = scaledWidth / iconAspectRatio;
+                scaledHeight = scaledHeight / iconAspectRatio;
             }
             if (scaledHeight > height * 0.9f) {
                 scaledHeight = height * 0.9f;
@@ -1522,6 +1685,15 @@ public class ControlElement {
                 elementJSONObject.put("activationZoneHeight", Float.valueOf(activationZoneHeight));
             }
             
+            // Add TOUCH_AREA specific settings
+            if (type == Type.TOUCH_AREA) {
+                // Add activation zone settings for TOUCH_AREA
+                elementJSONObject.put("activationZoneWidth", Float.valueOf(activationZoneWidth));
+                elementJSONObject.put("activationZoneHeight", Float.valueOf(activationZoneHeight));
+                // Add showActivationZone setting for TOUCH_AREA
+                elementJSONObject.put("showActivationZone", showActivationZone);
+            }
+            
             // Add Vertical Scroll Bar specific settings
             if (type == Type.VERTICAL_SCROLL_BAR) {
                 elementJSONObject.put("scrollBarWidth", Float.valueOf(scrollBarWidth));
@@ -1567,12 +1739,17 @@ public class ControlElement {
     }
 
     public boolean containsPoint(float x, float y) {
-        return getBoundingBox().contains((int)(x + 0.5f), (int)(y + 0.5f));
+        // For TOUCH_AREA, check if point is in activation zone
+        if (type == Type.TOUCH_AREA) {
+            return activationZone.contains(x, y);
+        } else {
+            return getBoundingBox().contains((int)(x + 0.5f), (int)(y + 0.5f));
+        }
     }
 
     // DYNAMIC_STICK specific method to check if point is in activation zone
     public boolean isInActivationZone(float x, float y) {
-        if (type != Type.DYNAMIC_STICK) return false;
+        if (type != Type.DYNAMIC_STICK && type != Type.TOUCH_AREA) return false;
         return activationZone.contains(x, y);
     }
 
@@ -1595,6 +1772,20 @@ public class ControlElement {
                 
                 // Force neutral value on first frame
                 handleTouchMove(pointerId, x, y);
+                inputControlsView.invalidate();
+                return true;
+            }
+            return false;
+        }
+        
+        // TOUCH_AREA specific logic - check activation zone
+        if (type == Type.TOUCH_AREA) {
+            if (isInActivationZone(x, y)) {
+                currentPointerId = pointerId;
+                // Handle Touch Area click - move cursor to touch position and perform action
+                touchActionPerformed = false; // Reset flag
+                performTouchAction(x, y); // Pass coordinates for TOUCH_AREA type
+                touchActionPerformed = true; // Mark as performed
                 inputControlsView.invalidate();
                 return true;
             }
@@ -1627,7 +1818,7 @@ public class ControlElement {
         if (type == Type.TOUCH) {
             // Handle Touch element click
             touchActionPerformed = false; // Reset flag
-            performTouchAction();
+            performTouchAction(x, y); // Pass coordinates for TOUCH type
             touchActionPerformed = true; // Mark as performed
             currentPointerId = pointerId; // Keep pointer id to track engagement
             inputControlsView.invalidate();
@@ -1657,112 +1848,125 @@ public class ControlElement {
         return handleTouchMove(pointerId, x, y);
     }
 
-    private void performTouchAction() {
-    XServer xServer = inputControlsView.getXServer();
-    if (xServer == null) return;
+    private void performTouchAction(float touchX, float touchY) {
+        XServer xServer = inputControlsView.getXServer();
+        if (xServer == null) return;
 
-    Rect boundingBox = getBoundingBox();
-    float centerX = boundingBox.centerX();
-    float centerY = boundingBox.centerY();
-    
-    // Получаем размеры виртуального экрана Wine
-    int serverWidth = xServer.screenInfo.width;  // 1280
-    int serverHeight = xServer.screenInfo.height; // 720
-    
-    // Получаем размеры InputControlsView
-    int viewWidth = inputControlsView.getWidth();  // 2448
-    int viewHeight = inputControlsView.getHeight(); // 1080
-    
-    // Проверяем, чтобы избежать деления на ноль
-    if (viewWidth <= 0 || viewHeight <= 0 || serverWidth <= 0 || serverHeight <= 0) return;
-    
-    // Используем ViewTransformation для корректного масштабирования
-    try {
-        // Получаем ViewTransformation через XServerDisplayActivity
-        com.winlator.cmod.XServerDisplayActivity activity = (com.winlator.cmod.XServerDisplayActivity) inputControlsView.getContext();
-        com.winlator.cmod.widget.XServerView xServerView = activity.getXServerView();
-        com.winlator.cmod.renderer.GLRenderer renderer = xServerView.getRenderer();
-        com.winlator.cmod.renderer.ViewTransformation transformation = renderer.viewTransformation;
+        // For TOUCH element, use center of element; for TOUCH_AREA, use touch coordinates
+        Rect boundingBox = getBoundingBox();
+        float targetX, targetY;
         
-        // Проверяем, включен ли режим полного экрана
-        boolean isFullscreen = renderer.isFullscreen();
-        
-        int serverX, serverY;
-        
-        if (isFullscreen) {
-            // В режиме полного экрана координаты InputControlsView напрямую соответствуют виртуальному экрану
-            // Используем простое масштабирование без учета смещений
-            serverX = (int) Math.round((centerX / viewWidth) * serverWidth);
-            serverY = (int) Math.round((centerY / viewHeight) * serverHeight);
+        if (type == Type.TOUCH) {
+            // For TOUCH element, use center of element
+            targetX = boundingBox.centerX();
+            targetY = boundingBox.centerY();
+        } else if (type == Type.TOUCH_AREA) {
+            // For TOUCH_AREA element, use touch coordinates within the activation zone
+            targetX = touchX;
+            targetY = touchY;
         } else {
-            // В обычном режиме используем смещения и масштабирование из ViewTransformation
-            float relativeX = (centerX - transformation.viewOffsetX) / transformation.viewWidth;
-            float relativeY = (centerY - transformation.viewOffsetY) / transformation.viewHeight;
+            // For other types, use center
+            targetX = boundingBox.centerX();
+            targetY = boundingBox.centerY();
+        }
+        
+        // Получаем размеры виртуального экрана Wine
+        int serverWidth = xServer.screenInfo.width;  // 1280
+        int serverHeight = xServer.screenInfo.height; // 720
+        
+        // Получаем размеры InputControlsView
+        int viewWidth = inputControlsView.getWidth();  // 2448
+        int viewHeight = inputControlsView.getHeight(); // 1080
+        
+        // Проверяем, чтобы избежать деления на ноль
+        if (viewWidth <= 0 || viewHeight <= 0 || serverWidth <= 0 || serverHeight <= 0) return;
+        
+        // Используем ViewTransformation для корректного масштабирования
+        try {
+            // Получаем ViewTransformation через XServerDisplayActivity
+            com.winlator.cmod.XServerDisplayActivity activity = (com.winlator.cmod.XServerDisplayActivity) inputControlsView.getContext();
+            com.winlator.cmod.widget.XServerView xServerView = activity.getXServerView();
+            com.winlator.cmod.renderer.GLRenderer renderer = xServerView.getRenderer();
+            com.winlator.cmod.renderer.ViewTransformation transformation = renderer.viewTransformation;
             
-            // Преобразуем в абсолютные координаты виртуального экрана
-            serverX = (int) Math.round(relativeX * serverWidth);
-            serverY = (int) Math.round(relativeY * serverHeight);
-        }
-        
-        // Ограничиваем координаты в пределах экрана XServer
-        serverX = Math.max(0, Math.min(serverX, serverWidth - 1));
-        serverY = Math.max(0, Math.min(serverY, serverHeight - 1));
-        
-        // Перемещаем курсор точно в центр Touch элемента
-        xServer.injectPointerMove(serverX, serverY);
-    } catch (Exception e) {
-        // В случае ошибки (например, если не удается получить ViewTransformation)
-        // используем простое масштабирование как запасной вариант
-        int serverX = (int) Math.round((centerX / viewWidth) * serverWidth);
-        int serverY = (int) Math.round((centerY / viewHeight) * serverHeight);
-        
-        serverX = Math.max(0, Math.min(serverX, serverWidth - 1));
-        serverY = Math.max(0, Math.min(serverY, serverHeight - 1));
-        
-        xServer.injectPointerMove(serverX, serverY);
-    }
-    
-    // Выполняем действие клика в зависимости от привязки
-    Binding binding = getBindingAt(0);
-    
-    if (binding == Binding.MOUSE_LEFT_CLICK) {
-        // Один клик левой кнопкой мыши
-        xServer.injectPointerButtonPress(com.winlator.cmod.xserver.Pointer.Button.BUTTON_LEFT);
-        xServer.injectPointerButtonRelease(com.winlator.cmod.xserver.Pointer.Button.BUTTON_LEFT);
-    } else if (binding == Binding.MOUSE_RIGHT_CLICK) {
-        // Один клик правой кнопкой мыши
-        xServer.injectPointerButtonPress(com.winlator.cmod.xserver.Pointer.Button.BUTTON_RIGHT);
-        xServer.injectPointerButtonRelease(com.winlator.cmod.xserver.Pointer.Button.BUTTON_RIGHT);
-    } else if (binding == Binding.MOUSE_MIDDLE_CLICK) {
-        // Один клик средней кнопкой мыши
-        xServer.injectPointerButtonPress(com.winlator.cmod.xserver.Pointer.Button.BUTTON_MIDDLE);
-        xServer.injectPointerButtonRelease(com.winlator.cmod.xserver.Pointer.Button.BUTTON_MIDDLE);
-    } else if (binding == Binding.MOUSE_DOUBLE_CLICK) {
-        // Двойной клик (два быстрых левых клика)
-        long currentTime = System.currentTimeMillis();
-        
-        // Проверяем, является ли это двойным кликом
-        if (currentTime - lastClickTime < DOUBLE_CLICK_INTERVAL) {
-            // Второй клик двойного клика
-            xServer.injectPointerButtonPress(com.winlator.cmod.xserver.Pointer.Button.BUTTON_LEFT);
-            xServer.injectPointerButtonRelease(com.winlator.cmod.xserver.Pointer.Button.BUTTON_LEFT);
-            try { 
-                Thread.sleep(50); 
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+            // Проверяем, включен ли режим полного экрана
+            boolean isFullscreen = renderer.isFullscreen();
+            
+            int serverX, serverY;
+            
+            if (isFullscreen) {
+                // В режиме полного экрана координаты InputControlsView напрямую соответствуют виртуальному экрану
+                // Используем простое масштабирование без учета смещений
+                serverX = (int) Math.round((targetX / viewWidth) * serverWidth);
+                serverY = (int) Math.round((targetY / viewHeight) * serverHeight);
+            } else {
+                // В обычном режиме используем смещения и масштабирование из ViewTransformation
+                float relativeX = (targetX - transformation.viewOffsetX) / transformation.viewWidth;
+                float relativeY = (targetY - transformation.viewOffsetY) / transformation.viewHeight;
+                
+                // Преобразуем в абсолютные координаты виртуального экрана
+                serverX = (int) Math.round(relativeX * serverWidth);
+                serverY = (int) Math.round(relativeY * serverHeight);
             }
+            
+            // Ограничиваем координаты в пределах экрана XServer
+            serverX = Math.max(0, Math.min(serverX, serverWidth - 1));
+            serverY = Math.max(0, Math.min(serverY, serverHeight - 1));
+            
+            // Перемещаем курсор точно в точку касания
+            xServer.injectPointerMove(serverX, serverY);
+        } catch (Exception e) {
+            // В случае ошибки (например, если не удается получить ViewTransformation)
+            // используем простое масштабирование как запасной вариант
+            int serverX = (int) Math.round((targetX / viewWidth) * serverWidth);
+            int serverY = (int) Math.round((targetY / viewHeight) * serverHeight);
+            
+            serverX = Math.max(0, Math.min(serverX, serverWidth - 1));
+            serverY = Math.max(0, Math.min(serverY, serverHeight - 1));
+            
+            xServer.injectPointerMove(serverX, serverY);
+        }
+        
+        // Выполняем действие клика в зависимости от привязки
+        Binding binding = getBindingAt(0);
+        
+        if (binding == Binding.MOUSE_LEFT_CLICK) {
+            // Один клик левой кнопкой мыши
             xServer.injectPointerButtonPress(com.winlator.cmod.xserver.Pointer.Button.BUTTON_LEFT);
             xServer.injectPointerButtonRelease(com.winlator.cmod.xserver.Pointer.Button.BUTTON_LEFT);
-            lastClickTime = 0; // Сбрасываем после двойного клика
-        } else {
-            // Первый клик потенциального двойного клика
-            xServer.injectPointerButtonPress(com.winlator.cmod.xserver.Pointer.Button.BUTTON_LEFT);
-            xServer.injectPointerButtonRelease(com.winlator.cmod.xserver.Pointer.Button.BUTTON_LEFT);
-            lastClickTime = currentTime;
+        } else if (binding == Binding.MOUSE_RIGHT_CLICK) {
+            // Один клик правой кнопкой мыши
+            xServer.injectPointerButtonPress(com.winlator.cmod.xserver.Pointer.Button.BUTTON_RIGHT);
+            xServer.injectPointerButtonRelease(com.winlator.cmod.xserver.Pointer.Button.BUTTON_RIGHT);
+        } else if (binding == Binding.MOUSE_MIDDLE_CLICK) {
+            // Один клик средней кнопкой мыши
+            xServer.injectPointerButtonPress(com.winlator.cmod.xserver.Pointer.Button.BUTTON_MIDDLE);
+            xServer.injectPointerButtonRelease(com.winlator.cmod.xserver.Pointer.Button.BUTTON_MIDDLE);
+        } else if (binding == Binding.MOUSE_DOUBLE_CLICK) {
+            // Двойной клик (два быстрых левых клика)
+            long currentTime = System.currentTimeMillis();
+            
+            // Проверяем, является ли это двойным кликом
+            if (currentTime - lastClickTime < DOUBLE_CLICK_INTERVAL) {
+                // Второй клик двойного клика
+                xServer.injectPointerButtonPress(com.winlator.cmod.xserver.Pointer.Button.BUTTON_LEFT);
+                xServer.injectPointerButtonRelease(com.winlator.cmod.xserver.Pointer.Button.BUTTON_LEFT);
+                try { 
+                    Thread.sleep(50); 
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                xServer.injectPointerButtonPress(com.winlator.cmod.xserver.Pointer.Button.BUTTON_LEFT);
+                xServer.injectPointerButtonRelease(com.winlator.cmod.xserver.Pointer.Button.BUTTON_LEFT);
+                lastClickTime = 0; // Сбрасываем после двойного клика
+            } else {
+                // Первый клик потенциального двойного клика
+                xServer.injectPointerButtonPress(com.winlator.cmod.xserver.Pointer.Button.BUTTON_LEFT);
+                xServer.injectPointerButtonRelease(com.winlator.cmod.xserver.Pointer.Button.BUTTON_LEFT);
+                lastClickTime = currentTime;
+            }
         }
     }
-}
-
 
     public boolean handleTouchMove(int pointerId, float x, float y) {
         if (pointerId == currentPointerId && (type == Type.D_PAD || type == Type.STICK || type == Type.TRACKPAD || type == Type.DYNAMIC_STICK || type == Type.VERTICAL_SCROLL_BAR)) {
@@ -1885,7 +2089,6 @@ public class ControlElement {
 
             if (type == Type.STICK || type == Type.DYNAMIC_STICK) {
                 final boolean[] states = {deltaY <= -STICK_DEAD_ZONE, deltaX >= STICK_DEAD_ZONE, deltaY >= STICK_DEAD_ZONE, deltaX <= -STICK_DEAD_ZONE};
-
                 for (byte i = 0; i < 4; i++) {
                     float value = (i == 1 || i == 3) ? deltaX : deltaY;
                     Binding binding = getBindingAt(i);
@@ -1961,6 +2164,11 @@ public class ControlElement {
         }
         else if (pointerId == currentPointerId && type == Type.TOUCH) {
             // For TOUCH element, we don't handle move events
+            // Action is performed once on touch down
+            return true;
+        }
+        else if (pointerId == currentPointerId && type == Type.TOUCH_AREA) {
+            // For TOUCH_AREA element, we don't handle move events
             // Action is performed once on touch down
             return true;
         }
@@ -2045,8 +2253,8 @@ public class ControlElement {
             if (currentPosition != null) currentPosition = null;
         }
 
-        else if (type == Type.TOUCH) {
-            // For TOUCH element, action is already performed on touch down
+        else if (type == Type.TOUCH || type == Type.TOUCH_AREA) {
+            // For TOUCH and TOUCH_AREA elements, action is already performed on touch down
             // Just reset the pointer id and update visual state
             currentPointerId = -1;
             inputControlsView.invalidate();
@@ -2082,8 +2290,8 @@ public class ControlElement {
         if (type == Type.BUTTON || type == Type.RANGE_BUTTON) {
             return currentPointerId != -1 || selected;
         }
-        else if (type == Type.TOUCH) {
-            // Touch element shows engaged state when pressed or action was performed
+        else if (type == Type.TOUCH || type == Type.TOUCH_AREA) {
+            // Touch and Touch Area elements show engaged state when pressed or action was performed
             return currentPointerId != -1 || touchActionPerformed;
         }
         return currentPointerId != -1 || anyStateActive();
