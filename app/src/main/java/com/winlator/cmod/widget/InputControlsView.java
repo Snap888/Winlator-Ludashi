@@ -352,10 +352,46 @@ public class InputControlsView extends View {
 
         if (profile != null && showTouchscreenControls && !isFocusedOnStick()) {
             if (!profile.isElementsLoaded()) profile.loadElements(this);
+            
+            // Сначала отрисовываем все TOUCH_AREA элементы
             for (ControlElement element : profile.getElements()) {
                 // Set edit mode for all elements to enable activation zone drawing
                 element.setEditMode(editMode);
-                element.draw(canvas);
+                
+                // Отрисовываем только TOUCH_AREA элементы
+                if (element.getType() == ControlElement.Type.TOUCH_AREA) {
+                    // Ограничиваем размеры при отрисовке, но не изменяем значения элемента
+                    float maxTouchAreaWidth = width * 1.2f;
+                    float maxTouchAreaHeight = height * 1.2f;
+                    
+                    float drawWidth = Math.min(element.getActivationZoneWidth(), maxTouchAreaWidth);
+                    float drawHeight = Math.min(element.getActivationZoneHeight(), maxTouchAreaHeight);
+                    
+                    // Временно изменяем размеры для отрисовки, если нужно
+                    // Но не сохраняем изменения в элементе
+                    float originalWidth = element.getActivationZoneWidth();
+                    float originalHeight = element.getActivationZoneHeight();
+                    
+                    // Если размеры для отрисовки отличаются от оригинальных, временно меняем
+                    if (drawWidth != originalWidth || drawHeight != originalHeight) {
+                        element.setActivationZoneWidth(drawWidth);
+                        element.setActivationZoneHeight(drawHeight);
+                        element.draw(canvas);
+                        // Восстанавливаем оригинальные размеры
+                        element.setActivationZoneWidth(originalWidth);
+                        element.setActivationZoneHeight(originalHeight);
+                    } else {
+                        element.draw(canvas);
+                    }
+                }
+            }
+            
+            // Затем отрисовываем все остальные элементы поверх TOUCH_AREA
+            for (ControlElement element : profile.getElements()) {
+                // Отрисовываем все элементы, кроме TOUCH_AREA (они уже отрисованы выше)
+                if (element.getType() != ControlElement.Type.TOUCH_AREA) {
+                    element.draw(canvas);
+                }
             }
         }
 
@@ -474,6 +510,31 @@ public class InputControlsView extends View {
         else return false;
     }
 
+    /**
+     * Создать элемент TOUCH_AREA
+     */
+    public synchronized boolean addTouchAreaElement() {
+        if (editMode && profile != null) {
+            ControlElement element = new ControlElement(this);
+            element.setType(ControlElement.Type.TOUCH_AREA);
+            element.setX(cursor.x);
+            element.setY(cursor.y);
+            
+            // Установить специальные значения по умолчанию для Touch Area элемента
+            element.setButtonOpacity(ControlElement.DEFAULT_TOUCH_BUTTON_OPACITY);
+            element.setIconSizeMultiplier(ControlElement.DEFAULT_TOUCH_ICON_SIZE_MULTIPLIER);
+            // Установить большие размеры области по умолчанию
+            element.setActivationZoneWidth(ControlElement.DEFAULT_ACTIVATION_ZONE_WIDTH * 2);
+            element.setActivationZoneHeight(ControlElement.DEFAULT_ACTIVATION_ZONE_HEIGHT * 2);
+            
+            profile.addElement(element);
+            profile.save();
+            selectElement(element);
+            return true;
+        }
+        else return false;
+    }
+
     public synchronized boolean removeElement() {
         if (editMode && selectedElement != null && profile != null) {
             // Remove any custom icon associated with this element
@@ -549,11 +610,12 @@ public class InputControlsView extends View {
         return null;
     }
 
-    // New method to find DYNAMIC_STICK elements in activation zone
-    private synchronized ControlElement findDynamicStickInActivationZone(float x, float y) {
+    // New method to find DYNAMIC_STICK and TOUCH_AREA elements in activation zone
+    private synchronized ControlElement findElementInActivationZone(float x, float y) {
         if (profile != null) {
             for (ControlElement element : profile.getElements()) {
-                if (element.getType() == ControlElement.Type.DYNAMIC_STICK && 
+                if ((element.getType() == ControlElement.Type.DYNAMIC_STICK || 
+                     element.getType() == ControlElement.Type.TOUCH_AREA) && 
                     element.isInActivationZone(x, y) && 
                     element.getCurrentPointerId() == -1) {
                     return element;
@@ -770,11 +832,33 @@ public class InputControlsView extends View {
 
                     touchpadView.setPointerButtonLeftEnabled(true);
                     
-                    // First check for DYNAMIC_STICK in activation zone
-                    ControlElement dynamicStick = findDynamicStickInActivationZone(x, y);
-                    if (dynamicStick != null) {
-                        if (dynamicStick.handleTouchDown(pointerId, x, y)) {
+                    // First, check for elements under the touch point, excluding TOUCH_AREA and DYNAMIC_STICK
+                    // This ensures that elements drawn "on top" of TOUCH_AREA can be clicked
+                    ControlElement elementAtPoint = null;
+                    // Iterate from the end of the list (elements drawn last, thus "on top")
+                    for (int i = profile.getElements().size() - 1; i >= 0; i--) {
+                        ControlElement element = profile.getElements().get(i);
+                        if (element.getType() != ControlElement.Type.TOUCH_AREA && 
+                            element.getType() != ControlElement.Type.DYNAMIC_STICK && 
+                            element.containsPoint(x, y)) {
+                            elementAtPoint = element;
+                            break;
+                        }
+                    }
+                    
+                    // If there is an element under the point (excluding TOUCH_AREA and DYNAMIC_STICK), handle it first
+                    if (elementAtPoint != null) {
+                        if (elementAtPoint.handleTouchDown(pointerId, x, y)) {
                             handled = true;
+
+                            // Check for MultiBinding first
+                            if (elementAtPoint.isUseMultiBinding() && !elementAtPoint.getMultiBindingAt(0).isEmpty()) {
+                                // MultiBinding handled in handleTouchDown
+                            }
+                            // Check for profile switching
+                            else if (elementAtPoint.isEnableProfileSwitching() && elementAtPoint.getTargetProfileId() != 0) {
+                                scheduleProfileSwitch(elementAtPoint);
+                            }
 
                             // Trigger haptic feedback for input controls
                             if (hapticsEnabled) {
@@ -787,40 +871,31 @@ public class InputControlsView extends View {
                                     }
                                 }
                             }
+                            
+                            if (elementAtPoint.getBindingAt(0) == Binding.MOUSE_LEFT_BUTTON) {
+                                touchpadView.setPointerButtonLeftEnabled(false);
+                            }
                         }
                     }
                     
-                    // If no DYNAMIC_STICK was activated, check other elements
+                    // If the element under the point did not handle the touch, check for DYNAMIC_STICK and TOUCH_AREA
                     if (!handled) {
-                        for (ControlElement element : profile.getElements()) {
-                            if (element.getType() != ControlElement.Type.DYNAMIC_STICK) {
-                                if (element.handleTouchDown(pointerId, x, y)) {
-                                    handled = true;
+                        ControlElement elementInZone = findElementInActivationZone(x, y);
+                        if (elementInZone != null) {
+                            if (elementInZone.handleTouchDown(pointerId, x, y)) {
+                                handled = true;
 
-                                    // Check for MultiBinding first
-                                    if (element.isUseMultiBinding() && !element.getMultiBindingAt(0).isEmpty()) {
-                                        // MultiBinding handled in handleTouchDown
-                                    }
-                                    // Check for profile switching
-                                    else if (element.isEnableProfileSwitching() && element.getTargetProfileId() != 0) {
-                                        scheduleProfileSwitch(element);
-                                    }
-
-                                    // Trigger haptic feedback for input controls
-                                    if (hapticsEnabled) {
-                                        Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
-                                        if (vibrator != null && vibrator.hasVibrator()) {
-                                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                                                vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE));
-                                            } else {
-                                                vibrator.vibrate(50); // Legacy method for older Android versions
-                                            }
+                                // Trigger haptic feedback for input controls
+                                if (hapticsEnabled) {
+                                    Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
+                                    if (vibrator != null && vibrator.hasVibrator()) {
+                                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                                            vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE));
+                                        } else {
+                                            vibrator.vibrate(50); // Legacy method for older Android versions
                                         }
                                     }
                                 }
-                            }
-                            if (element.getBindingAt(0) == Binding.MOUSE_LEFT_BUTTON) {
-                                touchpadView.setPointerButtonLeftEnabled(false);
                             }
                         }
                     }
@@ -1078,7 +1153,7 @@ public class InputControlsView extends View {
         return icons[id];
     }
 
-    // Add getter for currentPointerId to use in findDynamicStickInActivationZone
+    // Add getter for currentPointerId to use in findElementInActivationZone
     public int getCurrentPointerId(ControlElement element) {
         // This method would need to be implemented in ControlElement class
         // For now, we'll use reflection or add the method to ControlElement
