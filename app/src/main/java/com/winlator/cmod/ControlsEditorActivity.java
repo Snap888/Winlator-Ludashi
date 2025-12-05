@@ -80,6 +80,7 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
         container.findViewById(R.id.BTAddElement).setOnClickListener(this);
         container.findViewById(R.id.BTRemoveElement).setOnClickListener(this);
         container.findViewById(R.id.BTElementSettings).setOnClickListener(this);
+        container.findViewById(R.id.BTExitEditor).setOnClickListener(this);
     }
 
     @Override
@@ -102,6 +103,9 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
                 }
                 else AppUtils.showToast(this, R.string.no_control_element_selected);
                 break;
+            case R.id.BTExitEditor:
+                finish();
+                break;
         }
     }
 
@@ -121,6 +125,7 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
             view.findViewById(R.id.LLProfileSwitching).setVisibility(View.GONE);
             view.findViewById(R.id.LLMultiBinding).setVisibility(View.GONE);
             view.findViewById(R.id.LLScrollBarOptions).setVisibility(View.GONE);
+            view.findViewById(R.id.LLTouchAreaOptions).setVisibility(View.GONE); // NEW: Touch Area options
 
             if (type == ControlElement.Type.BUTTON || type == ControlElement.Type.TOUCH) {
                 view.findViewById(R.id.LLShape).setVisibility(View.VISIBLE);
@@ -143,6 +148,11 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
             else if (type == ControlElement.Type.DYNAMIC_STICK) {
                 view.findViewById(R.id.LLDynamicStickOptions).setVisibility(View.VISIBLE);
                 view.findViewById(R.id.LLDynamicStickVisual).setVisibility(View.VISIBLE);
+                view.findViewById(R.id.LLShowOutline).setVisibility(View.VISIBLE);
+            }
+            else if (type == ControlElement.Type.TOUCH_AREA) {
+                // TOUCH_AREA has similar options to DYNAMIC_STICK but with different controls
+                view.findViewById(R.id.LLTouchAreaOptions).setVisibility(View.VISIBLE);
                 view.findViewById(R.id.LLShowOutline).setVisibility(View.VISIBLE);
             }
             else if (type == ControlElement.Type.VERTICAL_SCROLL_BAR) {
@@ -315,6 +325,74 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
                         tvZoneHeight.setText((int)height + "px");
                         profile.save();
                         inputControlsView.invalidate();
+                    }
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {}
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {}
+            });
+        }
+
+        // NEW: Touch Area Width Control
+        final TextView tvTouchAreaWidth = view.findViewById(R.id.TVTouchAreaWidth);
+        SeekBar sbTouchAreaWidth = view.findViewById(R.id.SBTouchAreaWidth);
+        if (element.getType() == ControlElement.Type.TOUCH_AREA) {
+            // Set max value to 100 for progress bar
+            sbTouchAreaWidth.setMax(100);
+            
+            // Calculate progress based on element's current width and min/max values
+            int widthProgress = (int)((element.getActivationZoneWidth() - 50.0f) / 
+                                    (4000.0f - 50.0f) * 100); // From 50px to 4000px
+            widthProgress = Math.max(0, Math.min(100, widthProgress)); // Clamp to 0-100
+            sbTouchAreaWidth.setProgress(widthProgress);
+            tvTouchAreaWidth.setText((int)element.getActivationZoneWidth() + "px");
+            
+            sbTouchAreaWidth.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (fromUser && element.getType() == ControlElement.Type.TOUCH_AREA) {
+                        float width = 50.0f + (progress / 100.0f) * (4000.0f - 50.0f);
+                        element.setActivationZoneWidth(width);
+                        tvTouchAreaWidth.setText((int)width + "px");
+                        profile.save();
+                        inputControlsView.invalidate(); // Обновляем отображение в реальном времени
+                    }
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {}
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {}
+            });
+        }
+
+        // NEW: Touch Area Height Control
+        final TextView tvTouchAreaHeight = view.findViewById(R.id.TVTouchAreaHeight);
+        SeekBar sbTouchAreaHeight = view.findViewById(R.id.SBTouchAreaHeight);
+        if (element.getType() == ControlElement.Type.TOUCH_AREA) {
+            // Set max value to 100 for progress bar
+            sbTouchAreaHeight.setMax(100);
+            
+            // Calculate progress based on element's current height and min/max values
+            int heightProgress = (int)((element.getActivationZoneHeight() - 50.0f) / 
+                                     (4000.0f - 50.0f) * 100); // From 50px to 4000px
+            heightProgress = Math.max(0, Math.min(100, heightProgress)); // Clamp to 0-100
+            sbTouchAreaHeight.setProgress(heightProgress);
+            tvTouchAreaHeight.setText((int)element.getActivationZoneHeight() + "px");
+            
+            sbTouchAreaHeight.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (fromUser && element.getType() == ControlElement.Type.TOUCH_AREA) {
+                        float height = 50.0f + (progress / 100.0f) * (4000.0f - 50.0f);
+                        element.setActivationZoneHeight(height);
+                        tvTouchAreaHeight.setText((int)height + "px");
+                        profile.save();
+                        inputControlsView.invalidate(); // Обновляем отображение в реальном времени
                     }
                 }
 
@@ -864,7 +942,7 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
         container.removeAllViews();
 
         ControlElement.Type type = element.getType();
-        if (type == ControlElement.Type.BUTTON || type == ControlElement.Type.TOUCH) {
+        if (type == ControlElement.Type.BUTTON || type == ControlElement.Type.TOUCH || type == ControlElement.Type.TOUCH_AREA) {
             loadBindingSpinner(element, container, 0, R.string.binding);
         }
         else if (type == ControlElement.Type.D_PAD || type == ControlElement.Type.STICK || 
@@ -890,10 +968,10 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
             String[] bindingEntries = null;
             ControlElement.Type type = element.getType();
             
-            // Для TOUCH элементов показываем только Mouse Click привязки
-            if (type == ControlElement.Type.TOUCH) {
+            // Для TOUCH и TOUCH_AREA элементов показываем только Mouse Click привязки
+            if (type == ControlElement.Type.TOUCH || type == ControlElement.Type.TOUCH_AREA) {
                 bindingEntries = Binding.mouseClickBindingLabels();
-                sBindingType.setVisibility(View.GONE); // Скрываем выбор типа для Touch
+                sBindingType.setVisibility(View.GONE); // Скрываем выбор типа для Touch и Touch Area
             } else {
                 switch (sBindingType.getSelectedItemPosition()) {
                     case 0:
@@ -913,8 +991,8 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
             AppUtils.setSpinnerSelectionFromValue(sBinding, element.getBindingAt(index).toString());
         };
 
-        // Для TOUCH элементов автоматически выбираем тип Mouse
-        if (element.getType() == ControlElement.Type.TOUCH) {
+        // Для TOUCH и TOUCH_AREA элементов автоматически выбираем тип Mouse
+        if (element.getType() == ControlElement.Type.TOUCH || element.getType() == ControlElement.Type.TOUCH_AREA) {
             sBindingType.setSelection(1, false); // Mouse
         } else {
             Binding selectedBinding = element.getBindingAt(index);
@@ -945,8 +1023,8 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
                 Binding binding = Binding.NONE;
                 ControlElement.Type type = element.getType();
                 
-                // Для TOUCH элементов берем из Mouse Click привязок
-                if (type == ControlElement.Type.TOUCH) {
+                // Для TOUCH и TOUCH_AREA элементов берем из Mouse Click привязок
+                if (type == ControlElement.Type.TOUCH || type == ControlElement.Type.TOUCH_AREA) {
                     binding = Binding.mouseClickBindingValues()[position];
                 } else {
                     switch (sBindingType.getSelectedItemPosition()) {
