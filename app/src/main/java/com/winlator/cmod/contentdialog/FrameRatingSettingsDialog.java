@@ -1,4 +1,4 @@
-package com.winlator.cmod.widget;
+package com.winlator.cmod.contentdialog;
 
 import android.content.Context;
 import android.view.View;
@@ -8,6 +8,7 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import com.winlator.cmod.widget.FrameRating;
 
 import com.winlator.cmod.R;
 import com.winlator.cmod.contentdialog.ContentDialog;
