@@ -3,6 +3,8 @@ package com.winlator.cmod.widget;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -13,6 +15,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import com.winlator.cmod.contentdialog.FrameRatingSettingsDialog;
 
 import com.winlator.cmod.R;
 import com.winlator.cmod.container.Container;
@@ -83,13 +86,12 @@ public class FrameRating extends FrameLayout implements Runnable {
     public FrameRating(Context context, HashMap graphicsDriverConfig, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         this.context = context;
-        this.graphicsDriverConfig = graphicsDriverConfig;
+        // Защита от null
+        this.graphicsDriverConfig = (graphicsDriverConfig != null) ? graphicsDriverConfig : new HashMap<>();
         
-        // Инициализация SharedPreferences
         prefs = context.getSharedPreferences("frame_rating_prefs", Context.MODE_PRIVATE);
         prefsKey = "frame_rating_position_" + context.getPackageName();
         
-        // Загрузка настроек
         loadSettings();
         
         View view = LayoutInflater.from(context).inflate(R.layout.frame_rating, this, false);
@@ -111,8 +113,13 @@ public class FrameRating extends FrameLayout implements Runnable {
         tvBatteryLevel = view.findViewById(R.id.TVBatteryLevel);
         tvBatteryPower = view.findViewById(R.id.TVBatteryPower);
         
+        // Устанавливаем значения по умолчанию
         tvRenderer.setText("OpenGL");
-        tvGPU.setText(GPUInformation.getRenderer(graphicsDriverConfig.get("version").toString(), context));
+        String version = "system";
+        if (graphicsDriverConfig != null && graphicsDriverConfig.get("version") != null) {
+            version = graphicsDriverConfig.get("version").toString();
+        }
+        tvGPU.setText(GPUInformation.getRenderer(version, context));
         totalRAM = getTotalRAM();
         
         layoutContainer = view.findViewById(R.id.LLContainer);
@@ -222,7 +229,7 @@ public class FrameRating extends FrameLayout implements Runnable {
         editor.apply();
     }
     
-    private void loadSettings() {
+    public void loadSettings() {
         showFPS = prefs.getBoolean("show_fps", true);
         showRenderer = prefs.getBoolean("show_renderer", true);
         showGPU = prefs.getBoolean("show_gpu", true);
@@ -706,7 +713,7 @@ public class FrameRating extends FrameLayout implements Runnable {
         if (showTemperature) {
             float cpuTemp = getCPUTemperature();
             float batteryTemp = getBatteryTemperature();
-            String tempText = String.format(Locale.ENGLISH, "Bat🔋%.0f°C/CPU🔲%.0f°C", batteryTemp, cpuTemp);
+            String tempText = String.format(Locale.ENGLISH, "Bat %.0f°C / CPU %.0f°C", batteryTemp, cpuTemp);
             tvTemperature.setText(tempText);
         }
         if (showBatteryLevel) {
