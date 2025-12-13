@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+<string-array name="vr_modes">
+    <item>@string/vr_mode_split</item>
+    <item>@string/vr_mode_sbs</item>
+    <item>@string/vr_mode_ou</item>
+</string-array>
+
+<string-array name="scale_modes">
+    <item>Fit to Frame</item>
+    <item>Fill Frame</item>
+    <item>Stretch</item>
+</string-array>
+
     <string-array name="screen_size_entries">
         <item>Custom</item>
         <item>690x360 (16:9)</item>
