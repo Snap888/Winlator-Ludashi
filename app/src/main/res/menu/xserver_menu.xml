@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <group android:checkableBehavior="none">
         <!-- Existing menu items -->
         <item
@@ -21,6 +22,11 @@
             android:icon="@drawable/icon_screen_effect"
             android:id="@+id/main_menu_screen_effects"
             android:title="@string/screen_effect" />
+            <!-- Добавить в соответствующее место меню -->
+<item
+    android:id="@+id/main_menu_vr"
+    android:icon="@drawable/ic_vr_settings"
+    android:title="@string/vr_mode" />
         <item
             android:icon="@drawable/icon_fullscreen"
             android:id="@+id/main_menu_toggle_fullscreen"
@@ -49,6 +55,16 @@
             android:icon="@drawable/icon_exit"
             android:id="@+id/main_menu_exit"
             android:title="@string/exit" />
-        
+
+        <!-- New FPS menu items -->
+        <item
+            android:id="@+id/main_menu_fps_settings"
+            android:icon="@drawable/icon_settings"
+            android:title="FPS Settings" />
+        <item
+            android:id="@+id/main_menu_show_fps"
+            android:checkable="true"
+            android:checked="false"
+            android:title="Show FPS" />
     </group>
 </menu>
