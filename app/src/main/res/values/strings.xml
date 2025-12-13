@@ -5,6 +5,35 @@
     ]>
 <resources>
 
+<string name="vr_mode">VR Mode</string>
+<string name="vr_frame_settings">VR Frame Settings</string>
+<string name="vr_enable">Enable VR</string>
+<string name="vr_disable">Disable VR</string>
+<string name="vr_frame_size">Frame Size</string>
+<string name="vr_frame_position">Frame Position</string>
+<string name="vr_corner_radius">Corner Radius</string>
+<string name="vr_distortion_strength">Distortion Strength</string>
+<string name="vr_edge_feathering">Edge Feathering</string>
+<string name="vr_sync_frames">Sync Frames</string>
+<string name="vr_center_frames">Center Frames</string>
+<string name="vr_preset_640x480">640×480</string>
+<string name="vr_preset_800x600">800×600</string>
+<string name="vr_preset_960x720">960×720</string>
+<string name="vr_mode_split">Split Screen</string>
+<string name="vr_mode_sbs">Side-by-Side</string>
+<string name="vr_mode_ou">Over-Under</string>
+<string name="vr_left_eye_settings">Left Eye Settings</string>
+<string name="vr_right_eye_settings">Right Eye Settings</string>
+<string name="vr_frame_x_position">X Position</string>
+<string name="vr_frame_y_position">Y Position</string>
+<string name="vr_frame_width">Width</string>
+<string name="vr_frame_height">Height</string>
+<string name="vr_settings_title">VR Settings</string>
+
+
+
+
+
 
 
     <style name="Theme.Transparent" parent="Theme.AppCompat.NoActionBar">
