@@ -90,6 +90,13 @@ public class WinHandler {
     private int gyroTriggerButton;
     private boolean isGyroActive = false;
     private boolean isToggleMode;
+    
+    // Flag to indicate if VR mode is active
+    private boolean vrModeActive = false;
+    // Flag to indicate if gyro is used for mouse movement in VR mode (based on gyroMode)
+    private boolean useGyroForMouse = false; // Добавляем флаг
+    // НОВОЕ: Флаг для переопределения цели гироскопа в VR через меню
+    private boolean useGyroForMouseOverride = false; // Если true, использовать гироскоп для мыши в VR, игнорируя useGyroForMouse
 
     public void setGyroSensitivityX(float sensitivity) {
         this.gyroSensitivityX = sensitivity;
@@ -123,51 +130,158 @@ public class WinHandler {
     public void updateGyroData(float rawGyroX, float rawGyroY) {
         // Check if gyro is enabled before processing the data
         if (!preferences.getBoolean("gyro_enabled", false)) {
+            Log.d("WinHandler", "Gyro not enabled, skipping updateGyroData.");
             return; // Exit if the gyro is disabled
         }
 
-        boolean shouldProcessGyro = true;
+        Log.d("WinHandler", "updateGyroData called - vrModeActive: " + vrModeActive + ", useGyroForMouse: " + useGyroForMouse + ", useGyroForMouseOverride: " + useGyroForMouseOverride + ", rawX: " + rawGyroX + ", rawY: " + rawGyroY);
 
-        // Check if processing gyro data only when the left trigger is held
-        if (processGyroWithLeftTrigger) {
-            shouldProcessGyro = isLeftTriggerPressed();
+        // Проверяем, нужно ли использовать гироскоп для мыши
+        boolean shouldUseGyroForMouse = false;
+        if (useGyroForMouseOverride) {
+             if (vrModeActive) {
+                 // В VR-режиме: если useGyroForMouseOverride включён и gyroMode == 1, то мышь
+                 shouldUseGyroForMouse = useGyroForMouse; // useGyroForMouse устанавливается из VRSettings (gyroMode == 1)
+             } else {
+                 // Вне VR-режима: если useGyroForMouseOverride включён, то мышь
+                 shouldUseGyroForMouse = true;
+             }
+        }
+        // Если shouldUseGyroForMouse = false, гироскоп используется для фреймов или геймпада (старая логика)
+
+        if (shouldUseGyroForMouse) {
+             Log.d("WinHandler", "Processing gyro for mouse movement (Override/Non-VR).");
+             // Use gyro for mouse movement
+             // Apply deadzone
+             if (Math.abs(rawGyroX) < gyroDeadzone) rawGyroX = 0;
+             if (Math.abs(rawGyroY) < gyroDeadzone) rawGyroY = 0;
+
+             // Apply inversion
+             if (invertGyroX) rawGyroX = -rawGyroX;
+             if (invertGyroY) rawGyroY = -rawGyroY;
+
+             // Apply sensitivity
+             rawGyroX *= gyroSensitivityX; // gyroSensitivityX = 0.35f
+             rawGyroY *= gyroSensitivityY; // gyroSensitivityY = 0.25f
+
+             // Apply smoothing
+             smoothGyroX = smoothGyroX * smoothingFactor + rawGyroX * (1 - smoothingFactor); // smoothingFactor = 0.45f
+             smoothGyroY = smoothGyroY * smoothingFactor + rawGyroY * (1 - smoothingFactor);
+
+             // Convert gyro movement to mouse movement
+             // Need access to XServer or its pointer for mouse movement
+             XServer xServer = activity.getXServer(); // Используем activity.getXServer()
+             if (xServer != null) {
+                 // Calculate movement delta based on gyro sensitivity and smoothing
+                 // These values might need fine-tuning
+                 int dx = (int) (smoothGyroX * 100); // Adjust multiplier as needed - УМНОЖЕНИЕ НА 100!
+                 int dy = (int) (smoothGyroY * 100); // Adjust multiplier as needed - УМНОЖЕНИЕ НА 100!
+
+                 Log.d("WinHandler", "Calculated mouse delta (Override/Non-VR) - dx: " + dx + ", dy: " + dy + ", smoothGyroX: " + smoothGyroX + ", smoothGyroY: " + smoothGyroY);
+
+                 // Send mouse move event relative to current position
+                 xServer.injectPointerMoveDelta(dx, dy); // ВЫЗОВ injectPointerMoveDelta
+                 // Optionally request render to see cursor movement
+                 activity.getXServerView().requestRender(); // ЗАПРОС РЕНДЕРА
+             } else {
+                  Log.e("WinHandler", "XServer is null, cannot inject mouse delta (Override/Non-VR).");
+             }
+             // Важно: НЕ обрабатываем гироскоп для фреймов или геймпада, если он используется для мыши
+             return;
         }
 
+        // --- Старая логика для фреймов и геймпада ---
+        // If VR mode is active, check how to use gyro data (for frames, not mouse)
+        if (vrModeActive) {
+             // Режим 0 (для фреймов) или если useGyroForMouse = false, но VR активен
+             Log.d("WinHandler", "Processing gyro for VR frames (mode 0 or Override OFF).");
+             // Apply deadzone
+             if (Math.abs(rawGyroX) < gyroDeadzone) rawGyroX = 0;
+             if (Math.abs(rawGyroY) < gyroDeadzone) rawGyroY = 0;
 
+             // Apply inversion
+             if (invertGyroX) rawGyroX = -rawGyroX;
+             if (invertGyroY) rawGyroY = -rawGyroY;
 
-        if (isGyroActive) {
-            // Apply deadzone
-            if (Math.abs(rawGyroX) < gyroDeadzone) rawGyroX = 0;
-            if (Math.abs(rawGyroY) < gyroDeadzone) rawGyroY = 0;
+             // Apply sensitivity
+             rawGyroX *= gyroSensitivityX;
+             rawGyroY *= gyroSensitivityY;
 
-            // Apply inversion
-            if (invertGyroX) rawGyroX = -rawGyroX;
-            if (invertGyroY) rawGyroY = -rawGyroY;
+             // Apply smoothing
+             smoothGyroX = smoothGyroX * smoothingFactor + rawGyroX * (1 - smoothingFactor);
+             smoothGyroY = smoothGyroY * smoothingFactor + rawGyroY * (1 - smoothingFactor);
 
-            // Further reduce sensitivity by lowering the multiplier
-            float sensitivityMultiplier = 0.25f; // Reduce the sensitivity even more
-            rawGyroX *= gyroSensitivityX * sensitivityMultiplier;
-            rawGyroY *= gyroSensitivityY * sensitivityMultiplier;
+             // Update the gyro data in the activity's VREffect *only* if mode is 0 (and override is OFF)
+             // ИСПОЛЬЗУЕМ НОВЫЙ ПУБЛИЧНЫЙ МЕТОД activity.updateVREffectGyroData
+             // Убираем прямой доступ к activity.vrEffect
+             activity.updateVREffectGyroData(smoothGyroX, smoothGyroY);
+             // Важно: НЕ вызываем activity.updateGyroData(rawGyroX, rawGyroY);
+             return; // Exit to avoid processing gyro with gamepad
+        }
 
-            // Apply smoothing
-            smoothGyroX = smoothGyroX * smoothingFactor + rawGyroX * (1 - smoothingFactor);
-            smoothGyroY = smoothGyroY * smoothingFactor + rawGyroY * (1 - smoothingFactor);
+        // ... (существующая логика для gamepad mode, НЕ в VR) ...
+        // Обработка гироскопа для геймпада вне VR-режима (и если override OFF)
+        if (isGyroActive) { // isGyroActive теперь используется только для gamepad в non-VR
+             // Apply deadzone
+             if (Math.abs(rawGyroX) < gyroDeadzone) rawGyroX = 0;
+             if (Math.abs(rawGyroY) < gyroDeadzone) rawGyroY = 0;
 
-            // Clamp the result to reduce the overall range of movement
-            smoothGyroX = Mathf.clamp(smoothGyroX, -0.25f, 0.25f); // Reduce clamping range for less movement
-            smoothGyroY = Mathf.clamp(smoothGyroY, -0.25f, 0.25f);
+             // Apply inversion
+             if (invertGyroX) rawGyroX = -rawGyroX;
+             if (invertGyroY) rawGyroY = -rawGyroY;
 
-            // Update the gyro data
-            this.gyroX = smoothGyroX;
-            this.gyroY = smoothGyroY;
+             // Apply sensitivity
+             rawGyroX *= gyroSensitivityX;
+             rawGyroY *= gyroSensitivityY;
 
-            // Send the updated gamepad state
-            sendGamepadState();
+             // Apply smoothing
+             smoothGyroX = smoothGyroX * smoothingFactor + rawGyroX * (1 - smoothingFactor);
+             smoothGyroY = smoothGyroY * smoothingFactor + rawGyroY * (1 - smoothingFactor);
+
+             // Update the gyro data
+             this.gyroX = smoothGyroX;
+             this.gyroY = smoothGyroY;
+
+             // Send the updated gamepad state
+             sendGamepadState();
         }
     }
 
+    // Method to set VR mode active state
+    public void setVrModeActive(boolean active) {
+        this.vrModeActive = active;
+        if (active) {
+            // In VR mode, always set gyro as active for frame movement OR mouse movement
+            // The specific behavior is determined by updateGyroData logic
+            this.isGyroActive = true; // Keep for potential gamepad use if needed, or adjust logic
+            // Reset gyro angles when VR mode is activated
+            this.gyroX = 0;
+            this.gyroY = 0;
+            this.smoothGyroX = 0;
+            this.smoothGyroY = 0;
+        } else {
+            // Reset gyro active state when leaving VR mode
+            this.isGyroActive = false;
+            // Reset mouse-related gyro values too
+            this.smoothGyroX = 0;
+            this.smoothGyroY = 0;
+        }
+    }
 
+    // Method to set whether gyro is used for mouse in VR mode
+    public void setUseGyroForMouse(boolean useForMouse) {
+        this.useGyroForMouse = useForMouse;
+    }
 
+    // НОВЫЙ МЕТОД: Установка флага переопределения
+    public void setUseGyroForMouseOverride(boolean override) {
+        this.useGyroForMouseOverride = override;
+        Log.d("WinHandler", "setUseGyroForMouseOverride: " + override);
+    }
+
+    public boolean isUseGyroForMouse() {
+        return this.useGyroForMouse;
+    }
 
     public WinHandler(XServerDisplayActivity activity) {
         this.activity = activity;
@@ -317,17 +431,12 @@ public class WinHandler {
     public void bringToFront(final String processName, final long handle) {
         addAction(() -> {
             sendData.rewind();
-            try {
-                sendData.put(RequestCodes.BRING_TO_FRONT);
-                byte[] bytes = processName.getBytes();
-                sendData.putInt(bytes.length);
-                // FIXME: Chinese and Japanese got from winhandler.exe are broken, and they cause overflow.
-                sendData.put(bytes);
-                sendData.putLong(handle);
-            } catch (java.nio.BufferOverflowException e) {
-                e.printStackTrace();
-                sendData.rewind();
-            }
+            sendData.put(RequestCodes.BRING_TO_FRONT);
+            byte[] bytes = processName.getBytes();
+            sendData.putInt(bytes.length);
+            // FIXME: Chinese and Japanese got from winhandler.exe are broken, and they cause overflow.
+            sendData.put(bytes);
+            sendData.putLong(handle);
             sendPacket(CLIENT_PORT);
         });
     }
@@ -582,9 +691,22 @@ public class WinHandler {
                     sendData.putInt(!useVirtualGamepad ? currentController.getDeviceId() : profile.id);
                     GamepadState state = useVirtualGamepad ? profile.getGamepadState() : currentController.state;
 
-                    // Combine gyro input with thumbstick input
-                    state.thumbRX = Mathf.clamp(state.thumbRX + gyroX, -1.0f, 1.0f); // Apply clamping
-                    state.thumbRY = Mathf.clamp(state.thumbRY + gyroY, -1.0f, 1.0f); // Apply clamping
+                    // Only add gyro input to thumbstick if VR mode is NOT active OR VR mode is active but gyro is used for frames
+                    // В VR режиме, если гироскоп используется для мыши (override или gyroMode), НЕ добавляем его к геймпаду
+                    // shouldUseGyroForMouse логика из updateGyroData, но для геймпада
+                    boolean shouldUseGyroForMouseInGamepad = false;
+                    if (useGyroForMouseOverride) {
+                         if (vrModeActive) {
+                             shouldUseGyroForMouseInGamepad = useGyroForMouse; // useGyroForMouse устанавливается из VRSettings (gyroMode == 1)
+                         } else {
+                             shouldUseGyroForMouseInGamepad = true;
+                         }
+                    }
+                    // Если гироскоп будет использоваться для мыши, НЕ добавляем его к геймпаду
+                    if (!shouldUseGyroForMouseInGamepad) {
+                        state.thumbRX = Mathf.clamp(state.thumbRX + gyroX, -1.0f, 1.0f); // Apply clamping
+                        state.thumbRY = Mathf.clamp(state.thumbRY + gyroY, -1.0f, 1.0f); // Apply clamping
+                    }
 
                     state.writeTo(sendData);
                 }
@@ -629,7 +751,7 @@ public class WinHandler {
                 boolean isPressed = triggerValue > 0.5f; // Adjust threshold as needed
 
                 if (isPressed) {
-                    if (!isGyroActive) {
+                    if (!isGyroActive && !vrModeActive) { // Don't activate in VR mode
                         if (isToggleMode) {
                             isGyroActive = !isGyroActive;
                         } else {
@@ -637,7 +759,7 @@ public class WinHandler {
                         }
                     }
                 } else {
-                    if (isGyroActive && !isToggleMode) {
+                    if (isGyroActive && !isToggleMode && !vrModeActive) { // Don't deactivate in VR mode
                         isGyroActive = false;
                     }
                 }
@@ -658,12 +780,12 @@ public class WinHandler {
 
         if (event.getKeyCode() == gyroTriggerButton) {
             if (event.getAction() == KeyEvent.ACTION_DOWN) {
-                if (isToggleMode) {
+                if (isToggleMode && !vrModeActive) { // Don't toggle in VR mode
                     isGyroActive = !isGyroActive;
-                } else {
+                } else if (!vrModeActive) { // Don't activate in VR mode
                     isGyroActive = true;
                 }
-            } else if (event.getAction() == KeyEvent.ACTION_UP && !isToggleMode) {
+            } else if (event.getAction() == KeyEvent.ACTION_UP && !isToggleMode && !vrModeActive) { // Don't deactivate in VR mode
                 isGyroActive = false;
 
                 // Reset the analog stick to center when the gyro activator is released
