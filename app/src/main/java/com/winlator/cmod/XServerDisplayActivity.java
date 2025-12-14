@@ -216,6 +216,13 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
     // Добавлено для управления видимостью FPS через меню
     private boolean menuFPSVisibility = false;
 
+    // Добавлено для VR-режима
+    private VREffect vrEffect = null; // Добавляем поле для VR-эффекта
+    private boolean vrModeActive = false; // Добавляем флаг активности VR-режима
+
+    // НОВОЕ: Поле для отслеживания состояния гироскопа для мыши
+    private boolean useGyroForMouseControl = false; // Новое поле
+
     private void createNotifcationChannel() {
         String name = "Winlator";
         String description = "Winlator XServer Messages";
@@ -243,7 +250,11 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                 float gyroX = event.values[0]; // Rotation around the X-axis
                 float gyroY = event.values[1]; // Rotation around the Y-axis
 
-                winHandler.updateGyroData(gyroX, gyroY); // Send gyro data to WinHandler
+                // Вызываем метод в WinHandler, который сам разберется
+                if (winHandler != null) {
+                    winHandler.updateGyroData(gyroX, gyroY);
+                }
+                // Убираем вызов updateGyroData(gyroX, gyroY) отсюда.
             }
         }
 
@@ -592,6 +603,11 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
         // Инициализация видимости FPS через меню
         menuFPSVisibility = false;
+        // Инициализация VR-режима
+        vrModeActive = false;
+
+        // Загружаем состояние пункта меню из SharedPreferences
+        useGyroForMouseControl = preferences.getBoolean("use_gyro_mouse_control", false);
     }
 
     // Method to parse container_id from .desktop file
@@ -650,7 +666,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             case MotionEvent.ACTION_BUTTON_RELEASE:
                 if (actionButton == MotionEvent.BUTTON_PRIMARY) {
                     if (xServer.isRelativeMouseMovement())
-                        xServer.getWinHandler().mouseEvent(MouseEventFlags.LEFTUP, 0, 0, 0);
+                        xServer.getWinHandler().mouseEvent(MouseEventFlags.RIGHTUP, 0, 0, 0);
                     else
                         xServer.injectPointerButtonRelease(Pointer.Button.BUTTON_LEFT);
                 } else if (actionButton == MotionEvent.BUTTON_SECONDARY) {
@@ -766,6 +782,12 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         super.onPause();
         // Флаг сбрасывается, чтобы эффекты могли быть применены снова при возврате
         screenEffectsApplied = false;
+        
+        // Сбрасываем флаг VR-режима при уходе
+        vrModeActive = false;
+        if (vrEffect != null) {
+            vrEffect.resetGyroAngles();
+        }
 
         boolean gyroEnabled = preferences.getBoolean("gyro_enabled", true);
 
@@ -793,6 +815,10 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         super.onDestroy();
         // Убедитесь, что флаг сброшен при уничтожении активности
         screenEffectsApplied = false;
+        
+        // Сбрасываем флаг VR-режима
+        vrModeActive = false;
+        vrEffect = null;
     }
 
 
@@ -1423,24 +1449,32 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                 composer.addEffect(vrEffect);
             }
             
+            // Сохраняем ссылку на VREffect
+            this.vrEffect = vrEffect;
+            this.vrModeActive = true; // Устанавливаем флаг активности VR
+            // Обновляем флаги в WinHandler
+            if (winHandler != null) {
+                winHandler.setVrModeActive(true);
+                winHandler.setUseGyroForMouse(vrEffect.getGyroMode() == 1); // Устанавливаем режим гироскопа в WinHandler
+            }
+            
             VRSettingsDialog dialog = new VRSettingsDialog(this, vrEffect, effect -> {
                 xServerView.requestRender();
+                // Обновляем флаг в WinHandler при изменении режима гироскопа в профиле
+                if (winHandler != null) {
+                    winHandler.setUseGyroForMouse(effect.getGyroMode() == 1);
+                }
             });
             dialog.show();
         }
     }
 
-    // В классе XServerDisplayActivity, добавлю метод для обновления данных гироскопа
-    public void updateGyroData(float gyroX, float gyroY) {
-        GLRenderer renderer = xServerView.getRenderer();
-        if (renderer != null) {
-            com.winlator.cmod.renderer.EffectComposer composer = renderer.getEffectComposer();
-            VREffect vrEffect = (VREffect) composer.getEffect(VREffect.class);
-            
-            if (vrEffect != null && vrEffect.isUseGyroForMovement()) {
-                vrEffect.setGyroValues(gyroX, gyroY);
-                xServerView.requestRender();
-            }
+    // НОВЫЙ ПУБЛИЧНЫЙ МЕТОД для WinHandler
+    public void updateVREffectGyroData(float gyroX, float gyroY) {
+        // Проверяем, что VR-режим активен, VREffect существует, используется для движения и режим - 0 (фреймы)
+        if (vrModeActive && this.vrEffect != null && this.vrEffect.isUseGyroForMovement() && this.vrEffect.getGyroMode() == 0) {
+            this.vrEffect.setGyroValues(gyroX, gyroY);
+            xServerView.requestRender();
         }
     }
 
@@ -1572,8 +1606,30 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                 showVRSettingsDialog();
                 drawerLayout.closeDrawers();
                 return true;
+
+            // НОВЫЙ ПУНКТ МЕНЮ: Use Gyro for Mouse Control
+            case R.id.main_menu_gyro_mouse_control:
+                toggleGyroMouseControl(item);
+                drawerLayout.closeDrawers();
+                return true;
         }
         return true;
+    }
+
+    // НОВЫЙ МЕТОД: Переключение состояния использования гироскопа для мыши
+    private void toggleGyroMouseControl(MenuItem item) {
+        useGyroForMouseControl = !item.isChecked(); // Инвертируем состояние
+        item.setChecked(useGyroForMouseControl); // Обновляем галочку в меню
+
+        if (winHandler != null) {
+            // Устанавливаем флаг переопределения в WinHandler
+            winHandler.setUseGyroForMouseOverride(useGyroForMouseControl);
+        }
+
+        // Сохраняем состояние в SharedPreferences для персистентности
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean("use_gyro_mouse_control", useGyroForMouseControl);
+        editor.apply();
     }
 
     @Override
@@ -2228,6 +2284,18 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             if (!drawerLayout.isDrawerOpen(GravityCompat.START)) {
                 drawerLayout.openDrawer(GravityCompat.START);
             } else drawerLayout.closeDrawers();
+        }
+        // Добавляем сброс VR-режима при выходе
+        if (vrModeActive) {
+            vrModeActive = false;
+            if (winHandler != null) {
+                winHandler.setVrModeActive(false);
+                winHandler.setUseGyroForMouse(false); // Убедимся, что выключено
+                winHandler.setUseGyroForMouseOverride(false); // Убедимся, что переопределение выключено
+            }
+            if (vrEffect != null) {
+                vrEffect.resetGyroAngles(); // Сбросим углы при выходе из VR
+            }
         }
     }
 }
