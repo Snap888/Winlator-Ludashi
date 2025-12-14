@@ -20,13 +20,17 @@ public class VREffect extends Effect {
     private float leftImageOffsetX = 0.0f, leftImageOffsetY = 0.0f; // Смещение изображения в левом фрейме
     private float rightImageOffsetX = 0.0f, rightImageOffsetY = 0.0f; // Смещение изображения в правом фрейме
     private boolean useGyroForMovement = false; // Использовать гироскоп для движения
-    private float gyroX = 0.0f, gyroY = 0.0f; // Значения гироскопа
+    private float gyroX = 0.0f, gyroY = 0.0f; // Значения гироскопа (интегрированные углы)
+    private float gyroAngleX = 0.0f, gyroAngleY = 0.0f; // Интегрированные углы
+    private long lastGyroTime = 0; // Время последнего обновления
     private float gyroSensitivity = 0.1f; // Чувствительность гироскопа
     private float leftImageClipRight = 0.0f; // Обрезка правой части изображения для левого фрейма
     private float rightImageClipLeft = 0.0f; // Обрезка левой части изображения для правого фрейма
     private float ipdAdjustment = 0.0f; // Межзрачковая коррекция (-0.5 до 0.5)
     private float leftImageCenterOffsetX = 0.0f, leftImageCenterOffsetY = 0.0f; // Смещение изображения от центра фрейма (левый глаз)
     private float rightImageCenterOffsetX = 0.0f, rightImageCenterOffsetY = 0.0f; // Смещение изображения от центра фрейма (правый глаз)
+    // НОВОЕ: Поле для режима гироскопа
+    private int gyroMode = 0; // 0 = для фреймов, 1 = для мыши
     private GLRenderer renderer;
 
     public VREffect() {
@@ -52,6 +56,10 @@ public class VREffect extends Effect {
     }
 
     public void setVREnabled(boolean enabled) {
+        if (!this.vrEnabled && enabled) {
+            // При включении VR-режима сбрасываем углы
+            resetGyroAngles();
+        }
         this.vrEnabled = enabled;
     }
 
@@ -261,9 +269,27 @@ public class VREffect extends Effect {
         return useGyroForMovement;
     }
 
-    public void setGyroValues(float x, float y) {
-        this.gyroX = x;
-        this.gyroY = y;
+    public void setGyroValues(float gyroX, float gyroY) {
+        long currentTime = System.currentTimeMillis();
+        if (lastGyroTime == 0) {
+            lastGyroTime = currentTime;
+            return;
+        }
+        
+        float deltaTime = (currentTime - lastGyroTime) / 1000.0f; // В секундах
+        lastGyroTime = currentTime;
+        
+        // Интегрируем угловые скорости для получения углов
+        gyroAngleX += gyroX * deltaTime;
+        gyroAngleY += gyroY * deltaTime;
+        
+        // Ограничиваем углы, чтобы избежать больших значений
+        gyroAngleX = Math.max(-1.0f, Math.min(1.0f, gyroAngleX));
+        gyroAngleY = Math.max(-1.0f, Math.min(1.0f, gyroAngleY));
+        
+        // Используем углы для смещения изображения
+        this.gyroX = gyroAngleX * gyroSensitivity;
+        this.gyroY = gyroAngleY * gyroSensitivity;
     }
 
     public float getGyroX() {
@@ -280,6 +306,15 @@ public class VREffect extends Effect {
 
     public float getGyroSensitivity() {
         return gyroSensitivity;
+    }
+
+    // Метод для сброса углов гироскопа
+    public void resetGyroAngles() {
+        this.gyroAngleX = 0.0f;
+        this.gyroAngleY = 0.0f;
+        this.gyroX = 0.0f;
+        this.gyroY = 0.0f;
+        this.lastGyroTime = 0;
     }
 
     // Методы для параметров дисторсии - теперь с расширенным диапазоном
@@ -306,6 +341,15 @@ public class VREffect extends Effect {
 
     public float getCornerRadius() {
         return cornerRadius;
+    }
+
+    // Методы для режима гироскопа - НОВОЕ
+    public void setGyroMode(int mode) {
+        this.gyroMode = mode;
+    }
+
+    public int getGyroMode() {
+        return this.gyroMode;
     }
 
     // Метод для сброса к значениям по умолчанию
@@ -345,13 +389,14 @@ public class VREffect extends Effect {
         rightImageClipLeft = 0.0f; // Нет обрезки по умолчанию
         
         useGyroForMovement = false;
-        gyroX = 0.0f;
-        gyroY = 0.0f;
+        resetGyroAngles();
         gyroSensitivity = 0.1f;
         
         distortionStrength = 0.3f; // Умеренная выпуклая дисторсия для компенсации линз
         edgeFeathering = 0.02f;   // Небольшое размытие краев
         cornerRadius = 0.05f;     // Малое закругление
+        // Сброс gyroMode
+        gyroMode = 0; // По умолчанию для фреймов
     }
 
     // Методы для установки параметров фрейма (для совместимости)
@@ -381,6 +426,7 @@ public class VREffect extends Effect {
     private class VREffectMaterial extends ScreenMaterial {
         public VREffectMaterial() {
             super();
+            // Добавляем gyroMode в список uniform
             setUniformNames("resolution", "screenTexture", "vrEnabled", "showCenterLine", "centerLineColor", "vrMode",
                           "syncFrames",
                           "leftFrameX", "leftFrameY", "leftFrameWidth", "leftFrameHeight",
@@ -389,7 +435,8 @@ public class VREffect extends Effect {
                           "leftImageClipRight", "rightImageClipLeft", "ipdAdjustment",
                           "leftImageCenterOffsetX", "leftImageCenterOffsetY", "rightImageCenterOffsetX", "rightImageCenterOffsetY",
                           "useGyroForMovement", "gyroX", "gyroY", "gyroSensitivity",
-                          "distortionStrength", "edgeFeathering", "cornerRadius");
+                          "distortionStrength", "edgeFeathering", "cornerRadius",
+                          "gyroMode"); // Добавлен gyroMode
         }
 
         @Override
@@ -413,6 +460,8 @@ public class VREffect extends Effect {
                 "uniform float distortionStrength;",
                 "uniform float edgeFeathering;",
                 "uniform float cornerRadius;",
+                // Добавляем uniform для gyroMode
+                "uniform int gyroMode;",
                 "varying vec2 vUV;",
 
                 // Функция коррекции дисторсии - от вогнутой до выпуклой линзы
@@ -495,6 +544,9 @@ public class VREffect extends Effect {
                 "        return;",
                 "    }",
                 "",
+                "    // Используем gyroMode для определения, применять ли смещение от гироскопа к фрейму",
+                "    bool applyGyroToFrame = useGyroForMovement && gyroMode == 0; // Только если режим 0 (для фреймов)",
+                "",
                 "    vec4 finalColor = vec4(0.0, 0.0, 0.0, 1.0);",
                 "    ",
                 "    // Применяем межзрачковую коррекцию (IPD)",
@@ -512,9 +564,9 @@ public class VREffect extends Effect {
                 "        // Применяем смещение изображения в фрейме",
                 "        vec2 leftImageOffset = vec2(leftImageOffsetX, leftImageOffsetY);",
                 "        ",
-                "        // Применяем смещение от гироскопа, если включено",
-                "        if (useGyroForMovement) {",
-                "            leftImageOffset += vec2(gyroX * gyroSensitivity, -gyroY * gyroSensitivity);",
+                "        // Применяем смещение от гироскопа, если включено И режим 0",
+                "        if (applyGyroToFrame) {",
+                "            leftImageOffset += vec2(gyroX, -gyroY); // Инвертируем Y для правильного направления",
                 "        }",
                 "        ",
                 "        leftUV += leftImageOffset;",
@@ -555,9 +607,9 @@ public class VREffect extends Effect {
                 "            // Применяем смещение изображения в фрейме",
                 "            vec2 rightImageOffset = vec2(leftImageOffsetX, leftImageOffsetY);",
                 "            ",
-                "            // Применяем смещение от гироскопа, если включено",
-                "            if (useGyroForMovement) {",
-                "                rightImageOffset += vec2(gyroX * gyroSensitivity, -gyroY * gyroSensitivity);",
+                "            // Применяем смещение от гироскопа, если включено И режим 0",
+                "            if (applyGyroToFrame) {",
+                "                rightImageOffset += vec2(gyroX, -gyroY); // Инвертируем Y для правильного направления",
                 "            }",
                 "            ",
                 "            rightUV += rightImageOffset;",
@@ -577,9 +629,9 @@ public class VREffect extends Effect {
                 "            // Применяем смещение изображения в фрейме",
                 "            vec2 rightImageOffset = vec2(rightImageOffsetX, rightImageOffsetY);",
                 "            ",
-                "            // Применяем смещение от гироскопа, если включено",
-                "            if (useGyroForMovement) {",
-                "                rightImageOffset += vec2(gyroX * gyroSensitivity, -gyroY * gyroSensitivity);",
+                "            // Применяем смещение от гироскопа, если включено И режим 0",
+                "            if (applyGyroToFrame) {",
+                "                rightImageOffset += vec2(gyroX, -gyroY); // Инвертируем Y для правильного направления",
                 "            }",
                 "            ",
                 "            rightUV += rightImageOffset;",
@@ -632,7 +684,6 @@ public class VREffect extends Effect {
         @Override
         public void use() {
             super.use();
-
             setUniformInt("vrEnabled", vrEnabled ? 1 : 0);
             setUniformInt("showCenterLine", showCenterLine ? 1 : 0);
             setUniformFloat("centerLineColor", centerLineColor);
@@ -679,6 +730,9 @@ public class VREffect extends Effect {
             setUniformFloat("distortionStrength", distortionStrength);
             setUniformFloat("edgeFeathering", edgeFeathering);
             setUniformFloat("cornerRadius", cornerRadius);
+            
+            // Устанавливаем gyroMode
+            setUniformInt("gyroMode", gyroMode);
         }
     }
 }
