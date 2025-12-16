@@ -501,6 +501,76 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
             inputControlsView.invalidate();
         });
 
+        // Volume Key Binding Controls - PROGRAMMATICALLY ADDED
+        final LinearLayout llVolumeBinding = new LinearLayout(this);
+        llVolumeBinding.setOrientation(LinearLayout.VERTICAL);
+        llVolumeBinding.setLayoutParams(new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT));
+        llVolumeBinding.setPadding(16, 16, 16, 16);
+        llVolumeBinding.setVisibility(View.GONE); // Скрыть по умолчанию
+
+        // Добавить заголовок
+        TextView tvVolumeBindingTitle = new TextView(this);
+        tvVolumeBindingTitle.setText("Volume Key Binding");
+        tvVolumeBindingTitle.setTextSize(16);
+        tvVolumeBindingTitle.setTypeface(null, android.graphics.Typeface.BOLD);
+        tvVolumeBindingTitle.setPadding(0, 0, 0, 8);
+        llVolumeBinding.addView(tvVolumeBindingTitle);
+
+        // Чекбокс для Volume Up
+        LinearLayout volumeUpLayout = new LinearLayout(this);
+        volumeUpLayout.setOrientation(LinearLayout.HORIZONTAL);
+        volumeUpLayout.setGravity(android.view.Gravity.CENTER_VERTICAL);
+
+        CheckBox cbUseVolumeUp = new CheckBox(this);
+        cbUseVolumeUp.setChecked(element.isUseVolumeUp());
+        cbUseVolumeUp.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            element.setUseVolumeUp(isChecked);
+            profile.save();
+        });
+        volumeUpLayout.addView(cbUseVolumeUp);
+
+        TextView tvVolumeUpLabel = new TextView(this);
+        tvVolumeUpLabel.setText("Use Volume Up");
+        tvVolumeUpLabel.setTextSize(14);
+        tvVolumeUpLabel.setTypeface(null, android.graphics.Typeface.BOLD);
+        tvVolumeUpLabel.setPadding(8, 0, 0, 0);
+        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
+        tvVolumeUpLabel.setLayoutParams(labelParams);
+        volumeUpLayout.addView(tvVolumeUpLabel);
+
+        llVolumeBinding.addView(volumeUpLayout);
+
+        // Чекбокс для Volume Down
+        LinearLayout volumeDownLayout = new LinearLayout(this);
+        volumeDownLayout.setOrientation(LinearLayout.HORIZONTAL);
+        volumeDownLayout.setGravity(android.view.Gravity.CENTER_VERTICAL);
+
+        CheckBox cbUseVolumeDown = new CheckBox(this);
+        cbUseVolumeDown.setChecked(element.isUseVolumeDown());
+        cbUseVolumeDown.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            element.setUseVolumeDown(isChecked);
+            profile.save();
+        });
+        volumeDownLayout.addView(cbUseVolumeDown);
+
+        TextView tvVolumeDownLabel = new TextView(this);
+        tvVolumeDownLabel.setText("Use Volume Down");
+        tvVolumeDownLabel.setTextSize(14);
+        tvVolumeDownLabel.setTypeface(null, android.graphics.Typeface.BOLD);
+        tvVolumeDownLabel.setPadding(8, 0, 0, 0);
+        LinearLayout.LayoutParams labelParams2 = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
+        tvVolumeDownLabel.setLayoutParams(labelParams2);
+        volumeDownLayout.addView(tvVolumeDownLabel);
+
+        llVolumeBinding.addView(volumeDownLayout);
+
+        // Добавить контейнер с чекбоксами в основной контейнер
+        ViewGroup parent = (ViewGroup) view.findViewById(R.id.LLShowOutline).getParent();
+        int outlineIndex = parent.indexOfChild(view.findViewById(R.id.LLShowOutline));
+        parent.addView(llVolumeBinding, outlineIndex + 1); // Добавить после LLShowOutline
+
         RadioGroup rgOrientation = view.findViewById(R.id.RGOrientation);
         rgOrientation.check(element.getOrientation() == 1 ? R.id.RBVertical : R.id.RBHorizontal);
         rgOrientation.setOnCheckedChangeListener((group, checkedId) -> {
@@ -642,6 +712,13 @@ public class ControlsEditorActivity extends AppCompatActivity implements View.On
         loadCustomIcons(llCustomIcons, tvNoCustomIcons, element);
 
         updateLayout.run();
+
+        // Update volume binding visibility in updateLayout
+        if (element.getType() == ControlElement.Type.BUTTON) {
+            llVolumeBinding.setVisibility(View.VISIBLE);
+        } else {
+            llVolumeBinding.setVisibility(View.GONE);
+        }
 
         PopupWindow popupWindow = AppUtils.showPopupWindow(anchorView, view, 340, 0);
         popupWindow.setOnDismissListener(() -> {
