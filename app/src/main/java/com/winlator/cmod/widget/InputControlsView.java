@@ -1011,6 +1011,32 @@ public class InputControlsView extends View {
         return false;
     }
 
+    // Handle volume key events
+    public boolean handleVolumeKeyEvent(int keyCode, boolean isActionDown) {
+        if (profile == null || editMode) return false;
+        
+        for (ControlElement element : profile.getElements()) {
+            if (element.getType() == ControlElement.Type.BUTTON) {
+                if (keyCode == KeyEvent.KEYCODE_VOLUME_UP && element.isUseVolumeUp()) {
+                    if (element.isUseMultiBinding() && !element.getMultiBindingAt(0).isEmpty()) {
+                        handleMultiBinding(element.getMultiBindingAt(0), isActionDown);
+                    } else {
+                        handleInputEvent(element.getBindingAt(0), isActionDown);
+                    }
+                    return true;
+                } else if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN && element.isUseVolumeDown()) {
+                    if (element.isUseMultiBinding() && !element.getMultiBindingAt(0).isEmpty()) {
+                        handleMultiBinding(element.getMultiBindingAt(0), isActionDown);
+                    } else {
+                        handleInputEvent(element.getBindingAt(0), isActionDown);
+                    }
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public void handleInputEvent(Binding binding, boolean isActionDown) {
         handleInputEvent(binding, isActionDown, 0);
     }
