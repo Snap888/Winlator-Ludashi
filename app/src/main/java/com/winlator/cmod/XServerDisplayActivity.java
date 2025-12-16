@@ -646,17 +646,17 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         switch (event.getAction()) {
             case MotionEvent.ACTION_BUTTON_PRESS:
                 if (actionButton == MotionEvent.BUTTON_PRIMARY) {
-                    if (xServer.isRelativeMouseMovement())
+                    if (isRelativeMouseMovement)
                         xServer.getWinHandler().mouseEvent(MouseEventFlags.LEFTDOWN, 0, 0, 0);
                     else
                         xServer.injectPointerButtonPress(Pointer.Button.BUTTON_LEFT);
                 } else if (actionButton == MotionEvent.BUTTON_SECONDARY) {
-                    if (xServer.isRelativeMouseMovement())
+                    if (isRelativeMouseMovement)
                         xServer.getWinHandler().mouseEvent(MouseEventFlags.RIGHTDOWN, 0, 0, 0);
                     else
                         xServer.injectPointerButtonPress(Pointer.Button.BUTTON_RIGHT);
                 } else if (actionButton == MotionEvent.BUTTON_TERTIARY) {
-                    if (xServer.isRelativeMouseMovement())
+                    if (isRelativeMouseMovement)
                         xServer.getWinHandler().mouseEvent(MouseEventFlags.MIDDLEDOWN, 0, 0, 0);
                     else
                         xServer.injectPointerButtonPress(Pointer.Button.BUTTON_MIDDLE); // Add this line for middle mouse button press
@@ -665,17 +665,17 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                 break;
             case MotionEvent.ACTION_BUTTON_RELEASE:
                 if (actionButton == MotionEvent.BUTTON_PRIMARY) {
-                    if (xServer.isRelativeMouseMovement())
+                    if (isRelativeMouseMovement)
                         xServer.getWinHandler().mouseEvent(MouseEventFlags.RIGHTUP, 0, 0, 0);
                     else
                         xServer.injectPointerButtonRelease(Pointer.Button.BUTTON_LEFT);
                 } else if (actionButton == MotionEvent.BUTTON_SECONDARY) {
-                    if (xServer.isRelativeMouseMovement())
+                    if (isRelativeMouseMovement)
                         xServer.getWinHandler().mouseEvent(MouseEventFlags.RIGHTUP, 0, 0, 0);
                     else
                         xServer.injectPointerButtonRelease(Pointer.Button.BUTTON_RIGHT);
                 } else if (actionButton == MotionEvent.BUTTON_TERTIARY) {
-                    if (xServer.isRelativeMouseMovement())
+                    if (isRelativeMouseMovement)
                         xServer.getWinHandler().mouseEvent(MouseEventFlags.MIDDLEUP, 0, 0, 0);
                     else
                         xServer.injectPointerButtonRelease(Pointer.Button.BUTTON_MIDDLE); // Add this line for middle mouse button release
@@ -685,7 +685,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             case MotionEvent.ACTION_MOVE:
             case MotionEvent.ACTION_HOVER_MOVE:
                 float[] transformedPoint = XForm.transformPoint(xform, event.getX(), event.getY());
-                if (xServer.isRelativeMouseMovement())
+                if (isRelativeMouseMovement)
                     xServer.getWinHandler().mouseEvent(MouseEventFlags.MOVE, (int) transformedPoint[0], (int) transformedPoint[1], 0);
                 else
                     xServer.injectPointerMoveDelta((int) transformedPoint[0], (int) transformedPoint[1]);
@@ -694,14 +694,14 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             case MotionEvent.ACTION_SCROLL:
                 float scrollY = event.getAxisValue(MotionEvent.AXIS_VSCROLL);
                 if (scrollY <= -1.0f) {
-                    if (xServer.isRelativeMouseMovement())
+                    if (isRelativeMouseMovement)
                         xServer.getWinHandler().mouseEvent(MouseEventFlags.WHEEL, 0, 0, (int) scrollY * 270);
                     else {
                         xServer.injectPointerButtonPress(Pointer.Button.BUTTON_SCROLL_DOWN);
                         xServer.injectPointerButtonRelease(Pointer.Button.BUTTON_SCROLL_DOWN);
                     }
                 } else if (scrollY >= 1.0f) {
-                    if (xServer.isRelativeMouseMovement())
+                    if (isRelativeMouseMovement)
                         xServer.getWinHandler().mouseEvent(MouseEventFlags.WHEEL, 0, 0, (int) scrollY * 270);
                     else {
                         xServer.injectPointerButtonPress(Pointer.Button.BUTTON_SCROLL_UP);
@@ -1478,6 +1478,52 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         }
     }
 
+    // НОВЫЙ МЕТОД: Toggle Gyro Mouse Control
+    private void toggleGyroMouseControl(MenuItem item) {
+        useGyroForMouseControl = !useGyroForMouseControl; // Инвертируем состояние
+        item.setChecked(useGyroForMouseControl); // Обновляем галочку в меню
+
+        // Сохраняем состояние в SharedPreferences
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean("use_gyro_mouse_control", useGyroForMouseControl);
+        editor.apply();
+        
+        // Обновляем состояние в WinHandler
+        if (winHandler != null) {
+            winHandler.setUseGyroForMouse(useGyroForMouseControl);
+        }
+        
+        // Если гироскоп включен, регистрируем или отменяем регистрацию слушателя
+        boolean gyroEnabled = preferences.getBoolean("gyro_enabled", true);
+        if (gyroEnabled) {
+            if (useGyroForMouseControl) {
+                // Регистрируем слушатель для управления мышью
+                sensorManager.registerListener(gyroListener, gyroSensor, SensorManager.SENSOR_DELAY_GAME);
+            } else {
+                // Отменяем регистрацию слушателя
+                sensorManager.unregisterListener(gyroListener);
+            }
+        }
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        // Обработка нажатий физических кнопок громкости
+        if (inputControlsView != null && inputControlsView.handleVolumeKeyEvent(keyCode, true)) {
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        // Обработка отпускания физических кнопок громкости
+        if (inputControlsView != null && inputControlsView.handleVolumeKeyEvent(keyCode, false)) {
+            return true;
+        }
+        return super.onKeyUp(keyCode, event);
+    }
+
     @SuppressLint("SourceLockedOrientationActivity")
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
@@ -1614,22 +1660,6 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                 return true;
         }
         return true;
-    }
-
-    // НОВЫЙ МЕТОД: Переключение состояния использования гироскопа для мыши
-    private void toggleGyroMouseControl(MenuItem item) {
-        useGyroForMouseControl = !item.isChecked(); // Инвертируем состояние
-        item.setChecked(useGyroForMouseControl); // Обновляем галочку в меню
-
-        if (winHandler != null) {
-            // Устанавливаем флаг переопределения в WinHandler
-            winHandler.setUseGyroForMouseOverride(useGyroForMouseControl);
-        }
-
-        // Сохраняем состояние в SharedPreferences для персистентности
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putBoolean("use_gyro_mouse_control", useGyroForMouseControl);
-        editor.apply();
     }
 
     @Override
