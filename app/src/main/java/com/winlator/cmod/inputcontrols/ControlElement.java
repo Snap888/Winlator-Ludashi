@@ -125,6 +125,10 @@ public class ControlElement {
     private static final long DOUBLE_CLICK_INTERVAL = 300; // ms
     private boolean touchActionPerformed = false;
     
+    // Volume key binding fields
+    private boolean useVolumeUp = false;
+    private boolean useVolumeDown = false;
+    
     public enum Type {
         BUTTON, D_PAD, RANGE_BUTTON, STICK, TRACKPAD, DYNAMIC_STICK, VERTICAL_SCROLL_BAR, TOUCH, TOUCH_AREA;
 
@@ -319,6 +323,14 @@ for (int i = 0; i < bindingsJSONArray.length(); i++) { // <-- Исправлен
                 }
             }
             
+            // Load volume up/down binding settings
+            if (elementJSONObject.has("useVolumeUp")) {
+                useVolumeUp = elementJSONObject.getBoolean("useVolumeUp");
+            }
+            if (elementJSONObject.has("useVolumeDown")) {
+                useVolumeDown = elementJSONObject.getBoolean("useVolumeDown");
+            }
+            
             if (type == Type.RANGE_BUTTON) {
                 range = Range.valueOf(elementJSONObject.getString("range"));
                 orientation = elementJSONObject.has("orientation") ? (byte)elementJSONObject.getInt("orientation") : 0;
@@ -450,6 +462,10 @@ for (int i = 0; i < bindingsJSONArray.length(); i++) { // <-- Исправлен
         // Reset Touch element specific
         lastClickTime = 0;
         touchActionPerformed = false;
+        
+        // Reset volume key binding settings
+        useVolumeUp = false;
+        useVolumeDown = false;
         
         // For TOUCH_AREA, always use RECT shape
         if (type == Type.TOUCH_AREA) {
@@ -646,6 +662,23 @@ for (int i = 0; i < bindingsJSONArray.length(); i++) { // <-- Исправлен
 
     public void setCurrentScrollOffset(float currentScrollOffset) {
         this.currentScrollOffset = currentScrollOffset;
+    }
+
+    // Volume key binding methods
+    public boolean isUseVolumeUp() {
+        return useVolumeUp;
+    }
+
+    public void setUseVolumeUp(boolean useVolumeUp) {
+        this.useVolumeUp = useVolumeUp;
+    }
+
+    public boolean isUseVolumeDown() {
+        return useVolumeDown;
+    }
+
+    public void setUseVolumeDown(boolean useVolumeDown) {
+        this.useVolumeDown = useVolumeDown;
     }
 
     private void updateActivationZone() {
@@ -1726,6 +1759,10 @@ for (int i = 0; i < bindingsJSONArray.length(); i++) { // <-- Исправлен
                 }
                 elementJSONObject.put("multiBindings", multiBindingsArray);
             }
+
+            // Add volume up/down binding settings to JSON
+            elementJSONObject.put("useVolumeUp", useVolumeUp);
+            elementJSONObject.put("useVolumeDown", useVolumeDown);
 
             if (type == Type.RANGE_BUTTON && range != null) {
                 elementJSONObject.put("range", range.name());
