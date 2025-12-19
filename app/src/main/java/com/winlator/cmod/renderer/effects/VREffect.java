@@ -11,26 +11,25 @@ public class VREffect extends Effect {
     private boolean showCenterLine = false;
     private float centerLineColor = 1.0f;
     private boolean syncFrames = true;
-    private int vrMode = 0; // 0=Split Screen, 1=Side-by-Side, 2=Over-Under
+    private int vrMode = 0;
     private float leftFrameX = 0.0f, leftFrameY = 0.0f, leftFrameWidth = 0.5f, leftFrameHeight = 1.0f;
     private float rightFrameX = 0.5f, rightFrameY = 0.0f, rightFrameWidth = 0.5f, rightFrameHeight = 1.0f;
-    private float distortionStrength = 0.3f; // Диапазон от -1.0 (вогнутая) до 1.0 (выпуклая)
+    private float distortionStrength = 0.3f;
     private float edgeFeathering = 0.02f;
-    private float cornerRadius = 0.05f; // Меньше закругление
-    private float leftImageOffsetX = 0.0f, leftImageOffsetY = 0.0f; // Смещение изображения в левом фрейме
-    private float rightImageOffsetX = 0.0f, rightImageOffsetY = 0.0f; // Смещение изображения в правом фрейме
-    private boolean useGyroForMovement = false; // Использовать гироскоп для движения
-    private float gyroX = 0.0f, gyroY = 0.0f; // Значения гироскопа (интегрированные углы)
-    private float gyroAngleX = 0.0f, gyroAngleY = 0.0f; // Интегрированные углы
-    private long lastGyroTime = 0; // Время последнего обновления
-    private float gyroSensitivity = 0.1f; // Чувствительность гироскопа
-    private float leftImageClipRight = 0.0f; // Обрезка правой части изображения для левого фрейма
-    private float rightImageClipLeft = 0.0f; // Обрезка левой части изображения для правого фрейма
-    private float ipdAdjustment = 0.0f; // Межзрачковая коррекция (-0.5 до 0.5)
-    private float leftImageCenterOffsetX = 0.0f, leftImageCenterOffsetY = 0.0f; // Смещение изображения от центра фрейма (левый глаз)
-    private float rightImageCenterOffsetX = 0.0f, rightImageCenterOffsetY = 0.0f; // Смещение изображения от центра фрейма (правый глаз)
-    // НОВОЕ: Поле для режима гироскопа
-    private int gyroMode = 0; // 0 = для фреймов, 1 = для мыши
+    private float cornerRadius = 0.05f;
+    private float leftImageOffsetX = 0.0f, leftImageOffsetY = 0.0f;
+    private float rightImageOffsetX = 0.0f, rightImageOffsetY = 0.0f;
+    private boolean useGyroForMovement = false;
+    private float gyroX = 0.0f, gyroY = 0.0f;
+    private float gyroAngleX = 0.0f, gyroAngleY = 0.0f;
+    private long lastGyroTime = 0;
+    private float gyroSensitivity = 0.1f;
+    private float leftImageClipRight = 0.0f;
+    private float rightImageClipLeft = 0.0f;
+    private float ipdAdjustment = 0.0f;
+    private float leftImageCenterOffsetX = 0.0f, leftImageCenterOffsetY = 0.0f;
+    private float rightImageCenterOffsetX = 0.0f, rightImageCenterOffsetY = 0.0f;
+    private int gyroMode = 0;
     private GLRenderer renderer;
 
     public VREffect() {
@@ -46,7 +45,6 @@ public class VREffect extends Effect {
         return new VREffectMaterial();
     }
 
-    // Методы для управления VR режимом
     public void setEnabled(boolean enabled) {
         this.vrEnabled = enabled;
     }
@@ -57,7 +55,6 @@ public class VREffect extends Effect {
 
     public void setVREnabled(boolean enabled) {
         if (!this.vrEnabled && enabled) {
-            // При включении VR-режима сбрасываем углы
             resetGyroAngles();
         }
         this.vrEnabled = enabled;
@@ -67,7 +64,6 @@ public class VREffect extends Effect {
         return vrEnabled;
     }
 
-    // Методы для отображения центральной линии
     public void setShowCenterLine(boolean show) {
         this.showCenterLine = show;
     }
@@ -84,7 +80,6 @@ public class VREffect extends Effect {
         return centerLineColor;
     }
 
-    // Методы для VR режима
     public void setVrMode(int mode) {
         this.vrMode = mode;
     }
@@ -93,16 +88,21 @@ public class VREffect extends Effect {
         return vrMode;
     }
 
-    // Методы для синхронизации фреймов
     public void setSyncFrames(boolean sync) {
         this.syncFrames = sync;
+        // При включении синхронизации копируем Y, высоту и ширину из левого фрейма в правый
+        if (sync) {
+            this.rightFrameY = this.leftFrameY;
+            this.rightFrameWidth = this.leftFrameWidth;
+            this.rightFrameHeight = this.leftFrameHeight;
+            this.rightImageCenterOffsetY = this.leftImageCenterOffsetY;
+        }
     }
 
     public boolean isSyncFrames() {
         return syncFrames;
     }
 
-    // Методы для межзрачковой коррекции
     public void setIPDAdjustment(float adjustment) {
         this.ipdAdjustment = Math.max(-0.5f, Math.min(0.5f, adjustment));
     }
@@ -111,7 +111,6 @@ public class VREffect extends Effect {
         return ipdAdjustment;
     }
 
-    // Методы для смещения изображения в фреймах (относительно центра фрейма)
     public void setLeftImageCenterOffsetX(float offsetX) {
         this.leftImageCenterOffsetX = Math.max(-1.0f, Math.min(1.0f, offsetX));
     }
@@ -122,6 +121,10 @@ public class VREffect extends Effect {
 
     public void setLeftImageCenterOffsetY(float offsetY) {
         this.leftImageCenterOffsetY = Math.max(-1.0f, Math.min(1.0f, offsetY));
+        // При синхронизации копируем в правый глаз
+        if (syncFrames) {
+            this.rightImageCenterOffsetY = this.leftImageCenterOffsetY;
+        }
     }
 
     public float getLeftImageCenterOffsetY() {
@@ -144,7 +147,6 @@ public class VREffect extends Effect {
         return rightImageCenterOffsetY;
     }
 
-    // Методы для левого фрейма
     public void setLeftFrameX(float x) {
         this.leftFrameX = x;
     }
@@ -155,6 +157,10 @@ public class VREffect extends Effect {
 
     public void setLeftFrameY(float y) {
         this.leftFrameY = y;
+        // При синхронизации копируем в правый глаз
+        if (syncFrames) {
+            this.rightFrameY = y;
+        }
     }
 
     public float getLeftFrameY() {
@@ -163,6 +169,10 @@ public class VREffect extends Effect {
 
     public void setLeftFrameWidth(float width) {
         this.leftFrameWidth = width;
+        // При синхронизации копируем в правый глаз
+        if (syncFrames) {
+            this.rightFrameWidth = width;
+        }
     }
 
     public float getLeftFrameWidth() {
@@ -171,13 +181,16 @@ public class VREffect extends Effect {
 
     public void setLeftFrameHeight(float height) {
         this.leftFrameHeight = height;
+        // При синхронизации копируем в правый глаз
+        if (syncFrames) {
+            this.rightFrameHeight = height;
+        }
     }
 
     public float getLeftFrameHeight() {
         return leftFrameHeight;
     }
 
-    // Методы для правого фрейма
     public void setRightFrameX(float x) {
         this.rightFrameX = x;
     }
@@ -187,7 +200,9 @@ public class VREffect extends Effect {
     }
 
     public void setRightFrameY(float y) {
-        this.rightFrameY = y;
+        if (!syncFrames) {
+            this.rightFrameY = y;
+        }
     }
 
     public float getRightFrameY() {
@@ -195,7 +210,9 @@ public class VREffect extends Effect {
     }
 
     public void setRightFrameWidth(float width) {
-        this.rightFrameWidth = width;
+        if (!syncFrames) {
+            this.rightFrameWidth = width;
+        }
     }
 
     public float getRightFrameWidth() {
@@ -203,14 +220,15 @@ public class VREffect extends Effect {
     }
 
     public void setRightFrameHeight(float height) {
-        this.rightFrameHeight = height;
+        if (!syncFrames) {
+            this.rightFrameHeight = height;
+        }
     }
 
     public float getRightFrameHeight() {
         return rightFrameHeight;
     }
 
-    // Методы для смещения изображения в фреймах
     public void setLeftImageOffsetX(float offsetX) {
         this.leftImageOffsetX = offsetX;
     }
@@ -243,7 +261,6 @@ public class VREffect extends Effect {
         return rightImageOffsetY;
     }
 
-    // Методы для обрезки изображения
     public void setLeftImageClipRight(float clip) {
         this.leftImageClipRight = Math.max(0.0f, Math.min(1.0f, clip));
     }
@@ -260,7 +277,6 @@ public class VREffect extends Effect {
         return rightImageClipLeft;
     }
 
-    // Методы для гироскопа
     public void setUseGyroForMovement(boolean use) {
         this.useGyroForMovement = use;
     }
@@ -276,18 +292,15 @@ public class VREffect extends Effect {
             return;
         }
         
-        float deltaTime = (currentTime - lastGyroTime) / 1000.0f; // В секундах
+        float deltaTime = (currentTime - lastGyroTime) / 1000.0f;
         lastGyroTime = currentTime;
         
-        // Интегрируем угловые скорости для получения углов
         gyroAngleX += gyroX * deltaTime;
         gyroAngleY += gyroY * deltaTime;
         
-        // Ограничиваем углы, чтобы избежать больших значений
         gyroAngleX = Math.max(-1.0f, Math.min(1.0f, gyroAngleX));
         gyroAngleY = Math.max(-1.0f, Math.min(1.0f, gyroAngleY));
         
-        // Используем углы для смещения изображения
         this.gyroX = gyroAngleX * gyroSensitivity;
         this.gyroY = gyroAngleY * gyroSensitivity;
     }
@@ -308,7 +321,6 @@ public class VREffect extends Effect {
         return gyroSensitivity;
     }
 
-    // Метод для сброса углов гироскопа
     public void resetGyroAngles() {
         this.gyroAngleX = 0.0f;
         this.gyroAngleY = 0.0f;
@@ -317,9 +329,7 @@ public class VREffect extends Effect {
         this.lastGyroTime = 0;
     }
 
-    // Методы для параметров дисторсии - теперь с расширенным диапазоном
     public void setDistortionStrength(float strength) {
-        // Ограничиваем значение в диапазоне от -1.0 до 1.0
         this.distortionStrength = Math.max(-1.0f, Math.min(1.0f, strength));
     }
 
@@ -343,7 +353,6 @@ public class VREffect extends Effect {
         return cornerRadius;
     }
 
-    // Методы для режима гироскопа - НОВОЕ
     public void setGyroMode(int mode) {
         this.gyroMode = mode;
     }
@@ -352,54 +361,47 @@ public class VREffect extends Effect {
         return this.gyroMode;
     }
 
-    // Метод для сброса к значениям по умолчанию
     public void resetToDefaults() {
         vrEnabled = false;
         showCenterLine = false;
         centerLineColor = 1.0f;
-        vrMode = 0; // Split screen
+        vrMode = 0;
         syncFrames = true;
-        ipdAdjustment = 0.0f; // Нет коррекции IPD по умолчанию
+        ipdAdjustment = 0.0f;
         
-        // Установка стандартных значений для Google Cardboard
         leftFrameX = 0.0f;
         leftFrameY = 0.0f;
-        leftFrameWidth = 0.5f;  // Левая половина
+        leftFrameWidth = 0.5f;
         leftFrameHeight = 1.0f;
         
-        rightFrameX = 0.5f;     // Правая половина
+        rightFrameX = 0.5f;
         rightFrameY = 0.0f;
         rightFrameWidth = 0.5f;
         rightFrameHeight = 1.0f;
         
-        // Смещения изображения
-        leftImageOffsetX = 0.02f;  // Немного смещаем вправо (закрывает правую часть)
+        leftImageOffsetX = 0.02f;
         leftImageOffsetY = 0.0f;
-        rightImageOffsetX = -0.02f; // Немного смещаем влево (закрывает левую часть)
+        rightImageOffsetX = -0.02f;
         rightImageOffsetY = 0.0f;
         
-        // Смещения изображения от центра фрейма
         leftImageCenterOffsetX = 0.0f;
         leftImageCenterOffsetY = 0.0f;
         rightImageCenterOffsetX = 0.0f;
         rightImageCenterOffsetY = 0.0f;
         
-        // Обрезка изображения
-        leftImageClipRight = 0.0f; // Нет обрезки по умолчанию
-        rightImageClipLeft = 0.0f; // Нет обрезки по умолчанию
+        leftImageClipRight = 0.0f;
+        rightImageClipLeft = 0.0f;
         
         useGyroForMovement = false;
         resetGyroAngles();
         gyroSensitivity = 0.1f;
         
-        distortionStrength = 0.3f; // Умеренная выпуклая дисторсия для компенсации линз
-        edgeFeathering = 0.02f;   // Небольшое размытие краев
-        cornerRadius = 0.05f;     // Малое закругление
-        // Сброс gyroMode
-        gyroMode = 0; // По умолчанию для фреймов
+        distortionStrength = 0.3f;
+        edgeFeathering = 0.02f;
+        cornerRadius = 0.05f;
+        gyroMode = 0;
     }
 
-    // Методы для установки параметров фрейма (для совместимости)
     public void setLeftFrameParams(float x, float y, float width, float height) {
         this.leftFrameX = x;
         this.leftFrameY = y;
@@ -409,12 +411,17 @@ public class VREffect extends Effect {
 
     public void setRightFrameParams(float x, float y, float width, float height) {
         this.rightFrameX = x;
-        this.rightFrameY = y;
-        this.rightFrameWidth = width;
-        this.rightFrameHeight = height;
+        if (!syncFrames) {
+            this.rightFrameY = y;
+            this.rightFrameWidth = width;
+            this.rightFrameHeight = height;
+        } else {
+            this.rightFrameY = this.leftFrameY;
+            this.rightFrameWidth = this.leftFrameWidth;
+            this.rightFrameHeight = this.leftFrameHeight;
+        }
     }
 
-    // Методы для работы с профилями
     public VRProfile createProfile(String name) {
         return new VRProfile(name, this);
     }
@@ -426,7 +433,6 @@ public class VREffect extends Effect {
     private class VREffectMaterial extends ScreenMaterial {
         public VREffectMaterial() {
             super();
-            // Добавляем gyroMode в список uniform
             setUniformNames("resolution", "screenTexture", "vrEnabled", "showCenterLine", "centerLineColor", "vrMode",
                           "syncFrames",
                           "leftFrameX", "leftFrameY", "leftFrameWidth", "leftFrameHeight",
@@ -436,7 +442,7 @@ public class VREffect extends Effect {
                           "leftImageCenterOffsetX", "leftImageCenterOffsetY", "rightImageCenterOffsetX", "rightImageCenterOffsetY",
                           "useGyroForMovement", "gyroX", "gyroY", "gyroSensitivity",
                           "distortionStrength", "edgeFeathering", "cornerRadius",
-                          "gyroMode"); // Добавлен gyroMode
+                          "gyroMode");
         }
 
         @Override
@@ -460,216 +466,180 @@ public class VREffect extends Effect {
                 "uniform float distortionStrength;",
                 "uniform float edgeFeathering;",
                 "uniform float cornerRadius;",
-                // Добавляем uniform для gyroMode
                 "uniform int gyroMode;",
                 "varying vec2 vUV;",
 
-                // Функция коррекции дисторсии - от вогнутой до выпуклой линзы
                 "vec2 distortionCorrection(vec2 uv, float strength) {",
-                "    vec2 centered = uv * 2.0 - 1.0; // Центрируем координаты",
-                "    float r = length(centered); // Расстояние от центра",
-                "    float theta = atan(centered.y, centered.x); // Угол",
+                "    vec2 centered = uv * 2.0 - 1.0;",
+                "    float r = length(centered);",
+                "    float theta = atan(centered.y, centered.x);",
                 "    ",
                 "    float correctedR = r;",
                 "    ",
                 "    if (strength > 0.0) {",
-                "        // Выпуклая дисторсия (рыбий глаз) - положительная сила",
                 "        correctedR = r * (1.0 + strength * r * r + strength * strength * r * r * r * r);",
-                "        correctedR = min(correctedR, 2.0); // Ограничиваем искажение",
+                "        correctedR = min(correctedR, 2.0);",
                 "    } else if (strength < 0.0) {",
-                "        // Вогнутая дисторсия - отрицательная сила",
                 "        float absStrength = abs(strength);",
                 "        correctedR = r * (1.0 - absStrength * r * r);",
-                "        correctedR = max(correctedR, 0.0); // Не допускаем отрицательные значения",
+                "        correctedR = max(correctedR, 0.0);",
                 "    }",
                 "    ",
                 "    vec2 corrected = correctedR * vec2(cos(theta), sin(theta));",
-                "    ",
-                "    // Возвращаем к нормализованным координатам",
                 "    return (corrected + 1.0) * 0.5;",
                 "}",
 
-                // Функция для создания маски с закругленными углами для конкретного фрейма
                 "float roundedFrameMask(vec2 uv, float frameX, float frameY, float frameWidth, float frameHeight, float radius) {",
-                "    // Нормализуем координаты в систему координат фрейма",
                 "    vec2 frameUV = (uv - vec2(frameX, frameY)) / vec2(frameWidth, frameHeight);",
                 "    ",
-                "    // Проверяем, внутри ли точка фрейма",
                 "    if (frameUV.x < 0.0 || frameUV.x > 1.0 || frameUV.y < 0.0 || frameUV.y > 1.0) {",
-                "        return 0.0; // Вне фрейма",
+                "        return 0.0;",
                 "    }",
                 "    ",
-                "    // Рассчитываем радиус закругления в координатах фрейма",
                 "    float cornerRadius = radius;",
-                "    ",
-                "    // Проверяем углы фрейма",
                 "    vec2 cornerDist = vec2(0.0);",
                 "    ",
-                "    // Левый верхний угол",
                 "    cornerDist = vec2(cornerRadius, cornerRadius) - frameUV;",
                 "    if (cornerDist.x > 0.0 && cornerDist.y > 0.0) {",
                 "        float dist = length(cornerDist);",
                 "        if (dist > cornerRadius) return 0.0;",
                 "    }",
                 "    ",
-                "    // Правый верхний угол",
                 "    cornerDist = vec2(1.0 - cornerRadius, cornerRadius) - frameUV;",
                 "    if (cornerDist.x < 0.0 && cornerDist.y > 0.0) {",
                 "        float dist = length(cornerDist);",
                 "        if (dist > cornerRadius) return 0.0;",
                 "    }",
                 "    ",
-                "    // Левый нижний угол",
                 "    cornerDist = vec2(cornerRadius, 1.0 - cornerRadius) - frameUV;",
                 "    if (cornerDist.x > 0.0 && cornerDist.y < 0.0) {",
                 "        float dist = length(cornerDist);",
                 "        if (dist > cornerRadius) return 0.0;",
                 "    }",
                 "    ",
-                "    // Правый нижний угол",
                 "    cornerDist = vec2(1.0 - cornerRadius, 1.0 - cornerRadius) - frameUV;",
                 "    if (cornerDist.x < 0.0 && cornerDist.y < 0.0) {",
                 "        float dist = length(cornerDist);",
                 "        if (dist > cornerRadius) return 0.0;",
                 "    }",
                 "    ",
-                "    // Если мы дошли сюда, точка внутри фрейма с закругленными углами",
                 "    return 1.0;",
                 "}",
 
                 "void main() {",
                 "    if (!vrEnabled) {",
-                "        // Обычный режим - просто выводим оригинальное изображение",
                 "        gl_FragColor = texture2D(screenTexture, vUV);",
                 "        return;",
                 "    }",
                 "",
-                "    // Используем gyroMode для определения, применять ли смещение от гироскопа к фрейму",
-                "    bool applyGyroToFrame = useGyroForMovement && gyroMode == 0; // Только если режим 0 (для фреймов)",
+                "    bool applyGyroToFrame = useGyroForMovement && gyroMode == 0;",
                 "",
                 "    vec4 finalColor = vec4(0.0, 0.0, 0.0, 1.0);",
                 "    ",
-                "    // Применяем межзрачковую коррекцию (IPD)",
-                "    float adjustedLeftFrameX = leftFrameX - ipdAdjustment * 0.1; // Сдвигаем левый фрейм",
-                "    float adjustedRightFrameX = rightFrameX + ipdAdjustment * 0.1; // Сдвигаем правый фрейм",
+                "    // Применяем IPD коррекцию к X-координатам фреймов",
+                "    float adjustedLeftFrameX = leftFrameX - ipdAdjustment * 0.1;",
+                "    float adjustedRightFrameX = rightFrameX + ipdAdjustment * 0.1;",
                 "    ",
-                "    // Обрабатываем левую половину экрана (левый глаз)",
-                "    if (vUV.x < 0.5) {",
-                "        // Вычисляем UV координаты для левого изображения",
-                "        vec2 leftUV = vec2(",
+                "    // Определяем, в каком фрейме находимся",
+                "    bool isInLeftFrame = false;",
+                "    bool isInRightFrame = false;",
+                "    vec2 frameUV;",
+                "    ",
+                "    // Проверяем левый фрейм",
+                "    if (vUV.x >= adjustedLeftFrameX && vUV.x <= adjustedLeftFrameX + leftFrameWidth &&",
+                "        vUV.y >= leftFrameY && vUV.y <= leftFrameY + leftFrameHeight) {",
+                "        isInLeftFrame = true;",
+                "        frameUV = vec2(",
                 "            (vUV.x - adjustedLeftFrameX) / leftFrameWidth,",
                 "            (vUV.y - leftFrameY) / leftFrameHeight",
                 "        );",
+                "    }",
+                "    ",
+                "    // Проверяем правый фрейм",
+                "    if (!isInLeftFrame && vUV.x >= adjustedRightFrameX && vUV.x <= adjustedRightFrameX + rightFrameWidth &&",
+                "        vUV.y >= rightFrameY && vUV.y <= rightFrameY + rightFrameHeight) {",
+                "        isInRightFrame = true;",
+                "        frameUV = vec2(",
+                "            (vUV.x - adjustedRightFrameX) / rightFrameWidth,",
+                "            (vUV.y - rightFrameY) / rightFrameHeight",
+                "        );",
+                "    }",
+                "    ",
+                "    if (isInLeftFrame) {",
+                "        vec2 imageUV = frameUV;",
                 "        ",
-                "        // Применяем смещение изображения в фрейме",
-                "        vec2 leftImageOffset = vec2(leftImageOffsetX, leftImageOffsetY);",
-                "        ",
-                "        // Применяем смещение от гироскопа, если включено И режим 0",
+                "        // Применяем смещение изображения",
+                "        vec2 imageOffset = vec2(leftImageOffsetX, leftImageOffsetY);",
                 "        if (applyGyroToFrame) {",
-                "            leftImageOffset += vec2(gyroX, -gyroY); // Инвертируем Y для правильного направления",
+                "            imageOffset += vec2(gyroX, -gyroY);",
+                "        }",
+                "        imageUV += imageOffset;",
+                "        ",
+                "        // Применяем смещение от центра фрейма",
+                "        vec2 frameCenter = vec2(0.5, 0.5);",
+                "        vec2 centerOffset = vec2(leftImageCenterOffsetX, leftImageCenterOffsetY);",
+                "        imageUV = imageUV - frameCenter + centerOffset;",
+                "        imageUV = imageUV + frameCenter;",
+                "        ",
+                "        // Применяем обрезку правой части",
+                "        if (imageUV.x > 1.0 - leftImageClipRight) {",
+                "            imageUV.x = 1.0 - leftImageClipRight;",
                 "        }",
                 "        ",
-                "        leftUV += leftImageOffset;",
+                "        // Применяем дисторсию",
+                "        vec2 distortedUV = distortionCorrection(imageUV, distortionStrength);",
                 "        ",
-                "        // Применяем смещение изображения относительно центра фрейма",
-                "        vec2 frameCenter = vec2(0.5, 0.5); // Центр фрейма в UV координатах",
-                "        vec2 imageCenterOffset = vec2(leftImageCenterOffsetX, leftImageCenterOffsetY);",
-                "        leftUV = leftUV - frameCenter + imageCenterOffset;",
-                "        leftUV = leftUV + frameCenter; // Возвращаем к фрейм координатам",
-                "        ",
-                "        // Проверяем, находится ли точка внутри левого фрейма",
-                "        if (leftUV.x >= 0.0 && leftUV.x <= 1.0 && leftUV.y >= 0.0 && leftUV.y <= 1.0) {",
-                "            // Применяем дисторсию - от вогнутой до выпуклой линзы",
-                "            vec2 distortedLeftUV = distortionCorrection(leftUV, distortionStrength);",
+                "        if (distortedUV.x >= 0.0 && distortedUV.x <= 1.0 &&",
+                "            distortedUV.y >= 0.0 && distortedUV.y <= 1.0) {",
                 "            ",
-                "            // Проверяем, остались ли координаты в пределах",
-                "            if (distortedLeftUV.x >= 0.0 && distortedLeftUV.x <= 1.0 &&",
-                "                distortedLeftUV.y >= 0.0 && distortedLeftUV.y <= 1.0) {",
-                "                ",
-                "                // Применяем маску с закругленными углами для левого фрейма",
-                "                float leftMask = roundedFrameMask(vUV, adjustedLeftFrameX, leftFrameY, leftFrameWidth, leftFrameHeight, cornerRadius);",
-                "                ",
-                "                vec4 color = texture2D(screenTexture, distortedLeftUV);",
-                "                finalColor = vec4(color.rgb * leftMask, color.a);",
-                "            }",
+                "            float mask = roundedFrameMask(vUV, adjustedLeftFrameX, leftFrameY, leftFrameWidth, leftFrameHeight, cornerRadius);",
+                "            ",
+                "            vec4 color = texture2D(screenTexture, distortedUV);",
+                "            finalColor = vec4(color.rgb * mask, color.a);",
                 "        }",
-                "    } else {",
-                "        // Обрабатываем правую половину экрана (правый глаз)",
-                "        vec2 rightUV;",
+                "    } else if (isInRightFrame) {",
+                "        vec2 imageUV = frameUV;",
                 "        ",
+                "        // Применяем смещение изображения",
+                "        vec2 imageOffset = vec2(rightImageOffsetX, rightImageOffsetY);",
+                "        if (applyGyroToFrame) {",
+                "            imageOffset += vec2(gyroX, -gyroY);",
+                "        }",
+                "        imageUV += imageOffset;",
+                "        ",
+                "        // Применяем смещение от центра фрейма",
+                "        vec2 frameCenter = vec2(0.5, 0.5);",
+                "        vec2 centerOffset;",
                 "        if (syncFrames) {",
-                "            // Если синхронизация включена, используем левые параметры для правого глаза",
-                "            rightUV = vec2(",
-                "                (vUV.x - (adjustedLeftFrameX + 0.5)) / leftFrameWidth,",
-                "                (vUV.y - leftFrameY) / leftFrameHeight",
-                "            );",
-                "            ",
-                "            // Применяем смещение изображения в фрейме",
-                "            vec2 rightImageOffset = vec2(leftImageOffsetX, leftImageOffsetY);",
-                "            ",
-                "            // Применяем смещение от гироскопа, если включено И режим 0",
-                "            if (applyGyroToFrame) {",
-                "                rightImageOffset += vec2(gyroX, -gyroY); // Инвертируем Y для правильного направления",
-                "            }",
-                "            ",
-                "            rightUV += rightImageOffset;",
-                "            ",
-                "            // Применяем смещение изображения относительно центра фрейма",
-                "            vec2 frameCenter = vec2(0.5, 0.5); // Центр фрейма в UV координатах",
-                "            vec2 imageCenterOffset = vec2(leftImageCenterOffsetX, leftImageCenterOffsetY);",
-                "            rightUV = rightUV - frameCenter + imageCenterOffset;",
-                "            rightUV = rightUV + frameCenter; // Возвращаем к фрейм координатам",
+                "            centerOffset = vec2(rightImageCenterOffsetX, leftImageCenterOffsetY);",
                 "        } else {",
-                "            // Используем отдельные параметры для правого глаза",
-                "            rightUV = vec2(",
-                "                (vUV.x - adjustedRightFrameX) / rightFrameWidth,",
-                "                (vUV.y - rightFrameY) / rightFrameHeight",
-                "            );",
-                "            ",
-                "            // Применяем смещение изображения в фрейме",
-                "            vec2 rightImageOffset = vec2(rightImageOffsetX, rightImageOffsetY);",
-                "            ",
-                "            // Применяем смещение от гироскопа, если включено И режим 0",
-                "            if (applyGyroToFrame) {",
-                "                rightImageOffset += vec2(gyroX, -gyroY); // Инвертируем Y для правильного направления",
-                "            }",
-                "            ",
-                "            rightUV += rightImageOffset;",
-                "            ",
-                "            // Применяем смещение изображения относительно центра фрейма",
-                "            vec2 frameCenter = vec2(0.5, 0.5); // Центр фрейма в UV координатах",
-                "            vec2 imageCenterOffset = vec2(rightImageCenterOffsetX, rightImageCenterOffsetY);",
-                "            rightUV = rightUV - frameCenter + imageCenterOffset;",
-                "            rightUV = rightUV + frameCenter; // Возвращаем к фрейм координатам",
+                "            centerOffset = vec2(rightImageCenterOffsetX, rightImageCenterOffsetY);",
+                "        }",
+                "        imageUV = imageUV - frameCenter + centerOffset;",
+                "        imageUV = imageUV + frameCenter;",
+                "        ",
+                "        // Применяем обрезку левой части",
+                "        if (imageUV.x < rightImageClipLeft) {",
+                "            imageUV.x = rightImageClipLeft;",
                 "        }",
                 "        ",
-                "        // Проверяем, находится ли точка внутри правого фрейма",
-                "        if (rightUV.x >= 0.0 && rightUV.x <= 1.0 && rightUV.y >= 0.0 && rightUV.y <= 1.0) {",
-                "            // Применяем дисторсию - от вогнутой до выпуклой линзы",
-                "            vec2 distortedRightUV = distortionCorrection(rightUV, distortionStrength);",
+                "        // Применяем дисторсию",
+                "        vec2 distortedUV = distortionCorrection(imageUV, distortionStrength);",
+                "        ",
+                "        if (distortedUV.x >= 0.0 && distortedUV.x <= 1.0 &&",
+                "            distortedUV.y >= 0.0 && distortedUV.y <= 1.0) {",
                 "            ",
-                "            // Проверяем, остались ли координаты в пределах",
-                "            if (distortedRightUV.x >= 0.0 && distortedRightUV.x <= 1.0 &&",
-                "                distortedRightUV.y >= 0.0 && distortedRightUV.y <= 1.0) {",
-                "                ",
-                "                // Применяем маску с закругленными углами для правого фрейма",
-                "                float rightMask;",
-                "                if (syncFrames) {",
-                "                    rightMask = roundedFrameMask(vUV, adjustedLeftFrameX + 0.5, leftFrameY, leftFrameWidth, leftFrameHeight, cornerRadius);",
-                "                } else {",
-                "                    rightMask = roundedFrameMask(vUV, adjustedRightFrameX, rightFrameY, rightFrameWidth, rightFrameHeight, cornerRadius);",
-                "                }",
-                "                ",
-                "                vec4 color = texture2D(screenTexture, distortedRightUV);",
-                "                finalColor = vec4(color.rgb * rightMask, color.a);",
-                "            }",
+                "            float mask = roundedFrameMask(vUV, adjustedRightFrameX, rightFrameY, rightFrameWidth, rightFrameHeight, cornerRadius);",
+                "            ",
+                "            vec4 color = texture2D(screenTexture, distortedUV);",
+                "            finalColor = vec4(color.rgb * mask, color.a);",
                 "        }",
                 "    }",
                 "    ",
                 "    // Добавляем вертикальную линию по центру экрана, если нужно",
                 "    if (showCenterLine) {",
-                "        float centerLineWidth = 0.002; // Толщина линии (0.2% ширины экрана)",
-                "        float centerLinePosition = 0.5; // Центр экрана",
+                "        float centerLineWidth = 0.002;",
+                "        float centerLinePosition = 0.5;",
                 "        float distanceFromCenter = abs(vUV.x - centerLinePosition);",
                 "        float lineMask = 1.0 - smoothstep(0.0, centerLineWidth, distanceFromCenter);",
                 "        vec3 lineColor = vec3(centerLineColor);",
@@ -690,7 +660,6 @@ public class VREffect extends Effect {
             setUniformInt("vrMode", vrMode);
             setUniformInt("syncFrames", syncFrames ? 1 : 0);
             
-            // Устанавливаем параметры фреймов
             setUniformFloat("leftFrameX", leftFrameX);
             setUniformFloat("leftFrameY", leftFrameY);
             setUniformFloat("leftFrameWidth", leftFrameWidth);
@@ -701,37 +670,30 @@ public class VREffect extends Effect {
             setUniformFloat("rightFrameWidth", rightFrameWidth);
             setUniformFloat("rightFrameHeight", rightFrameHeight);
             
-            // Устанавливаем параметры смещения изображения
             setUniformFloat("leftImageOffsetX", leftImageOffsetX);
             setUniformFloat("leftImageOffsetY", leftImageOffsetY);
             setUniformFloat("rightImageOffsetX", rightImageOffsetX);
             setUniformFloat("rightImageOffsetY", rightImageOffsetY);
             
-            // Устанавливаем параметры смещения изображения от центра фрейма
             setUniformFloat("leftImageCenterOffsetX", leftImageCenterOffsetX);
             setUniformFloat("leftImageCenterOffsetY", leftImageCenterOffsetY);
             setUniformFloat("rightImageCenterOffsetX", rightImageCenterOffsetX);
             setUniformFloat("rightImageCenterOffsetY", rightImageCenterOffsetY);
             
-            // Устанавливаем параметры обрезки изображения
             setUniformFloat("leftImageClipRight", leftImageClipRight);
             setUniformFloat("rightImageClipLeft", rightImageClipLeft);
             
-            // Устанавливаем параметры IPD
             setUniformFloat("ipdAdjustment", ipdAdjustment);
             
-            // Устанавливаем параметры гироскопа
             setUniformInt("useGyroForMovement", useGyroForMovement ? 1 : 0);
             setUniformFloat("gyroX", gyroX);
             setUniformFloat("gyroY", gyroY);
             setUniformFloat("gyroSensitivity", gyroSensitivity);
             
-            // Устанавливаем параметры дисторсии и закругления
             setUniformFloat("distortionStrength", distortionStrength);
             setUniformFloat("edgeFeathering", edgeFeathering);
             setUniformFloat("cornerRadius", cornerRadius);
             
-            // Устанавливаем gyroMode
             setUniformInt("gyroMode", gyroMode);
         }
     }
