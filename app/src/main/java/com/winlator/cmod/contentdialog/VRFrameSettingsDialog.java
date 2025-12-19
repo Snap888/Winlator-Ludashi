@@ -113,8 +113,8 @@ public class VRFrameSettingsDialog extends Dialog {
         // Load left frame settings
         int leftFrameX = prefs.getInt("left_frame_x", 0);
         int leftFrameY = prefs.getInt("left_frame_y", 0);
-        int leftFrameWidth = prefs.getInt("left_frame_width", 100);
-        int leftFrameHeight = prefs.getInt("left_frame_height", 50);
+        int leftFrameWidth = prefs.getInt("left_frame_width", 50);
+        int leftFrameHeight = prefs.getInt("left_frame_height", 100);
         
         leftFrameXSeekBar.setProgress(leftFrameX);
         leftFrameYSeekBar.setProgress(leftFrameY);
@@ -127,10 +127,10 @@ public class VRFrameSettingsDialog extends Dialog {
         leftFrameHeightTextView.setText(String.valueOf(leftFrameHeight / 100.0f));
         
         // Load right frame settings
-        int rightFrameX = prefs.getInt("right_frame_x", 0);
-        int rightFrameY = prefs.getInt("right_frame_y", 50);
-        int rightFrameWidth = prefs.getInt("right_frame_width", 100);
-        int rightFrameHeight = prefs.getInt("right_frame_height", 50);
+        int rightFrameX = prefs.getInt("right_frame_x", 50);
+        int rightFrameY = prefs.getInt("right_frame_y", 0);
+        int rightFrameWidth = prefs.getInt("right_frame_width", 50);
+        int rightFrameHeight = prefs.getInt("right_frame_height", 100);
         
         rightFrameXSeekBar.setProgress(rightFrameX);
         rightFrameYSeekBar.setProgress(rightFrameY);
@@ -158,7 +158,7 @@ public class VRFrameSettingsDialog extends Dialog {
         int rightImageCenterOffsetX = prefs.getInt("right_image_center_offset_x", 0);
         int rightImageCenterOffsetY = prefs.getInt("right_image_center_offset_y", 0);
         
-        leftImageCenterOffsetXSeekBar.setProgress(leftImageCenterOffsetX + 50); // Сдвигаем на 50 для диапазона -50 до 50
+        leftImageCenterOffsetXSeekBar.setProgress(leftImageCenterOffsetX + 50);
         leftImageCenterOffsetYSeekBar.setProgress(leftImageCenterOffsetY + 50);
         rightImageCenterOffsetXSeekBar.setProgress(rightImageCenterOffsetX + 50);
         rightImageCenterOffsetYSeekBar.setProgress(rightImageCenterOffsetY + 50);
@@ -168,13 +168,13 @@ public class VRFrameSettingsDialog extends Dialog {
         rightImageCenterOffsetXTextView.setText(String.valueOf(rightImageCenterOffsetX / 100.0f));
         rightImageCenterOffsetYTextView.setText(String.valueOf(rightImageCenterOffsetY / 100.0f));
         
-        updateRightFrameControls(!syncFramesCheckBox.isChecked());
+        updateSyncControls(!syncFramesCheckBox.isChecked());
     }
 
     private void setupListeners() {
         syncFramesCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             vrEffect.setSyncFrames(isChecked);
-            updateRightFrameControls(!isChecked);
+            updateSyncControls(!isChecked);
             saveSettings();
             if (onSettingsChangedListener != null) {
                 onSettingsChangedListener.onSettingsChanged(vrEffect);
@@ -186,23 +186,41 @@ public class VRFrameSettingsDialog extends Dialog {
     }
 
     private void setupSeekBarListeners() {
-        // Left frame listeners
+        // Left frame listeners - всегда активны
         setupSeekBarWithTextView(leftFrameXSeekBar, leftFrameXTextView, 
             value -> vrEffect.setLeftFrameX(value / 100.0f));
         setupSeekBarWithTextView(leftFrameYSeekBar, leftFrameYTextView, 
-            value -> vrEffect.setLeftFrameY(value / 100.0f));
-        setupSeekBarWithTextView(leftFrameWidthSeekBar, leftFrameWidthTextView, 
-            value -> vrEffect.setLeftFrameWidth(value / 100.0f));
-        setupSeekBarWithTextView(leftFrameHeightSeekBar, leftFrameHeightTextView, 
-            value -> vrEffect.setLeftFrameHeight(value / 100.0f));
-
-        // Right frame listeners
-        setupSeekBarWithTextView(rightFrameXSeekBar, rightFrameXTextView, 
             value -> {
-                if (!vrEffect.isSyncFrames()) {
-                    vrEffect.setRightFrameX(value / 100.0f);
+                vrEffect.setLeftFrameY(value / 100.0f);
+                if (vrEffect.isSyncFrames()) {
+                    vrEffect.setRightFrameY(value / 100.0f);
+                    rightFrameYSeekBar.setProgress(value);
+                    rightFrameYTextView.setText(String.valueOf(value / 100.0f));
                 }
             });
+        setupSeekBarWithTextView(leftFrameWidthSeekBar, leftFrameWidthTextView, 
+            value -> {
+                vrEffect.setLeftFrameWidth(value / 100.0f);
+                if (vrEffect.isSyncFrames()) {
+                    vrEffect.setRightFrameWidth(value / 100.0f);
+                    rightFrameWidthSeekBar.setProgress(value);
+                    rightFrameWidthTextView.setText(String.valueOf(value / 100.0f));
+                }
+            });
+        setupSeekBarWithTextView(leftFrameHeightSeekBar, leftFrameHeightTextView, 
+            value -> {
+                vrEffect.setLeftFrameHeight(value / 100.0f);
+                if (vrEffect.isSyncFrames()) {
+                    vrEffect.setRightFrameHeight(value / 100.0f);
+                    rightFrameHeightSeekBar.setProgress(value);
+                    rightFrameHeightTextView.setText(String.valueOf(value / 100.0f));
+                }
+            });
+
+        // Right frame listeners - X всегда активен, остальные только при выключенной синхронизации
+        setupSeekBarWithTextView(rightFrameXSeekBar, rightFrameXTextView, 
+            value -> vrEffect.setRightFrameX(value / 100.0f));
+            
         setupSeekBarWithTextView(rightFrameYSeekBar, rightFrameYTextView, 
             value -> {
                 if (!vrEffect.isSyncFrames()) {
@@ -222,40 +240,39 @@ public class VRFrameSettingsDialog extends Dialog {
                 }
             });
             
-        // Image clip listeners
+        // Image clip listeners - всегда активны
         setupSeekBarWithTextView(leftImageClipRightSeekBar, leftImageClipRightTextView,
             value -> vrEffect.setLeftImageClipRight(value / 100.0f));
         setupSeekBarWithTextView(rightImageClipLeftSeekBar, rightImageClipLeftTextView,
-            value -> {
-                if (!vrEffect.isSyncFrames()) {
-                    vrEffect.setRightImageClipLeft(value / 100.0f);
-                }
-            });
+            value -> vrEffect.setRightImageClipLeft(value / 100.0f));
             
-        // Image center offset listeners (left eye)
+        // Image center offset listeners (left eye) - всегда активны
         setupSeekBarWithTextView(leftImageCenterOffsetXSeekBar, leftImageCenterOffsetXTextView,
             value -> {
-                float offset = (value - 50) / 100.0f; // Преобразуем из диапазона 0-100 в -0.5 до 0.5
+                float offset = (value - 50) / 100.0f;
                 vrEffect.setLeftImageCenterOffsetX(offset);
             });
         setupSeekBarWithTextView(leftImageCenterOffsetYSeekBar, leftImageCenterOffsetYTextView,
             value -> {
-                float offset = (value - 50) / 100.0f; // Преобразуем из диапазона 0-100 в -0.5 до 0.5
+                float offset = (value - 50) / 100.0f;
                 vrEffect.setLeftImageCenterOffsetY(offset);
+                if (vrEffect.isSyncFrames()) {
+                    vrEffect.setRightImageCenterOffsetY(offset);
+                    rightImageCenterOffsetYSeekBar.setProgress(value);
+                    rightImageCenterOffsetYTextView.setText(String.valueOf(offset));
+                }
             });
             
-        // Image center offset listeners (right eye)
+        // Image center offset listeners (right eye) - X всегда активен, Y только при выключенной синхронизации
         setupSeekBarWithTextView(rightImageCenterOffsetXSeekBar, rightImageCenterOffsetXTextView,
             value -> {
-                if (!vrEffect.isSyncFrames()) {
-                    float offset = (value - 50) / 100.0f; // Преобразуем из диапазона 0-100 в -0.5 до 0.5
-                    vrEffect.setRightImageCenterOffsetX(offset);
-                }
+                float offset = (value - 50) / 100.0f;
+                vrEffect.setRightImageCenterOffsetX(offset);
             });
         setupSeekBarWithTextView(rightImageCenterOffsetYSeekBar, rightImageCenterOffsetYTextView,
             value -> {
                 if (!vrEffect.isSyncFrames()) {
-                    float offset = (value - 50) / 100.0f; // Преобразуем из диапазона 0-100 в -0.5 до 0.5
+                    float offset = (value - 50) / 100.0f;
                     vrEffect.setRightImageCenterOffsetY(offset);
                 }
             });
@@ -266,11 +283,13 @@ public class VRFrameSettingsDialog extends Dialog {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 int value = progress;
-                if (textView.getText().toString().contains("offset")) { // Для смещений
-                    value = progress - 50; // Преобразуем в диапазон -50 до 50
+                if (textView.getText().toString().contains("offset")) {
+                    value = progress - 50;
                 }
                 textView.setText(String.valueOf(value / 100.0f));
-                setter.setValue(value);
+                if (fromUser) {
+                    setter.setValue(value);
+                }
             }
 
             @Override
@@ -288,17 +307,22 @@ public class VRFrameSettingsDialog extends Dialog {
 
     private void setupButtons() {
         centerFramesButton.setOnClickListener(v -> {
+            float leftWidth = 0.5f;
+            float rightWidth = 0.5f;
+            
+            if (vrEffect.isSyncFrames()) {
+                rightWidth = vrEffect.getLeftFrameWidth();
+            }
+            
             vrEffect.setLeftFrameX(0.0f);
             vrEffect.setLeftFrameY(0.0f);
-            vrEffect.setLeftFrameWidth(0.5f);
+            vrEffect.setLeftFrameWidth(leftWidth);
             vrEffect.setLeftFrameHeight(1.0f);
             
-            if (!vrEffect.isSyncFrames()) {
-                vrEffect.setRightFrameX(0.5f);
-                vrEffect.setRightFrameY(0.0f);
-                vrEffect.setRightFrameWidth(0.5f);
-                vrEffect.setRightFrameHeight(1.0f);
-            }
+            vrEffect.setRightFrameX(1.0f - rightWidth);
+            vrEffect.setRightFrameY(0.0f);
+            vrEffect.setRightFrameWidth(rightWidth);
+            vrEffect.setRightFrameHeight(1.0f);
             
             updateSeekBarsFromEffect();
             saveSettings();
@@ -324,28 +348,32 @@ public class VRFrameSettingsDialog extends Dialog {
     private void applyPreset(int width, int height) {
         float aspectRatio = (float) width / height;
         float screenWidth = 1.0f;
-        float screenHeight = 1.0f; // Full height
+        float screenHeight = 1.0f;
         
         float frameWidth, frameHeight;
-        if (aspectRatio > 1.0f) { // Landscape
-            frameWidth = screenWidth * 0.5f; // Half screen width for each eye
+        if (aspectRatio > 1.0f) {
+            frameWidth = screenWidth * 0.5f;
             frameHeight = frameWidth / aspectRatio;
-        } else { // Portrait
+        } else {
             frameHeight = screenHeight * 0.5f;
             frameWidth = frameHeight * aspectRatio;
         }
         
-        // Center the frames
-        float offsetX = (screenWidth * 0.5f - frameWidth) / 2.0f;
         float offsetY = (screenHeight - frameHeight) / 2.0f;
         
-        vrEffect.setLeftFrameX(offsetX);
+        vrEffect.setLeftFrameX(0.0f);
         vrEffect.setLeftFrameY(offsetY);
         vrEffect.setLeftFrameWidth(frameWidth);
         vrEffect.setLeftFrameHeight(frameHeight);
         
         if (!vrEffect.isSyncFrames()) {
-            vrEffect.setRightFrameX(0.5f + offsetX);
+            float rightFrameWidth = frameWidth;
+            vrEffect.setRightFrameX(1.0f - rightFrameWidth);
+            vrEffect.setRightFrameY(offsetY);
+            vrEffect.setRightFrameWidth(rightFrameWidth);
+            vrEffect.setRightFrameHeight(frameHeight);
+        } else {
+            vrEffect.setRightFrameX(1.0f - frameWidth);
             vrEffect.setRightFrameY(offsetY);
             vrEffect.setRightFrameWidth(frameWidth);
             vrEffect.setRightFrameHeight(frameHeight);
@@ -364,45 +392,32 @@ public class VRFrameSettingsDialog extends Dialog {
         leftFrameWidthSeekBar.setProgress(Math.round(vrEffect.getLeftFrameWidth() * 100));
         leftFrameHeightSeekBar.setProgress(Math.round(vrEffect.getLeftFrameHeight() * 100));
         
-        leftImageClipRightSeekBar.setProgress(Math.round(vrEffect.getLeftImageClipRight() * 100));
-        leftImageCenterOffsetXSeekBar.setProgress(Math.round(vrEffect.getLeftImageCenterOffsetX() * 100) + 50); // Сдвигаем на 50
-        leftImageCenterOffsetYSeekBar.setProgress(Math.round(vrEffect.getLeftImageCenterOffsetY() * 100) + 50);
+        rightFrameXSeekBar.setProgress(Math.round(vrEffect.getRightFrameX() * 100));
+        rightFrameYSeekBar.setProgress(Math.round(vrEffect.getRightFrameY() * 100));
+        rightFrameWidthSeekBar.setProgress(Math.round(vrEffect.getRightFrameWidth() * 100));
+        rightFrameHeightSeekBar.setProgress(Math.round(vrEffect.getRightFrameHeight() * 100));
         
-        if (vrEffect.isSyncFrames()) {
-            rightFrameXSeekBar.setProgress(Math.round(vrEffect.getRightFrameX() * 100));
-            rightFrameYSeekBar.setProgress(Math.round(vrEffect.getRightFrameY() * 100));
-            rightFrameWidthSeekBar.setProgress(Math.round(vrEffect.getRightFrameWidth() * 100));
-            rightFrameHeightSeekBar.setProgress(Math.round(vrEffect.getRightFrameHeight() * 100));
-            rightImageClipLeftSeekBar.setProgress(Math.round(vrEffect.getRightImageClipLeft() * 100));
-            rightImageCenterOffsetXSeekBar.setProgress(Math.round(vrEffect.getRightImageCenterOffsetX() * 100) + 50);
-            rightImageCenterOffsetYSeekBar.setProgress(Math.round(vrEffect.getRightImageCenterOffsetY() * 100) + 50);
-        } else {
-            rightFrameXSeekBar.setProgress(Math.round(vrEffect.getRightFrameX() * 100));
-            rightFrameYSeekBar.setProgress(Math.round(vrEffect.getRightFrameY() * 100));
-            rightFrameWidthSeekBar.setProgress(Math.round(vrEffect.getRightFrameWidth() * 100));
-            rightFrameHeightSeekBar.setProgress(Math.round(vrEffect.getRightFrameHeight() * 100));
-            rightImageClipLeftSeekBar.setProgress(Math.round(vrEffect.getRightImageClipLeft() * 100));
-            rightImageCenterOffsetXSeekBar.setProgress(Math.round(vrEffect.getRightImageCenterOffsetX() * 100) + 50);
-            rightImageCenterOffsetYSeekBar.setProgress(Math.round(vrEffect.getRightImageCenterOffsetY() * 100) + 50);
-        }
+        leftImageClipRightSeekBar.setProgress(Math.round(vrEffect.getLeftImageClipRight() * 100));
+        rightImageClipLeftSeekBar.setProgress(Math.round(vrEffect.getRightImageClipLeft() * 100));
+        
+        leftImageCenterOffsetXSeekBar.setProgress(Math.round(vrEffect.getLeftImageCenterOffsetX() * 100) + 50);
+        leftImageCenterOffsetYSeekBar.setProgress(Math.round(vrEffect.getLeftImageCenterOffsetY() * 100) + 50);
+        rightImageCenterOffsetXSeekBar.setProgress(Math.round(vrEffect.getRightImageCenterOffsetX() * 100) + 50);
+        rightImageCenterOffsetYSeekBar.setProgress(Math.round(vrEffect.getRightImageCenterOffsetY() * 100) + 50);
     }
 
-    private void updateRightFrameControls(boolean enabled) {
-        rightFrameXSeekBar.setEnabled(enabled);
+    private void updateSyncControls(boolean enabled) {
+        // Всегда активны: leftFrameX, rightFrameX, все clip и centerOffsetX
+        
+        // Зависит от синхронизации:
         rightFrameYSeekBar.setEnabled(enabled);
         rightFrameWidthSeekBar.setEnabled(enabled);
         rightFrameHeightSeekBar.setEnabled(enabled);
         
-        rightFrameXTextView.setEnabled(enabled);
         rightFrameYTextView.setEnabled(enabled);
         rightFrameWidthTextView.setEnabled(enabled);
         rightFrameHeightTextView.setEnabled(enabled);
         
-        rightImageClipLeftSeekBar.setEnabled(enabled);
-        rightImageClipLeftTextView.setEnabled(enabled);
-
-        rightImageCenterOffsetXSeekBar.setEnabled(enabled);
-        rightImageCenterOffsetXTextView.setEnabled(enabled);
         rightImageCenterOffsetYSeekBar.setEnabled(enabled);
         rightImageCenterOffsetYTextView.setEnabled(enabled);
     }
