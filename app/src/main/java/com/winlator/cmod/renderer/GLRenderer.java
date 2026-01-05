@@ -983,10 +983,10 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
             
             // Передаем ID текстуры в VREffect
-            VREffect vrEffect = effectComposer.getVREffect();
-            if (vrEffect != null) {
-                vrEffect.setBackgroundTextureId(backgroundTextureId);
-            }
+            //VREffect vrEffect = effectComposer.getVREffect();
+            //if (vrEffect != null) {
+               // vrEffect.setBackgroundTextureId(backgroundTextureId);
+          //  }
         }
     }
     
