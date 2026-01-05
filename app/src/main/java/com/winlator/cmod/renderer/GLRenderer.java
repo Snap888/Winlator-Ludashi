@@ -3,6 +3,7 @@ package com.winlator.cmod.renderer;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.util.Log;
@@ -1008,7 +1009,11 @@ public class GLRenderer implements GLSurfaceView.Renderer, WindowManager.OnWindo
     public void loadDefaultBackground() {
         // Загрузка стандартного фона из ресурсов
         Context context = xServerView.getContext();
-        Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.vr_background);
+        
+        // Создаем черный фон программно
+        Bitmap bitmap = Bitmap.createBitmap(64, 64, Bitmap.Config.ARGB_8888);
+        bitmap.eraseColor(Color.BLACK);
+        
         if (bitmap != null) {
             loadBackgroundImage(bitmap);
         }
