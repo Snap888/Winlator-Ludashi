@@ -1,78 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
-    <group android:checkableBehavior="none">
-        <!-- Existing menu items -->
-        <item
-            android:icon="@drawable/icon_keyboard"
-            android:id="@+id/main_menu_keyboard"
-            android:title="@string/keyboard" />
-        <item
-            android:icon="@drawable/icon_input_controls"
-            android:id="@+id/main_menu_input_controls"
-            android:title="@string/input_controls" />
-        <item
-            android:id="@+id/main_menu_move_mode"
-            android:title="Move Mode"
-            android:icon="@drawable/icon_input_controls" />
-        <item
-            android:id="@+id/main_menu_relative_mouse_movement"
-            android:title="Toggle Relative Mouse Movement" />
-        <item
-            android:icon="@drawable/icon_screen_effect"
-            android:id="@+id/main_menu_screen_effects"
-            android:title="@string/screen_effect" />
-        <!-- Добавить в соответствующее место меню -->
-        <item
-            android:id="@+id/main_menu_vr"
-            android:icon="@drawable/ic_vr_settings"
-            android:title="@string/vr_mode" />
-            <!-- New Gyro Mouse Control item -->
-        <item
-            android:id="@+id/main_menu_gyro_mouse_control"
-            android:checkable="true"
-            android:checked="false"
-            android:title="Use Gyro for Mouse Control" />
-        <item
-            android:icon="@drawable/icon_fullscreen"
-            android:id="@+id/main_menu_toggle_fullscreen"
-            android:title="@string/toggle_fullscreen" />
-        <item
-            android:icon="@drawable/icon_pause"
-            android:id="@+id/main_menu_pause"
-            android:title="Pause/Resume" />
-        <item
-            android:icon="@drawable/ic_picture_in_picture_alt"
-            android:id="@+id/main_menu_pip_mode"
-            android:title="@string/pip_mode" />
-        <item
-            android:icon="@drawable/icon_task_manager"
-            android:id="@+id/main_menu_task_manager"
-            android:title="@string/task_manager" />
-        <item
-            android:icon="@drawable/icon_magnifier"
-            android:id="@+id/main_menu_magnifier"
-            android:title="@string/magnifier" />
-        <item
-            android:icon="@drawable/icon_debug"
-            android:id="@+id/main_menu_logs"
-            android:title="@string/logs" />
-        <item
-            android:icon="@drawable/icon_exit"
-            android:id="@+id/main_menu_exit"
-            android:title="@string/exit" />
-
-        <!-- New FPS menu items -->
-        <item
-            android:id="@+id/main_menu_fps_settings"
-            android:icon="@drawable/icon_settings"
-            android:title="FPS Settings" />
-        <item
-            android:id="@+id/main_menu_show_fps"
-            android:checkable="true"
-            android:checked="false"
-            android:title="Show FPS" />
-
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/main_menu_keyboard"
+        android:icon="@drawable/icon_keyboard"
+        android:title="Keyboard" />
+    <item
+        android:id="@+id/main_menu_input_controls"
+        android:icon="@drawable/icon_input_controls"
+        android:title="Input Controls" />
+    <item
+        android:id="@+id/main_menu_relative_mouse_movement"
+        android:checkable="true"
+        android:title="Relative Mouse Movement" />
+    <item
+        android:id="@+id/main_menu_toggle_fullscreen"
+        android:icon="@drawable/icon_fullscreen"
+        android:title="Toggle Fullscreen" />
+    <item
+        android:id="@+id/main_menu_pause"
+        android:icon="@drawable/icon_pause"
+        android:title="Pause" />
+    <item
+        android:id="@+id/main_menu_pip_mode"
+        android:title="Picture-in-Picture" />
+    <item
+        android:id="@+id/main_menu_task_manager"
+        android:icon="@drawable/icon_task_manager"
+        android:title="Task Manager" />
+    <item
+        android:id="@+id/main_menu_magnifier"
+        android:icon="@drawable/icon_magnifier"
+        android:title="Magnifier" />
+    <item
+        android:id="@+id/main_menu_screen_effects"
         
-    </group>
+        android:title="Screen Effects" />
+    <item
+        android:id="@+id/main_menu_logs"
+        
+        android:title="Logs" />
+    <item
+        android:id="@+id/main_menu_move_mode"
+        android:title="Move Mode" />
+    <item
+        android:id="@+id/main_menu_fps_settings"
+        
+        android:title="FPS Settings" />
+    <item
+        android:id="@+id/main_menu_show_fps"
+        android:checkable="true"
+        android:title="Show FPS" />
+    <item
+        android:id="@+id/main_menu_vr"
+        
+        android:title="VR Mode" />
+    <item
+        android:id="@+id/main_menu_gyro_mouse_control"
+        android:checkable="true"
+        android:title="Use Gyro for Mouse" />
+    <!-- НОВЫЕ ПУНКТЫ МЕНЮ ДЛЯ ИНТЕРПОЛЯЦИИ -->
+    <item
+        android:id="@+id/main_menu_frame_interpolation"
+        android:checkable="true"
+        android:title="Frame Interpolation" />
+    <item
+        android:id="@+id/main_menu_interpolation_quality"
+        android:title="Interpolation Quality" />
+    <item
+        android:id="@+id/main_menu_performance_stats"
+        android:title="Performance Stats" />
+    <item
+        android:id="@+id/main_menu_exit"
+        android:icon="@drawable/icon_exit"
+        android:title="Exit" />
 </menu>
