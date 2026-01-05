@@ -1,6 +1,5 @@
 package com.winlator.cmod;
 
-// ДОБАВЛЕНЫ НЕДОСТАЮЩИЕ ИМПОРТЫ
 import com.winlator.cmod.contentdialog.FrameRatingSettingsDialog;
 import com.winlator.cmod.renderer.effects.CRTEffect;
 import com.winlator.cmod.renderer.effects.VREffect;
@@ -222,6 +221,10 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
     // НОВОЕ: Поле для отслеживания состояния гироскопа для мыши
     private boolean useGyroForMouseControl = false; // Новое поле
+
+    // Поля для управления интерполяцией кадров
+    private boolean frameInterpolationEnabled = false;
+    private int interpolationQuality = 1; // 0=off, 1=low, 2=medium, 3=high
 
     private void createNotifcationChannel() {
         String name = "Winlator";
@@ -608,6 +611,10 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
         // Загружаем состояние пункта меню из SharedPreferences
         useGyroForMouseControl = preferences.getBoolean("use_gyro_mouse_control", false);
+        
+        // Загружаем настройки интерполяции из SharedPreferences
+        frameInterpolationEnabled = preferences.getBoolean("frame_interpolation_enabled", false);
+        interpolationQuality = preferences.getInt("interpolation_quality", 1);
     }
 
     // Method to parse container_id from .desktop file
@@ -646,17 +653,17 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         switch (event.getAction()) {
             case MotionEvent.ACTION_BUTTON_PRESS:
                 if (actionButton == MotionEvent.BUTTON_PRIMARY) {
-                    if (xServer.isRelativeMouseMovement())
+                    if (isRelativeMouseMovement)
                         xServer.getWinHandler().mouseEvent(MouseEventFlags.LEFTDOWN, 0, 0, 0);
                     else
                         xServer.injectPointerButtonPress(Pointer.Button.BUTTON_LEFT);
                 } else if (actionButton == MotionEvent.BUTTON_SECONDARY) {
-                    if (xServer.isRelativeMouseMovement())
+                    if (isRelativeMouseMovement)
                         xServer.getWinHandler().mouseEvent(MouseEventFlags.RIGHTDOWN, 0, 0, 0);
                     else
                         xServer.injectPointerButtonPress(Pointer.Button.BUTTON_RIGHT);
                 } else if (actionButton == MotionEvent.BUTTON_TERTIARY) {
-                    if (xServer.isRelativeMouseMovement())
+                    if (isRelativeMouseMovement)
                         xServer.getWinHandler().mouseEvent(MouseEventFlags.MIDDLEDOWN, 0, 0, 0);
                     else
                         xServer.injectPointerButtonPress(Pointer.Button.BUTTON_MIDDLE); // Add this line for middle mouse button press
@@ -665,17 +672,17 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                 break;
             case MotionEvent.ACTION_BUTTON_RELEASE:
                 if (actionButton == MotionEvent.BUTTON_PRIMARY) {
-                    if (xServer.isRelativeMouseMovement())
+                    if (isRelativeMouseMovement)
                         xServer.getWinHandler().mouseEvent(MouseEventFlags.RIGHTUP, 0, 0, 0);
                     else
                         xServer.injectPointerButtonRelease(Pointer.Button.BUTTON_LEFT);
                 } else if (actionButton == MotionEvent.BUTTON_SECONDARY) {
-                    if (xServer.isRelativeMouseMovement())
+                    if (isRelativeMouseMovement)
                         xServer.getWinHandler().mouseEvent(MouseEventFlags.RIGHTUP, 0, 0, 0);
                     else
                         xServer.injectPointerButtonRelease(Pointer.Button.BUTTON_RIGHT);
                 } else if (actionButton == MotionEvent.BUTTON_TERTIARY) {
-                    if (xServer.isRelativeMouseMovement())
+                    if (isRelativeMouseMovement)
                         xServer.getWinHandler().mouseEvent(MouseEventFlags.MIDDLEUP, 0, 0, 0);
                     else
                         xServer.injectPointerButtonRelease(Pointer.Button.BUTTON_MIDDLE); // Add this line for middle mouse button release
@@ -685,7 +692,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             case MotionEvent.ACTION_MOVE:
             case MotionEvent.ACTION_HOVER_MOVE:
                 float[] transformedPoint = XForm.transformPoint(xform, event.getX(), event.getY());
-                if (xServer.isRelativeMouseMovement())
+                if (isRelativeMouseMovement)
                     xServer.getWinHandler().mouseEvent(MouseEventFlags.MOVE, (int) transformedPoint[0], (int) transformedPoint[1], 0);
                 else
                     xServer.injectPointerMoveDelta((int) transformedPoint[0], (int) transformedPoint[1]);
@@ -694,14 +701,14 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
             case MotionEvent.ACTION_SCROLL:
                 float scrollY = event.getAxisValue(MotionEvent.AXIS_VSCROLL);
                 if (scrollY <= -1.0f) {
-                    if (xServer.isRelativeMouseMovement())
+                    if (isRelativeMouseMovement)
                         xServer.getWinHandler().mouseEvent(MouseEventFlags.WHEEL, 0, 0, (int) scrollY * 270);
                     else {
                         xServer.injectPointerButtonPress(Pointer.Button.BUTTON_SCROLL_DOWN);
                         xServer.injectPointerButtonRelease(Pointer.Button.BUTTON_SCROLL_DOWN);
                     }
                 } else if (scrollY >= 1.0f) {
-                    if (xServer.isRelativeMouseMovement())
+                    if (isRelativeMouseMovement)
                         xServer.getWinHandler().mouseEvent(MouseEventFlags.WHEEL, 0, 0, (int) scrollY * 270);
                     else {
                         xServer.injectPointerButtonPress(Pointer.Button.BUTTON_SCROLL_UP);
@@ -763,6 +770,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         // Убедитесь, что xServerView и Renderer инициализированы
         if (xServerView != null && xServerView.getRenderer() != null) {
             initializeScreenEffects(); // Вызываем метод при возобновлении
+            setupAdvancedInterpolation(); // Применяем настройки интерполяции
         } else {
             Log.w("XServerDisplayActivity", "Renderer not ready in onResume, effects not applied yet.");
         }
@@ -821,8 +829,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         vrEffect = null;
     }
 
-
-    private void savePlaytimeData() {
+private void savePlaytimeData() {
         SharedPreferences.Editor editor = playtimePrefs.edit();
         String playtimeKey = shortcutName + "_playtime";
 
@@ -1415,7 +1422,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
     }
 
     private void toggleFPSVisibility(MenuItem item) {
-        menuFPSVisibility = !menuFPSVisibility;
+        menuFPSVisibility = !item.isChecked();
         item.setChecked(menuFPSVisibility);
         updateFPSVisibility();
     }
@@ -1612,6 +1619,23 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
                 toggleGyroMouseControl(item);
                 drawerLayout.closeDrawers();
                 return true;
+                
+            // НОВЫЕ ПУНКТЫ МЕНЮ: Frame Interpolation
+            case R.id.main_menu_frame_interpolation:
+                toggleFrameInterpolation(item);
+                drawerLayout.closeDrawers();
+                return true;
+                
+            case R.id.main_menu_interpolation_quality:
+                showInterpolationQualityDialog();
+                drawerLayout.closeDrawers();
+                return true;
+                
+            // Пункт для отображения статистики производительности
+            case R.id.main_menu_performance_stats:
+                showPerformanceStats();
+                drawerLayout.closeDrawers();
+                return true;
         }
         return true;
     }
@@ -1630,6 +1654,114 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         SharedPreferences.Editor editor = preferences.edit();
         editor.putBoolean("use_gyro_mouse_control", useGyroForMouseControl);
         editor.apply();
+    }
+
+    // НОВЫЕ МЕТОДЫ ДЛЯ УПРАВЛЕНИЯ ИНТЕРПОЛЯЦИЕЙ
+    private void toggleFrameInterpolation(MenuItem item) {
+        frameInterpolationEnabled = !item.isChecked();
+        item.setChecked(frameInterpolationEnabled);
+        
+        if (xServerView != null && xServerView.getRenderer() != null) {
+            xServerView.getRenderer().setFrameInterpolationEnabled(frameInterpolationEnabled);
+            xServerView.requestRender();
+        }
+        
+        // Сохраняем состояние в SharedPreferences
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean("frame_interpolation_enabled", frameInterpolationEnabled);
+        editor.apply();
+    }
+
+    private void showInterpolationQualityDialog() {
+        final String[] options = {"Off", "Low", "Medium", "High"};
+        int currentQuality = preferences.getInt("interpolation_quality", 1);
+        
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, options);
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        builder.setTitle("Interpolation Quality")
+               .setAdapter(adapter, (dialog, which) -> {
+                   interpolationQuality = which;
+                   if (xServerView != null && xServerView.getRenderer() != null) {
+                       xServerView.getRenderer().setInterpolationQuality(interpolationQuality);
+                       xServerView.requestRender();
+                   }
+                   
+                   // Сохраняем состояние в SharedPreferences
+                   SharedPreferences.Editor editor = preferences.edit();
+                   editor.putInt("interpolation_quality", interpolationQuality);
+                   editor.apply();
+               })
+               .show();
+    }
+
+    private void showPerformanceStats() {
+        if (xServerView != null && xServerView.getRenderer() != null) {
+            GLRenderer.PerformanceStats stats = xServerView.getRenderer().getPerformanceStats();
+            AppUtils.showToast(this, "Performance: " + stats.toString());
+        }
+    }
+
+    private void setupAdvancedInterpolation() {
+        GLRenderer renderer = xServerView.getRenderer();
+        
+        if (renderer != null) {
+            // Загружаем настройки из SharedPreferences
+            frameInterpolationEnabled = preferences.getBoolean("frame_interpolation_enabled", false);
+            interpolationQuality = preferences.getInt("interpolation_quality", 1);
+            boolean adaptiveInterpolation = preferences.getBoolean("adaptive_interpolation", true);
+            boolean motionPrediction = preferences.getBoolean("motion_prediction_enabled", true);
+            boolean temporalAA = preferences.getBoolean("temporal_aa_enabled", false);
+            boolean performanceMonitoring = preferences.getBoolean("performance_monitoring_enabled", true);
+            
+            // Применяем настройки
+            renderer.setFrameInterpolationEnabled(frameInterpolationEnabled);
+            renderer.setAdaptiveInterpolation(adaptiveInterpolation);
+            renderer.setMotionPredictionEnabled(motionPrediction);
+            renderer.setTemporalAAEnabled(temporalAA);
+            renderer.setInterpolationQuality(interpolationQuality);
+            renderer.setPerformanceMonitoringEnabled(performanceMonitoring);
+            renderer.setDynamicFPSAdjustment(true);
+            
+            // Настройка под тип контента
+            if (shortcut != null) {
+                String gameType = shortcut.getExtra("gameType", "unknown");
+                configureInterpolationForGameType(renderer, gameType);
+            }
+        }
+    }
+
+    private void configureInterpolationForGameType(GLRenderer renderer, String gameType) {
+        switch (gameType) {
+            case "fps":
+                // Быстрые движения - кубическая интерполяция
+                renderer.setInterpolationAlgorithm(1); // Cubic
+                renderer.setMaxIntermediateFrames(3);
+                renderer.setPredictionFactor(0.15f); // Более агрессивное предсказание
+                break;
+            case "rpg":
+                // Плавные камеры - сплайн или Эрмит
+                renderer.setInterpolationAlgorithm(3); // Hermite
+                renderer.setMaxIntermediateFrames(2);
+                renderer.setPredictionFactor(0.1f);
+                break;
+            case "strategy":
+                // Статичные сцены - линейная
+                renderer.setInterpolationAlgorithm(0); // Linear
+                renderer.setMaxIntermediateFrames(1);
+                renderer.setPredictionFactor(0.05f);
+                break;
+            case "platformer":
+                // Платформеры - баланс между плавностью и точностью
+                renderer.setInterpolationAlgorithm(2); // Spline
+                renderer.setMaxIntermediateFrames(2);
+                renderer.setPredictionFactor(0.1f);
+                break;
+            default:
+                renderer.setInterpolationAlgorithm(1); // Стандарт - кубическая
+                renderer.setMaxIntermediateFrames(2);
+                renderer.setPredictionFactor(0.1f);
+                break;
+        }
     }
 
     @Override
