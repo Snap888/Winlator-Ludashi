@@ -5,6 +5,11 @@
     ]>
 <resources>
 
+<string name="vsync_settings">VSync Settings</string>
+<string name="enable_vsync">Enable VSync</string>
+<string name="current_refresh_rate">Refresh Rate: %d Hz</string>
+<string name="refresh_rate_adjust">Adjust Refresh Rate</string>
+
 <string name="vr_mode">VR Mode</string>
 <string name="vr_frame_settings">VR Frame Settings</string>
 <string name="vr_enable">Enable VR</string>
