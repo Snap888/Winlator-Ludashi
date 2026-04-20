@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Declare features that might be needed -->
+    <!-- Declare features that might bee needed -->
     <uses-feature
         android:glEsVersion="0x00020000"
         android:required="true" />
